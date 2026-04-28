@@ -1,0 +1,48 @@
+@using Sandbox;
+@using Sandbox.UI;
+@inherits PanelComponent
+
+<root>
+	@if ( Holder.IsValid() && Holder.NearbyPickup.IsValid() )
+	{
+		<div class="prompt">Press <span class="key">E</span> to Equip</div>
+	}
+</root>
+
+@code {
+	/// <summary>
+	/// The player's WeaponHolder. Wire this in the inspector so the prompt knows when a pickup is in range.
+	/// </summary>
+	[Property]
+	public WeaponHolder Holder { get; set; }
+
+	protected override int BuildHash() => System.HashCode.Combine( Holder?.NearbyPickup?.GameObject?.Id );
+}
+
+<style>
+	root {
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		pointer-events: none;
+	}
+
+	.prompt {
+		position: absolute;
+		left: 50%;
+		bottom: 25%;
+		transform: translateX( -50% );
+		color: white;
+		font-size: 24px;
+		text-shadow: 0px 0px 4px rgba( 0, 0, 0, 0.9 );
+		background-color: rgba( 0, 0, 0, 0.5 );
+		padding: 8px 20px;
+		border-radius: 6px;
+		font-family: Roboto, sans-serif;
+	}
+
+	.key {
+		color: yellow;
+		font-weight: bold;
+	}
+</style>

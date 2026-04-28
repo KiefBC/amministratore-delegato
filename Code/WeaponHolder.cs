@@ -28,6 +28,21 @@ public sealed class WeaponHolder : Component
 	[Step( 100f )]
 	public float Range { get; set; } = 5000f;
 
+	/// <summary>
+	/// How close the player must be to a WeaponPickup to grab it on Use.
+	/// </summary>
+	[Property]
+	[Range( 10f, 500f )]
+	[Step( 10f )]
+	public float PickupRange { get; set; } = 100f;
+
+	/// <summary>
+	/// The closest WeaponPickup currently within PickupRange, or null. Updated each frame.
+	/// </summary>
+	public WeaponPickup NearbyPickup { get; private set; }
+
+	private bool _holstered;
+
 	protected override void OnStart()
 	{
 		Log.Info( "WeaponHolder OnStart fired" );
@@ -45,7 +60,14 @@ public sealed class WeaponHolder : Component
 	{
 		if ( AnimHelper is null ) return;
 
-		var aiming = Input.Down( "Attack2" );
+		if ( Input.Pressed( "Slot1" ) && Weapon.IsValid() )
+		{
+			_holstered = !_holstered;
+			Weapon.Enabled = !_holstered;
+		}
+
+		var hasWeapon = Weapon.IsValid();
+		var aiming = Input.Down( "Attack2" ) && !_holstered && hasWeapon;
 
 		if ( aiming )
 		{
@@ -57,10 +79,71 @@ public sealed class WeaponHolder : Component
 			AnimHelper.HoldType = CitizenAnimationHelper.HoldTypes.None;
 		}
 
-		if ( Input.Pressed( "Attack1" ) )
+		if ( Input.Pressed( "Attack1" ) && !_holstered && hasWeapon )
 		{
 			Fire();
 		}
+
+		NearbyPickup = FindNearestPickup();
+
+		if ( Input.Pressed( "Use" ) && NearbyPickup is not null )
+		{
+			AcquireWeapon( NearbyPickup );
+			NearbyPickup = null;
+		}
+	}
+
+	private WeaponPickup FindNearestPickup()
+	{
+		WeaponPickup nearest = null;
+		float nearestDistance = PickupRange;
+
+		foreach ( var pickup in Scene.GetAllComponents<WeaponPickup>() )
+		{
+			if ( !pickup.IsValid() ) continue;
+			if ( pickup.GameObject.Root == GameObject.Root ) continue;
+
+			var dist = pickup.WorldPosition.Distance( WorldPosition );
+			if ( dist < nearestDistance )
+			{
+				nearest = pickup;
+				nearestDistance = dist;
+			}
+		}
+
+		return nearest;
+	}
+
+	private void AcquireWeapon( WeaponPickup pickup )
+	{
+		Log.Info( $"Picked up {pickup.GameObject.Name}" );
+
+		if ( Weapon.IsValid() )
+		{
+			Weapon.Destroy();
+		}
+
+		Weapon = pickup.GameObject;
+		HoldType = pickup.HoldType;
+		Damage = pickup.Damage;
+		Range = pickup.Range;
+
+		var boneObject = BodyRenderer.GetBoneObject( HandBone );
+		if ( boneObject is not null )
+		{
+			Weapon.SetParent( boneObject, false );
+			Weapon.LocalPosition = Vector3.Zero;
+			Weapon.LocalRotation = Rotation.Identity;
+		}
+
+		foreach ( var collider in Weapon.Components.GetAll<Collider>() )
+		{
+			collider.Enabled = false;
+		}
+
+		_holstered = false;
+
+		pickup.Destroy();
 	}
 
 	private void Fire()
