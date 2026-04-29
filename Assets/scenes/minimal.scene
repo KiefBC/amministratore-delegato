@@ -205,6 +205,18 @@
           "RemoveUnownedItems": true,
           "Source": "OwnerConnection",
           "WorkshopItems": []
+        },
+        {
+          "__type": "PlayerComponent",
+          "__guid": "0773cf9b-944c-4df6-8221-7e56c42a26f7",
+          "__enabled": true,
+          "Flags": 0,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null
         }
       ],
       "Children": [
@@ -270,6 +282,38 @@
               "UseAnimGraph": true
             },
             {
+              "__type": "Sandbox.Citizen.CitizenAnimationHelper",
+              "__guid": "349063aa-8953-41f2-8b2c-e59a102f6254",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyWeight": 1,
+              "EyeSource": {
+                "_type": "gameobject",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686"
+              },
+              "EyesWeight": 1,
+              "HeadWeight": 1,
+              "Height": null,
+              "IkLeftFoot": null,
+              "IkLeftHand": null,
+              "IkRightFoot": null,
+              "IkRightHand": null,
+              "LookAt": null,
+              "LookAtEnabled": false,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Target": {
+                "_type": "component",
+                "component_id": "d2898695-f228-4930-89dc-353c84ea4454",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "SkinnedModelRenderer"
+              }
+            },
+            {
               "__type": "WeaponHolder",
               "__guid": "d8a1dccb-1b1c-4db2-99aa-043a6c8b95ae",
               "__enabled": true,
@@ -312,41 +356,9 @@
               "WeaponScale": "1,1,1"
             },
             {
-              "__type": "Sandbox.Citizen.CitizenAnimationHelper",
-              "__guid": "349063aa-8953-41f2-8b2c-e59a102f6254",
-              "__enabled": true,
-              "Flags": 0,
-              "BodyWeight": 1,
-              "EyeSource": {
-                "_type": "gameobject",
-                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686"
-              },
-              "EyesWeight": 1,
-              "HeadWeight": 1,
-              "Height": null,
-              "IkLeftFoot": null,
-              "IkLeftHand": null,
-              "IkRightFoot": null,
-              "IkRightHand": null,
-              "LookAt": null,
-              "LookAtEnabled": false,
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null,
-              "Target": {
-                "_type": "component",
-                "component_id": "d2898695-f228-4930-89dc-353c84ea4454",
-                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "SkinnedModelRenderer"
-              }
-            },
-            {
               "__type": "ChairInteraction",
               "__guid": "a116a4e2-753c-411d-a53d-5260a3af55a7",
-              "__enabled": true,
+              "__enabled": false,
               "Flags": 0,
               "Controller": {
                 "_type": "component",
@@ -374,6 +386,29 @@
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
               "OnComponentUpdate": null
+            },
+            {
+              "__type": "UnitComponent",
+              "__guid": "7495be4a-cc9f-4431-aff8-db77fd967100",
+              "__enabled": true,
+              "Flags": 0,
+              "MaxHealth": 100,
+              "ModelRenderer": {
+                "_type": "component",
+                "component_id": "d2898695-f228-4930-89dc-353c84ea4454",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "SkinnedModelRenderer"
+              },
+              "Name": "Player",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Patrol": null,
+              "Physics": null,
+              "Team": "Player"
             }
           ],
           "Children": [
@@ -3224,177 +3259,6 @@
           "__Prefab": "snake.prefab",
           "__PrefabInstancePatch": {
             "AddedObjects": [
-              {
-                "Id": {
-                  "Type": "Component",
-                  "IdValue": "d4cc4248-8b63-4190-bdef-7a184183f3ff"
-                },
-                "Parent": {
-                  "Type": "GameObject",
-                  "IdValue": "6d213e92-0d2c-4090-9a91-c6fc6be917fe"
-                },
-                "PreviousElement": {
-                  "Type": "Component",
-                  "IdValue": "e18aee90-d3c4-4b35-8842-39dcc7c5a80e"
-                },
-                "ContainerProperty": "Components",
-                "IsContainerArray": true,
-                "Data": {
-                  "__type": "Sandbox.ParticleSpriteRenderer",
-                  "__guid": "d4cc4248-8b63-4190-bdef-7a184183f3ff",
-                  "__enabled": true,
-                  "Flags": 0,
-                  "__version": 2,
-                  "Additive": false,
-                  "Alignment": "LookAtCamera",
-                  "BlurAmount": 0.5,
-                  "BlurOpacity": 0.5,
-                  "BlurSpacing": 0.5,
-                  "DepthFeather": 0,
-                  "FaceVelocity": true,
-                  "FogStrength": 1,
-                  "LeadingTrail": true,
-                  "Lighting": false,
-                  "MotionBlur": true,
-                  "OnComponentDestroy": null,
-                  "OnComponentDisabled": null,
-                  "OnComponentEnabled": null,
-                  "OnComponentFixedUpdate": null,
-                  "OnComponentStart": null,
-                  "OnComponentUpdate": null,
-                  "Opaque": false,
-                  "PlaybackSpeed": 1,
-                  "RenderOptions": {
-                    "GameLayer": true,
-                    "OverlayLayer": false,
-                    "BloomLayer": false,
-                    "AfterUILayer": false
-                  },
-                  "RotationOffset": 0,
-                  "Scale": 1,
-                  "Shadows": false,
-                  "SortMode": "Unsorted",
-                  "Sprite": {
-                    "$compiler": "embed",
-                    "$source": null,
-                    "data": {
-                      "Animations": [
-                        {
-                          "Name": "Default",
-                          "FrameRate": 15,
-                          "Origin": "0.5,0.5",
-                          "LoopMode": "Loop",
-                          "Frames": [
-                            {
-                              "Texture": null,
-                              "BroadcastMessages": []
-                            }
-                          ]
-                        }
-                      ],
-                      "__references": null
-                    },
-                    "compiled": null
-                  },
-                  "StartingAnimationName": "Default",
-                  "TextureFilter": "Bilinear"
-                }
-              },
-              {
-                "Id": {
-                  "Type": "Component",
-                  "IdValue": "d8950921-3420-439c-9bbc-b0bc135acddd"
-                },
-                "Parent": {
-                  "Type": "GameObject",
-                  "IdValue": "6d213e92-0d2c-4090-9a91-c6fc6be917fe"
-                },
-                "PreviousElement": {
-                  "Type": "Component",
-                  "IdValue": "d4cc4248-8b63-4190-bdef-7a184183f3ff"
-                },
-                "ContainerProperty": "Components",
-                "IsContainerArray": true,
-                "Data": {
-                  "__type": "Sandbox.ParticleEffect",
-                  "__guid": "d8950921-3420-439c-9bbc-b0bc135acddd",
-                  "__enabled": true,
-                  "Flags": 0,
-                  "__version": 3,
-                  "Alpha": 1,
-                  "ApplyAlpha": false,
-                  "ApplyColor": false,
-                  "ApplyRotation": false,
-                  "ApplyShape": false,
-                  "Bounce": 1,
-                  "Brightness": 1,
-                  "Bumpiness": 0,
-                  "Collision": false,
-                  "CollisionIgnore": null,
-                  "CollisionPrefab": null,
-                  "CollisionPrefabAlign": false,
-                  "CollisionPrefabChance": 1,
-                  "CollisionPrefabRotation": 0,
-                  "CollisionRadius": 1,
-                  "ConstantMovement": {
-                    "X": 0,
-                    "Y": 0,
-                    "Z": 0
-                  },
-                  "Damping": 0,
-                  "DieOnCollisionChance": 0,
-                  "FollowerPrefab": null,
-                  "FollowerPrefabChance": 1,
-                  "FollowerPrefabKill": true,
-                  "Force": false,
-                  "ForceDirection": "0,0,0",
-                  "ForceScale": 1,
-                  "ForceSpace": "World",
-                  "Friction": 1,
-                  "Gradient": "1,1,1,1",
-                  "InitialVelocity": {
-                    "X": 0,
-                    "Y": 0,
-                    "Z": 0
-                  },
-                  "Lifetime": 1,
-                  "LocalSpace": 0,
-                  "MaxParticles": 1000,
-                  "OnComponentDestroy": null,
-                  "OnComponentDisabled": null,
-                  "OnComponentEnabled": null,
-                  "OnComponentFixedUpdate": null,
-                  "OnComponentStart": null,
-                  "OnComponentUpdate": null,
-                  "OnParticleCreated": null,
-                  "OnParticleDestroyed": null,
-                  "OrbitalForce": {
-                    "X": 0,
-                    "Y": 0,
-                    "Z": 0
-                  },
-                  "OrbitalPull": 0,
-                  "PerParticleTimeScale": 1,
-                  "Pitch": 0,
-                  "PreWarm": 0,
-                  "PushStrength": 0,
-                  "Roll": 0,
-                  "Scale": 1,
-                  "SequenceId": 0,
-                  "SequenceSpeed": 1,
-                  "SequenceTime": 1,
-                  "SheetSequence": false,
-                  "SnapToFrame": false,
-                  "StartDelay": 0,
-                  "StartVelocity": 0,
-                  "Stretch": 0,
-                  "TimeScale": 1,
-                  "Timing": "GameTime",
-                  "Tint": "1,1,1,1",
-                  "UsePrefabFeature": false,
-                  "Yaw": 0
-                }
-              },
               {
                 "Id": {
                   "Type": "Component",
@@ -8454,10 +8318,11 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.Crosshair",
-              "__guid": "8a432131-6b38-4525-80cc-4384f4168376",
-              "__enabled": true,
+              "__type": "Sandbox.PickupPrompt",
+              "__guid": "ebf4cd3a-ed9c-4a7d-a665-a7dc93a79846",
+              "__enabled": false,
               "Flags": 0,
+              "Holder": null,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
@@ -8466,11 +8331,10 @@
               "OnComponentUpdate": null
             },
             {
-              "__type": "Sandbox.PickupPrompt",
-              "__guid": "ebf4cd3a-ed9c-4a7d-a665-a7dc93a79846",
-              "__enabled": false,
+              "__type": "Sandbox.Crosshair",
+              "__guid": "0b13b61d-b81b-43f1-a1c3-012c74cf0827",
+              "__enabled": true,
               "Flags": 0,
-              "Holder": null,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
@@ -8553,7 +8417,7 @@
             },
             {
               "__type": "Sandbox.InteractPrompt",
-              "__guid": "ba433632-99fd-4370-a296-4159eafc2d3c",
+              "__guid": "314d79e6-317d-4353-97d0-c5e3f793e6bc",
               "__enabled": true,
               "Flags": 0,
               "OnComponentDestroy": null,
@@ -9062,7 +8926,7 @@
       "__guid": "43521d4e-7ca2-4538-9860-66777fa540c8",
       "__version": 2,
       "Flags": 0,
-      "Name": "antique_chair",
+      "Name": "Antique Chair",
       "Position": "-174.47699,-242.540405,11.1422443",
       "Rotation": "0,0,0,1",
       "Scale": "1,1,1",
@@ -9205,251 +9069,6 @@
         }
       ],
       "Children": []
-    },
-    {
-      "__guid": "37403962-06d8-4d90-becf-21d59b3a1e7c",
-      "__version": 2,
-      "Flags": 0,
-      "Name": "Cube",
-      "Position": "0,0,0",
-      "Rotation": "0,0,0,1",
-      "Scale": "1,1,1",
-      "Tags": "",
-      "Enabled": true,
-      "NetworkMode": 2,
-      "NetworkFlags": 0,
-      "NetworkOrphaned": 0,
-      "NetworkTransmit": true,
-      "OwnerTransfer": 1,
-      "Components": [
-        {
-          "__type": "Sandbox.ModelRenderer",
-          "__guid": "1e4df8c7-f8b3-4245-9f92-96dfff4df443",
-          "__enabled": true,
-          "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "CreateAttachments": false,
-          "LodOverride": null,
-          "MaterialGroup": null,
-          "MaterialOverride": null,
-          "Materials": null,
-          "Model": "models/dev/box.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "RenderOptions": {
-            "GameLayer": true,
-            "OverlayLayer": false,
-            "BloomLayer": false,
-            "AfterUILayer": false
-          },
-          "RenderType": "On",
-          "Tint": "1,1,1,1"
-        },
-        {
-          "__type": "Sandbox.BaseChair",
-          "__guid": "11c9e4d4-8a65-4894-a0cc-9b93cc3621c5",
-          "__enabled": true,
-          "Flags": 0,
-          "ExitPoints": [],
-          "EyePosition": null,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "PitchRange": "-90,70",
-          "SeatPosition": {
-            "_type": "gameobject",
-            "go": "37403962-06d8-4d90-becf-21d59b3a1e7c"
-          },
-          "SitHeight": 0,
-          "SitPose": "Chair",
-          "TooltipDescription": "",
-          "TooltipIcon": "airline_seat_recline_normal",
-          "TooltipTitle": "Sit",
-          "YawRange": "-120,120"
-        },
-        {
-          "__type": "Sandbox.BoxCollider",
-          "__guid": "fd07894c-71b2-415a-b51f-69c9692666e5",
-          "__enabled": true,
-          "Flags": 0,
-          "Center": "0,0,0",
-          "ColliderFlags": 0,
-          "Elasticity": null,
-          "Friction": null,
-          "IsTrigger": false,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnObjectTriggerEnter": null,
-          "OnObjectTriggerExit": null,
-          "OnTriggerEnter": null,
-          "OnTriggerExit": null,
-          "RollingResistance": null,
-          "Scale": "50,50,50",
-          "Static": false,
-          "Surface": null,
-          "SurfaceVelocity": "0,0,0"
-        }
-      ],
-      "Children": []
-    },
-    {
-      "__guid": "12f2e943-5d3e-49a4-823b-9674639af49c",
-      "__version": 2,
-      "Flags": 0,
-      "Name": "chaircinema",
-      "Position": "180.123795,-89.7487335,0",
-      "Rotation": "0,0,0,1",
-      "Scale": "1,1,1",
-      "Tags": "",
-      "Enabled": true,
-      "NetworkMode": 2,
-      "NetworkFlags": 0,
-      "NetworkOrphaned": 0,
-      "NetworkTransmit": true,
-      "OwnerTransfer": 1,
-      "Components": [
-        {
-          "__type": "Sandbox.Prop",
-          "__guid": "3edfcae9-2b0c-42c7-bb1a-b59fcb3bbb0b",
-          "__enabled": true,
-          "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "Health": 0,
-          "IsStatic": false,
-          "MaterialGroup": null,
-          "Model": "models/theatr/chaircinema.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnPropBreak": null,
-          "OnPropTakeDamage": null,
-          "StartAsleep": false,
-          "Tint": "1,1,1,1"
-        },
-        {
-          "__type": "Sandbox.ModelRenderer",
-          "__guid": "338a30e9-f94a-494a-8e94-099675c53f4e",
-          "__enabled": true,
-          "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "CreateAttachments": false,
-          "LodOverride": null,
-          "MaterialGroup": null,
-          "MaterialOverride": null,
-          "Materials": null,
-          "Model": "models/theatr/chaircinema.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "RenderOptions": {
-            "GameLayer": true,
-            "OverlayLayer": false,
-            "BloomLayer": false,
-            "AfterUILayer": false
-          },
-          "RenderType": "On",
-          "Tint": "1,1,1,1"
-        },
-        {
-          "__type": "Sandbox.ModelCollider",
-          "__guid": "f396e941-ae2a-4e1e-8ab5-f74f895be752",
-          "__enabled": true,
-          "Flags": 0,
-          "ColliderFlags": 0,
-          "Elasticity": null,
-          "Friction": null,
-          "IsTrigger": false,
-          "Model": "models/theatr/chaircinema.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnObjectTriggerEnter": null,
-          "OnObjectTriggerExit": null,
-          "OnTriggerEnter": null,
-          "OnTriggerExit": null,
-          "RollingResistance": null,
-          "Static": false,
-          "Surface": null,
-          "SurfaceVelocity": "0,0,0"
-        },
-        {
-          "__type": "Sandbox.Rigidbody",
-          "__guid": "6f4fe4ed-0441-47cd-9eff-eec0e5e2a314",
-          "__enabled": true,
-          "Flags": 0,
-          "AngularDamping": 0,
-          "EnableImpactDamage": true,
-          "EnhancedCcd": false,
-          "Gravity": true,
-          "GravityScale": 1,
-          "ImpactDamage": 0,
-          "LinearDamping": 0,
-          "Locking": {
-            "X": false,
-            "Y": false,
-            "Z": false,
-            "Pitch": false,
-            "Yaw": false,
-            "Roll": false
-          },
-          "MassCenterOverride": "0,0,0",
-          "MassOverride": 0,
-          "MinImpactDamageSpeed": 500,
-          "MotionEnabled": true,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OverrideMassCenter": false,
-          "RigidbodyFlags": 0,
-          "StartAsleep": false
-        },
-        {
-          "__type": "Sandbox.BaseChair",
-          "__guid": "32e54e8b-63a0-4232-a73d-86e0c335fbd1",
-          "__enabled": true,
-          "Flags": 0,
-          "ExitPoints": [],
-          "EyePosition": null,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "PitchRange": "-90,70",
-          "SeatPosition": null,
-          "SitHeight": 0,
-          "SitPose": "Chair",
-          "TooltipDescription": "",
-          "TooltipIcon": "airline_seat_recline_normal",
-          "TooltipTitle": "Sit",
-          "YawRange": "-120,120"
-        }
-      ],
-      "Children": []
     }
   ],
   "SceneProperties": {
@@ -9491,7 +9110,6 @@
   "Title": null,
   "Description": null,
   "__references": [
-    "ambi.chaircinema#51720",
     "defqwop.glockg20#207365",
     "facepunch.ladder#139177",
     "pcjr.chair20#41836",
