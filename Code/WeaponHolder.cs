@@ -198,17 +198,19 @@ public sealed class WeaponHolder : Component
 		Log.Info( $"Shot hit {trace.GameObject?.Name}" );
 		SpawnDebugMarker( trace.HitPosition, Color.Red );
 
-		var hitObject = trace.GameObject;
-		while ( hitObject.IsValid() )
+		var hit = trace.GameObject?.Components.GetInAncestorsOrSelf<Component.IDamageable>();
+		if ( hit is null ) return;
+
+		var info = new DamageInfo
 		{
-			var unit = hitObject.Components.Get<UnitComponent>();
-			if ( unit.IsValid() )
-			{
-				unit.Damage( Damage );
-				return;
-			}
-			hitObject = hitObject.Parent;
-		}
+			Damage = Damage,
+			Position = trace.HitPosition,
+			Origin = startPos,
+			Attacker = GameObject.Root,
+			Weapon = Weapon,
+		};
+
+		CombatSystem.Current.DealDamage( hit, info );
 	}
 
 	private void SpawnDebugMarker( Vector3 position, Color color )
