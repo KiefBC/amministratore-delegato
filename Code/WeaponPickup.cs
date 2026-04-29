@@ -25,4 +25,23 @@ public sealed class WeaponPickup : Component
 	[Range( 100f, 10000f )]
 	[Step( 100f )]
 	public float Range { get; set; } = 5000f;
+
+	/// <summary>
+	/// Local-space position offset to apply when this weapon is held in the hand bone.
+	/// Tune in the editor for each weapon — pistol vs rifle vs bat all need different grips.
+	/// </summary>
+	[Property]
+	public Vector3 WeaponOffset { get; set; } = Vector3.Zero;
+
+	/// <summary>
+	/// Local-space rotation offset (pitch/yaw/roll, degrees) to apply when held.
+	/// </summary>
+	[Property]
+	public Angles WeaponAngleOffset { get; set; } = Angles.Zero;
+
+	/// <summary>
+	/// Local-space scale to apply when held (use 1,1,1 for no scaling).
+	/// </summary>
+	[Property]
+	public Vector3 WeaponScale { get; set; } = Vector3.One;
 }

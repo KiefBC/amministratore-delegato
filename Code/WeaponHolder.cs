@@ -8,6 +8,26 @@ public sealed class WeaponHolder : Component
 	[Property] private string HandBone { get; set; } = "hold_R";
 	[Property] public CitizenAnimationHelper AnimHelper { get; set; }
 
+	/// <summary>
+	/// Local-space position offset of the held weapon relative to the hand bone.
+	/// Tune live during Play to find the right grip position.
+	/// </summary>
+	[Property]
+	public Vector3 WeaponOffset { get; set; } = Vector3.Zero;
+
+	/// <summary>
+	/// Local-space rotation offset (pitch/yaw/roll, degrees) of the held weapon relative to the hand bone.
+	/// Tune live during Play to find the right grip rotation.
+	/// </summary>
+	[Property]
+	public Angles WeaponAngleOffset { get; set; } = Angles.Zero;
+
+	/// <summary>
+	/// Local-space scale of the held weapon. Tune live during Play.
+	/// </summary>
+	[Property]
+	public Vector3 WeaponScale { get; set; } = Vector3.One;
+
 	[Property]
 	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
 		= CitizenAnimationHelper.HoldTypes.Pistol;
@@ -49,14 +69,23 @@ public sealed class WeaponHolder : Component
 		if ( boneObject is not null && Weapon is not null )
 		{
 			Weapon.SetParent( boneObject, false );
-			Weapon.LocalPosition = Vector3.Zero;
-			Weapon.LocalRotation = Rotation.Identity;
+			ApplyWeaponOffset();
 		}
+	}
+
+	private void ApplyWeaponOffset()
+	{
+		if ( !Weapon.IsValid() ) return;
+		Weapon.LocalPosition = WeaponOffset;
+		Weapon.LocalRotation = Rotation.From( WeaponAngleOffset );
+		Weapon.LocalScale = WeaponScale;
 	}
 
 	protected override void OnUpdate()
 	{
 		if ( AnimHelper is null ) return;
+
+		ApplyWeaponOffset();
 
 		if ( Input.Pressed( "Slot1" ) && Weapon.IsValid() )
 		{
@@ -125,13 +154,15 @@ public sealed class WeaponHolder : Component
 		HoldType = pickup.HoldType;
 		Damage = pickup.Damage;
 		Range = pickup.Range;
+		WeaponOffset = pickup.WeaponOffset;
+		WeaponAngleOffset = pickup.WeaponAngleOffset;
+		WeaponScale = pickup.WeaponScale;
 
 		var boneObject = BodyRenderer.GetBoneObject( HandBone );
 		if ( boneObject is not null )
 		{
 			Weapon.SetParent( boneObject, false );
-			Weapon.LocalPosition = Vector3.Zero;
-			Weapon.LocalRotation = Rotation.Identity;
+			ApplyWeaponOffset();
 		}
 
 		foreach ( var collider in Weapon.Components.GetAll<Collider>() )
