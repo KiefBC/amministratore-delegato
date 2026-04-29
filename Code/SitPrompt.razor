@@ -1,0 +1,45 @@
+@using Sandbox;
+@using Sandbox.UI;
+@inherits PanelComponent
+
+<root>
+	@if ( Interaction.IsValid() && Interaction.NearbyChair.IsValid() )
+	{
+		<div class="prompt">Press <span class="key">E</span> to Sit</div>
+	}
+</root>
+
+@code {
+	[Property]
+	public ChairInteraction Interaction { get; set; }
+
+	protected override int BuildHash() => System.HashCode.Combine( Interaction?.NearbyChair?.GameObject?.Id );
+}
+
+<style>
+	root {
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		pointer-events: none;
+	}
+
+	.prompt {
+		position: absolute;
+		left: 50%;
+		bottom: 32%;
+		transform: translateX( -50% );
+		color: white;
+		font-size: 24px;
+		text-shadow: 0px 0px 4px rgba( 0, 0, 0, 0.9 );
+		background-color: rgba( 0, 0, 0, 0.5 );
+		padding: 8px 20px;
+		border-radius: 6px;
+		font-family: Roboto, sans-serif;
+	}
+
+	.key {
+		color: yellow;
+		font-weight: bold;
+	}
+</style>

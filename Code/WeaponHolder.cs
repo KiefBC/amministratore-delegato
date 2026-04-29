@@ -7,6 +7,7 @@ public sealed class WeaponHolder : Component
 	[Property] public GameObject Weapon { get; set; }
 	[Property] private string HandBone { get; set; } = "hold_R";
 	[Property] public CitizenAnimationHelper AnimHelper { get; set; }
+	[Property] public ChairInteraction Sit { get; set; }
 
 	/// <summary>
 	/// Local-space position offset of the held weapon relative to the hand bone.
@@ -113,7 +114,7 @@ public sealed class WeaponHolder : Component
 
 		NearbyPickup = FindNearestPickup();
 
-		if ( Input.Pressed( "Use" ) && NearbyPickup is not null )
+		if ( Input.Pressed( "Use" ) && NearbyPickup is not null && Sit?.IsSitting != true )
 		{
 			AcquireWeapon( NearbyPickup );
 			NearbyPickup = null;

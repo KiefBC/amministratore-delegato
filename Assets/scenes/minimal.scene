@@ -154,6 +154,18 @@
           "SwimLevel": 0.7
         },
         {
+          "__type": "Sandbox.Movement.SitMoveMode",
+          "__guid": "3f642fa1-c983-40a0-9584-23f38b1f0327",
+          "__enabled": true,
+          "Flags": 0,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null
+        },
+        {
           "__type": "Sandbox.Movement.MoveModeLadder",
           "__guid": "ce492040-66e9-41be-8e3c-301b6608bdf8",
           "__enabled": true,
@@ -193,18 +205,6 @@
           "RemoveUnownedItems": true,
           "Source": "OwnerConnection",
           "WorkshopItems": []
-        },
-        {
-          "__type": "Sandbox.Movement.SitMoveMode",
-          "__guid": "3f642fa1-c983-40a0-9584-23f38b1f0327",
-          "__enabled": true,
-          "Flags": 0,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null
         }
       ],
       "Children": [
@@ -297,6 +297,12 @@
               "OnComponentUpdate": null,
               "PickupRange": 100,
               "Range": 5000,
+              "Sit": {
+                "_type": "component",
+                "component_id": "a116a4e2-753c-411d-a53d-5260a3af55a7",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "ChairInteraction"
+              },
               "Weapon": null,
               "WeaponAngleOffset": "0,0,0",
               "WeaponOffset": "0,0,-6.64799976",
@@ -333,6 +339,25 @@
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
                 "component_type": "SkinnedModelRenderer"
               }
+            },
+            {
+              "__type": "ChairInteraction",
+              "__guid": "a116a4e2-753c-411d-a53d-5260a3af55a7",
+              "__enabled": true,
+              "Flags": 0,
+              "Controller": {
+                "_type": "component",
+                "component_id": "d0d8f914-7324-4dd2-b286-937edf4714bc",
+                "go": "02d90cc4-1163-4d25-891b-2555279f2cbb",
+                "component_type": "PlayerController"
+              },
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "SitRange": 100
             }
           ],
           "Children": [
@@ -3153,158 +3178,6 @@
           "OnTriggerExit": null,
           "RollingResistance": null,
           "Scale": "50,50,50",
-          "Static": false,
-          "Surface": null,
-          "SurfaceVelocity": "0,0,0"
-        }
-      ],
-      "Children": []
-    },
-    {
-      "__guid": "0ef6fea5-bd2c-415c-a0a6-316bdd1b9f6d",
-      "__version": 2,
-      "Flags": 0,
-      "Name": "ladder_large",
-      "Position": "-107.761292,56.6522827,0",
-      "Rotation": "0,0,0,1",
-      "Scale": "1.72965455,1.72965455,1.72965455",
-      "Tags": "",
-      "Enabled": true,
-      "NetworkMode": 2,
-      "NetworkFlags": 0,
-      "NetworkOrphaned": 0,
-      "NetworkTransmit": true,
-      "OwnerTransfer": 1,
-      "Components": [
-        {
-          "__type": "Sandbox.Prop",
-          "__guid": "f0dd2fde-8d38-46bf-b0f6-a8124832a169",
-          "__enabled": true,
-          "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "Health": 0,
-          "IsStatic": false,
-          "MaterialGroup": null,
-          "Model": "models/props/ladder/ladder_large.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnPropBreak": null,
-          "OnPropTakeDamage": null,
-          "StartAsleep": false,
-          "Tint": "1,1,1,1"
-        },
-        {
-          "__type": "Sandbox.ModelRenderer",
-          "__guid": "fe5a124f-d430-489d-bb8b-a8212e8c920e",
-          "__enabled": true,
-          "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "CreateAttachments": false,
-          "LodOverride": null,
-          "MaterialGroup": null,
-          "MaterialOverride": null,
-          "Materials": null,
-          "Model": "models/props/ladder/ladder_large.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "RenderOptions": {
-            "GameLayer": true,
-            "OverlayLayer": false,
-            "BloomLayer": false,
-            "AfterUILayer": false
-          },
-          "RenderType": "On",
-          "Tint": "1,1,1,1"
-        },
-        {
-          "__type": "Sandbox.ModelCollider",
-          "__guid": "1c8fe50b-d5f5-4a1a-aeca-bfd1655f3adf",
-          "__enabled": true,
-          "Flags": 0,
-          "ColliderFlags": 0,
-          "Elasticity": null,
-          "Friction": null,
-          "IsTrigger": false,
-          "Model": "models/props/ladder/ladder_large.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnObjectTriggerEnter": null,
-          "OnObjectTriggerExit": null,
-          "OnTriggerEnter": null,
-          "OnTriggerExit": null,
-          "RollingResistance": null,
-          "Static": false,
-          "Surface": null,
-          "SurfaceVelocity": "0,0,0"
-        },
-        {
-          "__type": "Sandbox.Rigidbody",
-          "__guid": "c8d7e045-9ccc-4e5d-86b9-17c96dfdb75c",
-          "__enabled": true,
-          "Flags": 0,
-          "AngularDamping": 0,
-          "EnableImpactDamage": true,
-          "EnhancedCcd": false,
-          "Gravity": true,
-          "GravityScale": 1,
-          "ImpactDamage": 0,
-          "LinearDamping": 0,
-          "Locking": {
-            "X": false,
-            "Y": false,
-            "Z": true,
-            "Pitch": true,
-            "Yaw": true,
-            "Roll": true
-          },
-          "MassCenterOverride": "0,0,0",
-          "MassOverride": 0,
-          "MinImpactDamageSpeed": 500,
-          "MotionEnabled": true,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OverrideMassCenter": false,
-          "RigidbodyFlags": 0,
-          "StartAsleep": false
-        },
-        {
-          "__type": "Sandbox.BoxCollider",
-          "__guid": "21e78f40-830c-4e10-9cfb-3ada45fd3a9b",
-          "__enabled": true,
-          "Flags": 0,
-          "Center": "4.8460598,0.570566177,15.7856026",
-          "ColliderFlags": 0,
-          "Elasticity": null,
-          "Friction": null,
-          "IsTrigger": true,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnObjectTriggerEnter": null,
-          "OnObjectTriggerExit": null,
-          "OnTriggerEnter": null,
-          "OnTriggerExit": null,
-          "RollingResistance": null,
-          "Scale": "24.0697136,18.2074203,81.5711746",
           "Static": false,
           "Surface": null,
           "SurfaceVelocity": "0,0,0"
@@ -7116,7 +6989,7 @@
                   "IdValue": "b63aa0e9-2c78-43ce-9f4a-c0125cfd7b22"
                 },
                 "Property": "Position",
-                "Value": "6.07967377E-06,3.34512901,-2.98190618"
+                "Value": "5.84125519E-06,3.34512901,-2.98190594"
               },
               {
                 "Target": {
@@ -7124,7 +6997,7 @@
                   "IdValue": "b63aa0e9-2c78-43ce-9f4a-c0125cfd7b22"
                 },
                 "Property": "Rotation",
-                "Value": "0.477968484,0.521100521,0.477968395,0.521101117"
+                "Value": "0.477968484,0.521100461,0.477968365,0.521101058"
               },
               {
                 "Target": {
@@ -7140,7 +7013,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Position",
-                "Value": "-0.499542654,-0.0145909786,-1.15707517E-05"
+                "Value": "-0.499540865,-0.0145908594,-1.1600554E-05"
               },
               {
                 "Target": {
@@ -7148,7 +7021,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Rotation",
-                "Value": "1.78813934E-07,-1.49011612E-07,0.0647458434,0.99790144"
+                "Value": "1.78813934E-07,-1.1920929E-07,0.0647457838,0.99790144"
               },
               {
                 "Target": {
@@ -7164,7 +7037,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Position",
-                "Value": "-0.53875494,-5.17673254,0.894969106"
+                "Value": "-0.538754582,-5.17673349,0.894969523"
               },
               {
                 "Target": {
@@ -7172,7 +7045,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Rotation",
-                "Value": "0.275677323,-0.184229687,0.766193867,0.550462484"
+                "Value": "0.275677323,-0.184229672,0.766193986,0.550462306"
               },
               {
                 "Target": {
@@ -7188,7 +7061,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Position",
-                "Value": "11.6925058,-4.30047512E-05,-0.000107586384"
+                "Value": "11.6925068,-4.43458557E-05,-0.000107288361"
               },
               {
                 "Target": {
@@ -7196,7 +7069,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Rotation",
-                "Value": "-1.87382102E-06,5.07570803E-07,0.0301841758,-0.999544561"
+                "Value": "-1.89617276E-06,5.06639481E-07,0.0301842093,-0.999544501"
               },
               {
                 "Target": {
@@ -7212,7 +7085,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Position",
-                "Value": "11.481657,2.93552876E-05,-6.70315058E-05"
+                "Value": "11.481657,3.07559967E-05,-6.72340393E-05"
               },
               {
                 "Target": {
@@ -7220,7 +7093,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Rotation",
-                "Value": "0.704695642,-0.0222177692,-0.0532006137,-0.707163572"
+                "Value": "0.704695582,-0.0222177207,-0.0532006286,-0.707163572"
               },
               {
                 "Target": {
@@ -7236,7 +7109,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Position",
-                "Value": "-0.538704157,-5.09911966,-1.26424909"
+                "Value": "-0.538705826,-5.09912109,-1.26424921"
               },
               {
                 "Target": {
@@ -7244,7 +7117,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Rotation",
-                "Value": "-0.234485522,0.183758885,0.778640449,0.552239537"
+                "Value": "-0.234485596,0.183758825,0.778640509,0.552239537"
               },
               {
                 "Target": {
@@ -7260,7 +7133,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Position",
-                "Value": "11.6925297,-3.02046537E-05,3.33786011E-06"
+                "Value": "11.6925297,-3.26037407E-05,3.69548798E-06"
               },
               {
                 "Target": {
@@ -7268,7 +7141,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Rotation",
-                "Value": "-2.33773608E-06,5.96046448E-08,-0.0301856399,0.999544263"
+                "Value": "-2.35624611E-06,3.7252903E-08,-0.030185692,0.999544382"
               },
               {
                 "Target": {
@@ -7284,7 +7157,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Position",
-                "Value": "11.4816647,6.10053539E-05,-7.39097595E-05"
+                "Value": "11.4816628,6.26444817E-05,-7.3492527E-05"
               },
               {
                 "Target": {
@@ -7292,7 +7165,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Rotation",
-                "Value": "0.707605124,-0.0219992995,0.0532982051,0.704251766"
+                "Value": "0.707605064,-0.0219993144,0.0532981865,0.704251707"
               },
               {
                 "Target": {
@@ -7308,7 +7181,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Position",
-                "Value": "-5.52951908,1.08693993,-2.18153E-05"
+                "Value": "-5.52952099,1.08694077,-2.18749046E-05"
               },
               {
                 "Target": {
@@ -7316,7 +7189,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Rotation",
-                "Value": "-0.994681478,-0.103000641,-2.98023224E-07,-2.2649765E-06"
+                "Value": "-0.994681537,-0.103000641,-2.38418579E-07,-2.23517418E-06"
               },
               {
                 "Target": {
@@ -7332,7 +7205,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Position",
-                "Value": "3.59376836,2.58684158E-05,-6.06775284E-05"
+                "Value": "3.59376955,2.6345253E-05,-6.05583191E-05"
               },
               {
                 "Target": {
@@ -7340,7 +7213,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Rotation",
-                "Value": "1.49011612E-07,-6.40749931E-07,0.201891378,0.979408085"
+                "Value": "1.78813934E-07,-6.55651093E-07,0.201891333,0.979408085"
               },
               {
                 "Target": {
@@ -7380,7 +7253,7 @@
                   "IdValue": "1210b9c2-d075-4697-a75a-f8a95bd8a96c"
                 },
                 "Property": "Position",
-                "Value": "17.8481255,-7.5340271E-05,-2.81333923E-05"
+                "Value": "17.8481236,-7.43865967E-05,-2.81333923E-05"
               },
               {
                 "Target": {
@@ -7404,7 +7277,7 @@
                   "IdValue": "5ce6f4b8-eb5d-41c5-acaa-1ebd2d73446a"
                 },
                 "Property": "Position",
-                "Value": "16.5252113,-9.46521759E-05,-1.66893005E-05"
+                "Value": "16.5252113,-9.58442688E-05,-1.57356262E-05"
               },
               {
                 "Target": {
@@ -7428,7 +7301,7 @@
                   "IdValue": "841dab43-e2f3-4309-8477-29828f0ad6fb"
                 },
                 "Property": "Position",
-                "Value": "3.89044499,1.31130219E-06,-1.44839287E-05"
+                "Value": "3.89044476,1.1920929E-06,-1.41263008E-05"
               },
               {
                 "Target": {
@@ -7436,7 +7309,7 @@
                   "IdValue": "841dab43-e2f3-4309-8477-29828f0ad6fb"
                 },
                 "Property": "Rotation",
-                "Value": "-0.488212734,0.511515498,-0.485534847,0.514058352"
+                "Value": "-0.488212734,0.511515498,-0.485534817,0.514058352"
               },
               {
                 "Target": {
@@ -7452,7 +7325,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Position",
-                "Value": "17.8480988,0.000111103058,-4.38690186E-05"
+                "Value": "17.8480988,0.000111579895,-4.38690186E-05"
               },
               {
                 "Target": {
@@ -7460,7 +7333,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Rotation",
-                "Value": "-2.98023224E-08,-2.83122063E-07,0.0171019286,0.999853909"
+                "Value": "-5.96046448E-08,-3.12924385E-07,0.0171018988,0.999853969"
               },
               {
                 "Target": {
@@ -7476,7 +7349,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Position",
-                "Value": "16.5252037,1.12056732E-05,-3.05175781E-05"
+                "Value": "16.5252056,1.21593475E-05,-3.09944153E-05"
               },
               {
                 "Target": {
@@ -7484,7 +7357,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Rotation",
-                "Value": "-0.0224069878,-0.0104060769,-0.510633111,0.859443545"
+                "Value": "-0.0224069878,-0.0104060471,-0.51063323,0.859443605"
               }
             ],
             "MovedObjects": []
@@ -8604,7 +8477,7 @@
           "__guid": "d30a36f3-8859-40cc-9d93-2aaa85f3e545",
           "__version": 2,
           "Flags": 0,
-          "Name": "Weapon Pickup",
+          "Name": "Prompts",
           "Position": "0,0,0",
           "Rotation": "0,0,0,1",
           "Scale": "1,1,1",
@@ -8644,6 +8517,24 @@
                 "component_id": "d8a1dccb-1b1c-4db2-99aa-043a6c8b95ae",
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
                 "component_type": "WeaponHolder"
+              },
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null
+            },
+            {
+              "__type": "Sandbox.SitPrompt",
+              "__guid": "6bf594bd-4fe7-4c81-bfa7-04b1b399d917",
+              "__enabled": true,
+              "Flags": 0,
+              "Interaction": {
+                "_type": "component",
+                "component_id": "a116a4e2-753c-411d-a53d-5260a3af55a7",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "ChairInteraction"
               },
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
@@ -8797,7 +8688,7 @@
       "__version": 2,
       "Flags": 0,
       "Name": "Office Chair",
-      "Position": "0,0,0",
+      "Position": "-95.7038727,-288.832428,6.87390566E-05",
       "Rotation": "0,0,0,1",
       "Scale": "1,1,1",
       "Tags": "",
@@ -8830,8 +8721,41 @@
           "Tint": "1,1,1,1"
         },
         {
+          "__type": "Sandbox.BaseChair",
+          "__guid": "89687b00-071a-4923-94aa-45aa96c76465",
+          "__enabled": true,
+          "Flags": 0,
+          "ExitPoints": [
+            {
+              "_type": "gameobject",
+              "go": "ad6198e0-39cf-49e9-90c6-719889812c01"
+            }
+          ],
+          "EyePosition": {
+            "_type": "gameobject",
+            "go": "3b1da20d-589b-4e42-b244-07742c64eabd"
+          },
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "PitchRange": "-90,70",
+          "SeatPosition": {
+            "_type": "gameobject",
+            "go": "ac1c806a-70ab-47be-9e85-249b14e8e53b"
+          },
+          "SitHeight": 0.32142854,
+          "SitPose": "ChairCrossed",
+          "TooltipDescription": "Lets the Citizen sit on the chair",
+          "TooltipIcon": "airline_seat_recline_normal",
+          "TooltipTitle": "Sit",
+          "YawRange": "-120,120"
+        },
+        {
           "__type": "Sandbox.ModelRenderer",
-          "__guid": "3fa66fb4-cee2-47fb-92aa-3750be30818e",
+          "__guid": "8a8f8a0b-aa16-4f48-a089-3d45a139d048",
           "__enabled": true,
           "Flags": 0,
           "BodyGroups": 18446744073709551615,
@@ -8858,7 +8782,7 @@
         },
         {
           "__type": "Sandbox.ModelCollider",
-          "__guid": "63b6437c-b335-43ac-823f-71a0ff0396f6",
+          "__guid": "34cd7b35-9c78-4436-a514-d11e3b2044f4",
           "__enabled": true,
           "Flags": 0,
           "ColliderFlags": 0,
@@ -8883,7 +8807,7 @@
         },
         {
           "__type": "Sandbox.Rigidbody",
-          "__guid": "cd28fd70-cb8a-4d85-bbfe-fac48d78bf79",
+          "__guid": "14eb919c-7fb3-4eb2-ba19-6c95181c3501",
           "__enabled": true,
           "Flags": 0,
           "AngularDamping": 0,
@@ -8916,6 +8840,580 @@
           "StartAsleep": false
         }
       ],
+      "Children": [
+        {
+          "__guid": "3b1da20d-589b-4e42-b244-07742c64eabd",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Eye Level",
+          "Position": "0,0,49.5816383",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [],
+          "Children": []
+        },
+        {
+          "__guid": "ac1c806a-70ab-47be-9e85-249b14e8e53b",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Sitting",
+          "Position": "0,0,0.666565895",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [],
+          "Children": []
+        },
+        {
+          "__guid": "ad6198e0-39cf-49e9-90c6-719889812c01",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Exit",
+          "Position": "21.119236,0,14.8426962",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [],
+          "Children": []
+        }
+      ]
+    },
+    {
+      "__guid": "85f9d970-30ce-4dde-8826-ae40d117b2bd",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "Ladder",
+      "Position": "-110.120789,148.111969,3.2852884E-05",
+      "Rotation": "0,0,0,1",
+      "Scale": "1.34782386,1.34782386,2.13553762",
+      "Tags": "ladder",
+      "Enabled": true,
+      "NetworkMode": 2,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
+        {
+          "__type": "Sandbox.Prop",
+          "__guid": "1edf130c-4a0d-40cc-8342-35cccec7f78b",
+          "__enabled": true,
+          "Flags": 0,
+          "BodyGroups": 18446744073709551615,
+          "Health": 0,
+          "IsStatic": false,
+          "MaterialGroup": null,
+          "Model": "models/dev/ladder/ladder.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OnPropBreak": null,
+          "OnPropTakeDamage": null,
+          "StartAsleep": false,
+          "Tint": "1,1,1,1"
+        },
+        {
+          "__type": "Sandbox.ModelRenderer",
+          "__guid": "6f322ffa-935e-4ade-a459-9eaa7fa4e63a",
+          "__enabled": true,
+          "Flags": 0,
+          "BodyGroups": 18446744073709551615,
+          "CreateAttachments": false,
+          "LodOverride": null,
+          "MaterialGroup": null,
+          "MaterialOverride": null,
+          "Materials": null,
+          "Model": "models/dev/ladder/ladder.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "RenderOptions": {
+            "GameLayer": true,
+            "OverlayLayer": false,
+            "BloomLayer": false,
+            "AfterUILayer": false
+          },
+          "RenderType": "On",
+          "Tint": "1,1,1,1"
+        },
+        {
+          "__type": "Sandbox.ModelCollider",
+          "__guid": "ffa16b80-c127-4e30-be7e-7286978f96b9",
+          "__enabled": true,
+          "Flags": 0,
+          "ColliderFlags": 0,
+          "Elasticity": null,
+          "Friction": null,
+          "IsTrigger": true,
+          "Model": "models/dev/ladder/ladder.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OnObjectTriggerEnter": null,
+          "OnObjectTriggerExit": null,
+          "OnTriggerEnter": null,
+          "OnTriggerExit": null,
+          "RollingResistance": null,
+          "Static": false,
+          "Surface": null,
+          "SurfaceVelocity": "0,0,0"
+        },
+        {
+          "__type": "Sandbox.Rigidbody",
+          "__guid": "58e218ce-00b3-47e6-91e2-444a5de65096",
+          "__enabled": true,
+          "Flags": 0,
+          "AngularDamping": 0,
+          "EnableImpactDamage": true,
+          "EnhancedCcd": false,
+          "Gravity": true,
+          "GravityScale": 1,
+          "ImpactDamage": 0,
+          "LinearDamping": 0,
+          "Locking": {
+            "X": true,
+            "Y": true,
+            "Z": true,
+            "Pitch": true,
+            "Yaw": true,
+            "Roll": true
+          },
+          "MassCenterOverride": "0,0,0",
+          "MassOverride": 40,
+          "MinImpactDamageSpeed": 500,
+          "MotionEnabled": true,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OverrideMassCenter": false,
+          "RigidbodyFlags": 0,
+          "StartAsleep": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "__guid": "43521d4e-7ca2-4538-9860-66777fa540c8",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "antique_chair",
+      "Position": "-174.47699,-242.540405,11.1422443",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "",
+      "Enabled": true,
+      "NetworkMode": 2,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
+        {
+          "__type": "Sandbox.Prop",
+          "__guid": "cf18522b-cc0a-4fb4-a484-6f38011df51e",
+          "__enabled": true,
+          "Flags": 0,
+          "BodyGroups": 18446744073709551615,
+          "Health": 0,
+          "IsStatic": false,
+          "MaterialGroup": null,
+          "Model": "models/antique_chair.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OnPropBreak": null,
+          "OnPropTakeDamage": null,
+          "StartAsleep": false,
+          "Tint": "1,1,1,1"
+        },
+        {
+          "__type": "Sandbox.ModelRenderer",
+          "__guid": "0e203398-5e42-4fd7-b7ab-a59e6fd8d7b4",
+          "__enabled": true,
+          "Flags": 0,
+          "BodyGroups": 18446744073709551615,
+          "CreateAttachments": false,
+          "LodOverride": null,
+          "MaterialGroup": null,
+          "MaterialOverride": null,
+          "Materials": null,
+          "Model": "models/antique_chair.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "RenderOptions": {
+            "GameLayer": true,
+            "OverlayLayer": false,
+            "BloomLayer": false,
+            "AfterUILayer": false
+          },
+          "RenderType": "On",
+          "Tint": "1,1,1,1"
+        },
+        {
+          "__type": "Sandbox.ModelCollider",
+          "__guid": "f0681243-9126-4470-a9ad-409c3b96a299",
+          "__enabled": true,
+          "Flags": 0,
+          "ColliderFlags": 0,
+          "Elasticity": null,
+          "Friction": null,
+          "IsTrigger": false,
+          "Model": "models/antique_chair.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OnObjectTriggerEnter": null,
+          "OnObjectTriggerExit": null,
+          "OnTriggerEnter": null,
+          "OnTriggerExit": null,
+          "RollingResistance": null,
+          "Static": false,
+          "Surface": null,
+          "SurfaceVelocity": "0,0,0"
+        },
+        {
+          "__type": "Sandbox.Rigidbody",
+          "__guid": "27651d9c-06b3-4f03-a549-e7e76e9f595e",
+          "__enabled": true,
+          "Flags": 0,
+          "AngularDamping": 0,
+          "EnableImpactDamage": true,
+          "EnhancedCcd": false,
+          "Gravity": true,
+          "GravityScale": 1,
+          "ImpactDamage": 0,
+          "LinearDamping": 0,
+          "Locking": {
+            "X": false,
+            "Y": false,
+            "Z": false,
+            "Pitch": false,
+            "Yaw": false,
+            "Roll": false
+          },
+          "MassCenterOverride": "0,0,0",
+          "MassOverride": 90,
+          "MinImpactDamageSpeed": 500,
+          "MotionEnabled": true,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OverrideMassCenter": false,
+          "RigidbodyFlags": 0,
+          "StartAsleep": false
+        },
+        {
+          "__type": "Sandbox.BaseChair",
+          "__guid": "4be9785b-c8ac-4461-a321-6ab16a03dbc2",
+          "__enabled": true,
+          "Flags": 0,
+          "ExitPoints": [],
+          "EyePosition": null,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "PitchRange": "-90.3120041,70.1600189",
+          "SeatPosition": null,
+          "SitHeight": 0,
+          "SitPose": "Chair",
+          "TooltipDescription": "",
+          "TooltipIcon": "airline_seat_recline_normal",
+          "TooltipTitle": "Sit",
+          "YawRange": "-119.759964,120.048027"
+        }
+      ],
+      "Children": []
+    },
+    {
+      "__guid": "37403962-06d8-4d90-becf-21d59b3a1e7c",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "Cube",
+      "Position": "0,0,0",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "",
+      "Enabled": true,
+      "NetworkMode": 2,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
+        {
+          "__type": "Sandbox.ModelRenderer",
+          "__guid": "1e4df8c7-f8b3-4245-9f92-96dfff4df443",
+          "__enabled": true,
+          "Flags": 0,
+          "BodyGroups": 18446744073709551615,
+          "CreateAttachments": false,
+          "LodOverride": null,
+          "MaterialGroup": null,
+          "MaterialOverride": null,
+          "Materials": null,
+          "Model": "models/dev/box.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "RenderOptions": {
+            "GameLayer": true,
+            "OverlayLayer": false,
+            "BloomLayer": false,
+            "AfterUILayer": false
+          },
+          "RenderType": "On",
+          "Tint": "1,1,1,1"
+        },
+        {
+          "__type": "Sandbox.BaseChair",
+          "__guid": "11c9e4d4-8a65-4894-a0cc-9b93cc3621c5",
+          "__enabled": true,
+          "Flags": 0,
+          "ExitPoints": [],
+          "EyePosition": null,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "PitchRange": "-90,70",
+          "SeatPosition": {
+            "_type": "gameobject",
+            "go": "37403962-06d8-4d90-becf-21d59b3a1e7c"
+          },
+          "SitHeight": 0,
+          "SitPose": "Chair",
+          "TooltipDescription": "",
+          "TooltipIcon": "airline_seat_recline_normal",
+          "TooltipTitle": "Sit",
+          "YawRange": "-120,120"
+        },
+        {
+          "__type": "Sandbox.BoxCollider",
+          "__guid": "fd07894c-71b2-415a-b51f-69c9692666e5",
+          "__enabled": true,
+          "Flags": 0,
+          "Center": "0,0,0",
+          "ColliderFlags": 0,
+          "Elasticity": null,
+          "Friction": null,
+          "IsTrigger": false,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OnObjectTriggerEnter": null,
+          "OnObjectTriggerExit": null,
+          "OnTriggerEnter": null,
+          "OnTriggerExit": null,
+          "RollingResistance": null,
+          "Scale": "50,50,50",
+          "Static": false,
+          "Surface": null,
+          "SurfaceVelocity": "0,0,0"
+        }
+      ],
+      "Children": []
+    },
+    {
+      "__guid": "12f2e943-5d3e-49a4-823b-9674639af49c",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "chaircinema",
+      "Position": "180.123795,-89.7487335,0",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "",
+      "Enabled": true,
+      "NetworkMode": 2,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
+        {
+          "__type": "Sandbox.Prop",
+          "__guid": "3edfcae9-2b0c-42c7-bb1a-b59fcb3bbb0b",
+          "__enabled": true,
+          "Flags": 0,
+          "BodyGroups": 18446744073709551615,
+          "Health": 0,
+          "IsStatic": false,
+          "MaterialGroup": null,
+          "Model": "models/theatr/chaircinema.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OnPropBreak": null,
+          "OnPropTakeDamage": null,
+          "StartAsleep": false,
+          "Tint": "1,1,1,1"
+        },
+        {
+          "__type": "Sandbox.ModelRenderer",
+          "__guid": "338a30e9-f94a-494a-8e94-099675c53f4e",
+          "__enabled": true,
+          "Flags": 0,
+          "BodyGroups": 18446744073709551615,
+          "CreateAttachments": false,
+          "LodOverride": null,
+          "MaterialGroup": null,
+          "MaterialOverride": null,
+          "Materials": null,
+          "Model": "models/theatr/chaircinema.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "RenderOptions": {
+            "GameLayer": true,
+            "OverlayLayer": false,
+            "BloomLayer": false,
+            "AfterUILayer": false
+          },
+          "RenderType": "On",
+          "Tint": "1,1,1,1"
+        },
+        {
+          "__type": "Sandbox.ModelCollider",
+          "__guid": "f396e941-ae2a-4e1e-8ab5-f74f895be752",
+          "__enabled": true,
+          "Flags": 0,
+          "ColliderFlags": 0,
+          "Elasticity": null,
+          "Friction": null,
+          "IsTrigger": false,
+          "Model": "models/theatr/chaircinema.vmdl",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OnObjectTriggerEnter": null,
+          "OnObjectTriggerExit": null,
+          "OnTriggerEnter": null,
+          "OnTriggerExit": null,
+          "RollingResistance": null,
+          "Static": false,
+          "Surface": null,
+          "SurfaceVelocity": "0,0,0"
+        },
+        {
+          "__type": "Sandbox.Rigidbody",
+          "__guid": "6f4fe4ed-0441-47cd-9eff-eec0e5e2a314",
+          "__enabled": true,
+          "Flags": 0,
+          "AngularDamping": 0,
+          "EnableImpactDamage": true,
+          "EnhancedCcd": false,
+          "Gravity": true,
+          "GravityScale": 1,
+          "ImpactDamage": 0,
+          "LinearDamping": 0,
+          "Locking": {
+            "X": false,
+            "Y": false,
+            "Z": false,
+            "Pitch": false,
+            "Yaw": false,
+            "Roll": false
+          },
+          "MassCenterOverride": "0,0,0",
+          "MassOverride": 0,
+          "MinImpactDamageSpeed": 500,
+          "MotionEnabled": true,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "OverrideMassCenter": false,
+          "RigidbodyFlags": 0,
+          "StartAsleep": false
+        },
+        {
+          "__type": "Sandbox.BaseChair",
+          "__guid": "32e54e8b-63a0-4232-a73d-86e0c335fbd1",
+          "__enabled": true,
+          "Flags": 0,
+          "ExitPoints": [],
+          "EyePosition": null,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "PitchRange": "-90,70",
+          "SeatPosition": null,
+          "SitHeight": 0,
+          "SitPose": "Chair",
+          "TooltipDescription": "",
+          "TooltipIcon": "airline_seat_recline_normal",
+          "TooltipTitle": "Sit",
+          "YawRange": "-120,120"
+        }
+      ],
       "Children": []
     }
   ],
@@ -8939,18 +9437,18 @@
       "CustomBounds": false
     },
     "GameObjectSystems": {
-      "Sandbox.MovieMaker.MovieRecorderSystem": {
-        "DisableClientRecording": false
+      "Sandbox.SelectionSetsSystem": {
+        "Data": {
+          "SelectionSets": []
+        }
       },
       "Sandbox.Clutter.ClutterGridSystem": {
         "Storage": {
           "$blob": "c7e0731d-eb2b-4b7c-be24-5301459ae2d2"
         }
       },
-      "Sandbox.SelectionSetsSystem": {
-        "Data": {
-          "SelectionSets": []
-        }
+      "Sandbox.MovieMaker.MovieRecorderSystem": {
+        "DisableClientRecording": false
       }
     }
   },
@@ -8958,10 +9456,12 @@
   "Title": null,
   "Description": null,
   "__references": [
+    "ambi.chaircinema#51720",
     "defqwop.glockg20#207365",
-    "fpopium.ladder_large#184672",
+    "facepunch.ladder#139177",
     "pcjr.chair20#41836",
     "peteisverycool.linkragdoll#185308",
+    "randkassets.antique_chair#26996",
     "thebox.metalstairs#179430"
   ],
   "__version": 3
