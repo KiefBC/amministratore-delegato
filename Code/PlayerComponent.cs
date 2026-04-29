@@ -4,6 +4,7 @@ public sealed class PlayerComponent : Component
 {
 	protected override void OnUpdate()
 	{
-		// Nothing
+		// Stub — engine PlayerController handles movement; future custom player
+		// logic (stamina, footsteps, etc.) lives here.
 	}
 }

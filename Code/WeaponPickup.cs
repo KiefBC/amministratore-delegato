@@ -1,7 +1,7 @@
 using Sandbox;
 using Sandbox.Citizen;
 
-public sealed class WeaponPickup : Component
+public sealed class WeaponPickup : Component, IInteractable
 {
 	/// <summary>
 	/// Hold type the player adopts when picking up this weapon.
@@ -9,6 +9,14 @@ public sealed class WeaponPickup : Component
 	[Property]
 	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
 		= CitizenAnimationHelper.HoldTypes.Pistol;
+
+	/// <summary>
+	/// How close the player must be (world units) for the prompt to appear and Use to equip.
+	/// </summary>
+	[Property]
+	[Range( 10f, 500f )]
+	[Step( 10f )]
+	public float PickupRange { get; set; } = 100f;
 
 	/// <summary>
 	/// Damage per shot when this weapon is held.
@@ -44,4 +52,16 @@ public sealed class WeaponPickup : Component
 	/// </summary>
 	[Property]
 	public Vector3 WeaponScale { get; set; } = Vector3.One;
+
+	Vector3 IInteractable.InteractPosition => WorldPosition;
+	float IInteractable.InteractRange => PickupRange;
+	string IInteractable.Prompt => "Press E to Equip";
+	bool IInteractable.CanInteract( GameObject player ) => true;
+
+	void IInteractable.Interact( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+		var inventory = player.Components.GetInDescendantsOrSelf<Inventory>();
+		inventory?.Equip( GameObject );
+	}
 }

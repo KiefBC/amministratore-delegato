@@ -1,33 +1,25 @@
 using Sandbox;
 using Sandbox.Citizen;
 
+/// <summary>
+/// Firearm behavior — aim, fire, holster. Reads the currently equipped weapon from
+/// <see cref="Inventory"/> on the same GameObject; stats (Damage/Range/HoldType/offsets)
+/// are copied in by <see cref="Inventory.Equip"/> from the world <see cref="WeaponPickup"/>.
+///
+/// (Conceptually "WeaponBehavior" — class name retained so existing scene wiring resolves
+/// without re-adding the component.)
+/// </summary>
 public sealed class WeaponHolder : Component
 {
 	[Property] public SkinnedModelRenderer BodyRenderer { get; set; }
-	[Property] public GameObject Weapon { get; set; }
-	[Property] private string HandBone { get; set; } = "hold_R";
 	[Property] public CitizenAnimationHelper AnimHelper { get; set; }
+	[Property] public Inventory Inventory { get; set; }
+
+	/// <summary>
+	/// Legacy field kept so existing scene wiring (the disabled per-player ChairInteraction
+	/// reference) doesn't error. Unused — sit/stand is handled by SittableInteractable now.
+	/// </summary>
 	[Property] public ChairInteraction Sit { get; set; }
-
-	/// <summary>
-	/// Local-space position offset of the held weapon relative to the hand bone.
-	/// Tune live during Play to find the right grip position.
-	/// </summary>
-	[Property]
-	public Vector3 WeaponOffset { get; set; } = Vector3.Zero;
-
-	/// <summary>
-	/// Local-space rotation offset (pitch/yaw/roll, degrees) of the held weapon relative to the hand bone.
-	/// Tune live during Play to find the right grip rotation.
-	/// </summary>
-	[Property]
-	public Angles WeaponAngleOffset { get; set; } = Angles.Zero;
-
-	/// <summary>
-	/// Local-space scale of the held weapon. Tune live during Play.
-	/// </summary>
-	[Property]
-	public Vector3 WeaponScale { get; set; } = Vector3.One;
 
 	[Property]
 	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
@@ -49,37 +41,23 @@ public sealed class WeaponHolder : Component
 	[Step( 100f )]
 	public float Range { get; set; } = 5000f;
 
-	/// <summary>
-	/// How close the player must be to a WeaponPickup to grab it on Use.
-	/// </summary>
-	[Property]
-	[Range( 10f, 500f )]
-	[Step( 10f )]
-	public float PickupRange { get; set; } = 100f;
+	[Property] public Vector3 WeaponOffset { get; set; } = Vector3.Zero;
+	[Property] public Angles WeaponAngleOffset { get; set; } = Angles.Zero;
+	[Property] public Vector3 WeaponScale { get; set; } = Vector3.One;
 
 	/// <summary>
-	/// The closest WeaponPickup currently within PickupRange, or null. Updated each frame.
+	/// Stub kept for legacy <c>PickupPrompt.razor</c> binding. Always null —
+	/// pickup detection lives in <see cref="InteractionSystem"/> now. The
+	/// prompt simply never shows; the new InteractPrompt (Stage 2.5) will replace it.
 	/// </summary>
-	public WeaponPickup NearbyPickup { get; private set; }
+	public WeaponPickup NearbyPickup => null;
 
+	private GameObject Weapon => Inventory?.Equipped;
 	private bool _holstered;
 
 	protected override void OnStart()
 	{
-		var boneObject = BodyRenderer.GetBoneObject( HandBone );
-		if ( boneObject is not null && Weapon is not null )
-		{
-			Weapon.SetParent( boneObject, false );
-			ApplyWeaponOffset();
-		}
-	}
-
-	private void ApplyWeaponOffset()
-	{
-		if ( !Weapon.IsValid() ) return;
-		Weapon.LocalPosition = WeaponOffset;
-		Weapon.LocalRotation = Rotation.From( WeaponAngleOffset );
-		Weapon.LocalScale = WeaponScale;
+		Inventory ??= Components.Get<Inventory>();
 	}
 
 	protected override void OnUpdate()
@@ -111,69 +89,14 @@ public sealed class WeaponHolder : Component
 		{
 			Fire();
 		}
-
-		NearbyPickup = FindNearestPickup();
-
-		if ( Input.Pressed( "Use" ) && NearbyPickup is not null && Sit?.IsSitting != true )
-		{
-			AcquireWeapon( NearbyPickup );
-			NearbyPickup = null;
-		}
 	}
 
-	private WeaponPickup FindNearestPickup()
+	private void ApplyWeaponOffset()
 	{
-		WeaponPickup nearest = null;
-		float nearestDistance = PickupRange;
-
-		foreach ( var pickup in Scene.GetAllComponents<WeaponPickup>() )
-		{
-			if ( !pickup.IsValid() ) continue;
-			if ( pickup.GameObject.Root == GameObject.Root ) continue;
-
-			var dist = pickup.WorldPosition.Distance( WorldPosition );
-			if ( dist < nearestDistance )
-			{
-				nearest = pickup;
-				nearestDistance = dist;
-			}
-		}
-
-		return nearest;
-	}
-
-	private void AcquireWeapon( WeaponPickup pickup )
-	{
-		Log.Info( $"Picked up {pickup.GameObject.Name}" );
-
-		if ( Weapon.IsValid() )
-		{
-			Weapon.Destroy();
-		}
-
-		Weapon = pickup.GameObject;
-		HoldType = pickup.HoldType;
-		Damage = pickup.Damage;
-		Range = pickup.Range;
-		WeaponOffset = pickup.WeaponOffset;
-		WeaponAngleOffset = pickup.WeaponAngleOffset;
-		WeaponScale = pickup.WeaponScale;
-
-		var boneObject = BodyRenderer.GetBoneObject( HandBone );
-		if ( boneObject is not null )
-		{
-			Weapon.SetParent( boneObject, false );
-			ApplyWeaponOffset();
-		}
-
-		foreach ( var collider in Weapon.Components.GetAll<Collider>() )
-		{
-			collider.Enabled = false;
-		}
-
-		_holstered = false;
-
-		pickup.Destroy();
+		if ( !Weapon.IsValid() ) return;
+		Weapon.LocalPosition = WeaponOffset;
+		Weapon.LocalRotation = Rotation.From( WeaponAngleOffset );
+		Weapon.LocalScale = WeaponScale;
 	}
 
 	private void Fire()

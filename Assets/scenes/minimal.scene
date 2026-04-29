@@ -287,15 +287,19 @@
                 "component_type": "SkinnedModelRenderer"
               },
               "Damage": 25,
-              "HandBone": "hold_R",
               "HoldType": "Pistol",
+              "Inventory": {
+                "_type": "component",
+                "component_id": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "Inventory"
+              },
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
               "OnComponentUpdate": null,
-              "PickupRange": 100,
               "Range": 5000,
               "Sit": {
                 "_type": "component",
@@ -303,7 +307,6 @@
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
                 "component_type": "ChairInteraction"
               },
-              "Weapon": null,
               "WeaponAngleOffset": "0,0,0",
               "WeaponOffset": "0,0,-6.64799976",
               "WeaponScale": "1,1,1"
@@ -356,8 +359,21 @@
               "OnComponentEnabled": null,
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
-              "OnComponentUpdate": null,
-              "SitRange": 100
+              "OnComponentUpdate": null
+            },
+            {
+              "__type": "Inventory",
+              "__guid": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyRenderer": null,
+              "HandBone": "hold_R",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null
             }
           ],
           "Children": [
@@ -5915,14 +5931,6 @@
               },
               {
                 "Target": {
-                  "Type": "GameObject",
-                  "IdValue": "6d213e92-0d2c-4090-9a91-c6fc6be917fe"
-                },
-                "Property": "Enabled",
-                "Value": false
-              },
-              {
-                "Target": {
                   "Type": "Component",
                   "IdValue": "d06c3675-43c0-46c7-b4a6-d5bc314c0f23"
                 },
@@ -6989,7 +6997,7 @@
                   "IdValue": "b63aa0e9-2c78-43ce-9f4a-c0125cfd7b22"
                 },
                 "Property": "Position",
-                "Value": "5.84125519E-06,3.34512901,-2.98190594"
+                "Value": "6.19888306E-06,3.34512901,-2.9819057"
               },
               {
                 "Target": {
@@ -6997,7 +7005,7 @@
                   "IdValue": "b63aa0e9-2c78-43ce-9f4a-c0125cfd7b22"
                 },
                 "Property": "Rotation",
-                "Value": "0.477968484,0.521100461,0.477968365,0.521101058"
+                "Value": "0.477968484,0.521100461,0.477968365,0.521100998"
               },
               {
                 "Target": {
@@ -7013,7 +7021,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Position",
-                "Value": "-0.499540865,-0.0145908594,-1.1600554E-05"
+                "Value": "-4.51549196,-0.146689773,-1.41859055E-05"
               },
               {
                 "Target": {
@@ -7021,7 +7029,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Rotation",
-                "Value": "1.78813934E-07,-1.1920929E-07,0.0647457838,0.99790144"
+                "Value": "5.96046448E-08,-1.78813934E-07,0.0793305337,0.996847987"
               },
               {
                 "Target": {
@@ -7037,7 +7045,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Position",
-                "Value": "-0.538754582,-5.17673349,0.894969523"
+                "Value": "0.437318325,-12.1850834,5.43971157"
               },
               {
                 "Target": {
@@ -7045,7 +7053,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Rotation",
-                "Value": "0.275677323,-0.184229672,0.766193986,0.550462306"
+                "Value": "0.454617739,-0.0507862568,-0.873555541,0.1662682"
               },
               {
                 "Target": {
@@ -7061,7 +7069,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Position",
-                "Value": "11.6925068,-4.43458557E-05,-0.000107288361"
+                "Value": "11.6925077,-4.31537628E-05,-0.000107526779"
               },
               {
                 "Target": {
@@ -7069,7 +7077,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Rotation",
-                "Value": "-1.89617276E-06,5.06639481E-07,0.0301842093,-0.999544501"
+                "Value": "-1.90734863E-06,5.36441803E-07,0.0301841944,-0.999544501"
               },
               {
                 "Target": {
@@ -7085,7 +7093,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Position",
-                "Value": "11.481657,3.07559967E-05,-6.72340393E-05"
+                "Value": "11.4816589,3.09944153E-05,-6.86645508E-05"
               },
               {
                 "Target": {
@@ -7093,7 +7101,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Rotation",
-                "Value": "0.704695582,-0.0222177207,-0.0532006286,-0.707163572"
+                "Value": "0.704695642,-0.0222177207,-0.053200651,-0.707163632"
               },
               {
                 "Target": {
@@ -7109,7 +7117,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Position",
-                "Value": "-0.538705826,-5.09912109,-1.26424921"
+                "Value": "0.0830775499,-11.8650322,-6.2199316"
               },
               {
                 "Target": {
@@ -7117,7 +7125,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Rotation",
-                "Value": "-0.234485596,0.183758825,0.778640509,0.552239537"
+                "Value": "-0.474124134,0.0634889901,-0.853731632,0.205713898"
               },
               {
                 "Target": {
@@ -7133,7 +7141,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Position",
-                "Value": "11.6925297,-3.26037407E-05,3.69548798E-06"
+                "Value": "11.6925306,-3.31997871E-05,2.98023224E-06"
               },
               {
                 "Target": {
@@ -7141,7 +7149,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Rotation",
-                "Value": "-2.35624611E-06,3.7252903E-08,-0.030185692,0.999544382"
+                "Value": "-2.32644379E-06,5.58793545E-08,-0.0301856734,0.999544442"
               },
               {
                 "Target": {
@@ -7157,7 +7165,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Position",
-                "Value": "11.4816628,6.26444817E-05,-7.3492527E-05"
+                "Value": "11.4816637,6.15715981E-05,-7.40885735E-05"
               },
               {
                 "Target": {
@@ -7165,7 +7173,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Rotation",
-                "Value": "0.707605064,-0.0219993144,0.0532981865,0.704251707"
+                "Value": "0.707605064,-0.02199932,0.0532981791,0.704251707"
               },
               {
                 "Target": {
@@ -7181,7 +7189,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Position",
-                "Value": "-5.52952099,1.08694077,-2.18749046E-05"
+                "Value": "-13.9907427,3.85803437,3.33786011E-06"
               },
               {
                 "Target": {
@@ -7189,7 +7197,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Rotation",
-                "Value": "-0.994681537,-0.103000641,-2.38418579E-07,-2.23517418E-06"
+                "Value": "-0.999981403,-0.00613053143,-1.49011612E-07,-2.47359276E-06"
               },
               {
                 "Target": {
@@ -7205,7 +7213,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Position",
-                "Value": "3.59376955,2.6345253E-05,-6.05583191E-05"
+                "Value": "3.59376979,2.64644623E-05,-6.04391098E-05"
               },
               {
                 "Target": {
@@ -7213,7 +7221,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Rotation",
-                "Value": "1.78813934E-07,-6.55651093E-07,0.201891333,0.979408085"
+                "Value": "2.38418579E-07,-7.59959221E-07,0.201891333,0.979408145"
               },
               {
                 "Target": {
@@ -7253,7 +7261,7 @@
                   "IdValue": "1210b9c2-d075-4697-a75a-f8a95bd8a96c"
                 },
                 "Property": "Position",
-                "Value": "17.8481236,-7.43865967E-05,-2.81333923E-05"
+                "Value": "17.8481236,-7.5340271E-05,-2.81333923E-05"
               },
               {
                 "Target": {
@@ -7277,7 +7285,7 @@
                   "IdValue": "5ce6f4b8-eb5d-41c5-acaa-1ebd2d73446a"
                 },
                 "Property": "Position",
-                "Value": "16.5252113,-9.58442688E-05,-1.57356262E-05"
+                "Value": "16.5252113,-9.6321106E-05,-1.62124634E-05"
               },
               {
                 "Target": {
@@ -7309,7 +7317,7 @@
                   "IdValue": "841dab43-e2f3-4309-8477-29828f0ad6fb"
                 },
                 "Property": "Rotation",
-                "Value": "-0.488212734,0.511515498,-0.485534817,0.514058352"
+                "Value": "-0.488212734,0.511515498,-0.485534787,0.514058352"
               },
               {
                 "Target": {
@@ -7325,7 +7333,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Position",
-                "Value": "17.8480988,0.000111579895,-4.38690186E-05"
+                "Value": "17.8480988,0.000112533569,-4.38690186E-05"
               },
               {
                 "Target": {
@@ -7333,7 +7341,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Rotation",
-                "Value": "-5.96046448E-08,-3.12924385E-07,0.0171018988,0.999853969"
+                "Value": "-5.96046448E-08,-2.83122063E-07,0.0171018839,0.999853969"
               },
               {
                 "Target": {
@@ -7349,7 +7357,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Position",
-                "Value": "16.5252056,1.21593475E-05,-3.09944153E-05"
+                "Value": "16.5252037,1.21593475E-05,-3.19480896E-05"
               },
               {
                 "Target": {
@@ -7357,7 +7365,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Rotation",
-                "Value": "-0.0224069878,-0.0104060471,-0.51063323,0.859443605"
+                "Value": "-0.0224069953,-0.0104060471,-0.51063323,0.859443545"
               }
             ],
             "MovedObjects": []
@@ -8460,7 +8468,7 @@
             {
               "__type": "Sandbox.PickupPrompt",
               "__guid": "ebf4cd3a-ed9c-4a7d-a665-a7dc93a79846",
-              "__enabled": true,
+              "__enabled": false,
               "Flags": 0,
               "Holder": null,
               "OnComponentDestroy": null,
@@ -8510,7 +8518,7 @@
             {
               "__type": "Sandbox.PickupPrompt",
               "__guid": "62156d58-7967-4914-9f1a-b26fa6d2c196",
-              "__enabled": true,
+              "__enabled": false,
               "Flags": 0,
               "Holder": {
                 "_type": "component",
@@ -8528,7 +8536,7 @@
             {
               "__type": "Sandbox.SitPrompt",
               "__guid": "6bf594bd-4fe7-4c81-bfa7-04b1b399d917",
-              "__enabled": true,
+              "__enabled": false,
               "Flags": 0,
               "Interaction": {
                 "_type": "component",
@@ -8536,6 +8544,18 @@
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
                 "component_type": "ChairInteraction"
               },
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null
+            },
+            {
+              "__type": "Sandbox.InteractPrompt",
+              "__guid": "ba433632-99fd-4370-a296-4159eafc2d3c",
+              "__enabled": true,
+              "Flags": 0,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
@@ -8673,6 +8693,7 @@
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
               "OnComponentUpdate": null,
+              "PickupRange": 100,
               "Range": 5000,
               "WeaponAngleOffset": "-11.5679998,-8.44799995,0",
               "WeaponOffset": "3.01600003,-0.864000022,2.12800002",
@@ -8838,6 +8859,20 @@
           "OverrideMassCenter": false,
           "RigidbodyFlags": 0,
           "StartAsleep": false
+        },
+        {
+          "__type": "SittableInteractable",
+          "__guid": "dd987b4e-fa69-42ac-b930-13f41acc3224",
+          "__enabled": true,
+          "Flags": 0,
+          "Chair": null,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "SitRange": 100
         }
       ],
       "Children": [
@@ -9437,14 +9472,14 @@
       "CustomBounds": false
     },
     "GameObjectSystems": {
-      "Sandbox.SelectionSetsSystem": {
-        "Data": {
-          "SelectionSets": []
-        }
-      },
       "Sandbox.Clutter.ClutterGridSystem": {
         "Storage": {
           "$blob": "c7e0731d-eb2b-4b7c-be24-5301459ae2d2"
+        }
+      },
+      "Sandbox.SelectionSetsSystem": {
+        "Data": {
+          "SelectionSets": []
         }
       },
       "Sandbox.MovieMaker.MovieRecorderSystem": {

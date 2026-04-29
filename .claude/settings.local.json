@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(xargs grep *)",
-      "Bash(awk *)"
+      "Bash(awk *)",
+      "PowerShell(Add-Type -Path F:\\\\SteamLibrary\\\\steamapps\\\\common\\\\sbox\\\\bin\\\\managed\\\\Mono.Cecil.dll; $asm = [Mono.Cecil.AssemblyDefinition]::ReadAssembly\\(\"F:\\\\SteamLibrary\\\\steamapps\\\\common\\\\sbox\\\\bin\\\\managed\\\\Sandbox.Engine.dll\"\\); foreach \\($t in $asm.MainModule.GetTypes\\(\\)\\) { foreach \\($m in $t.Methods\\) { if \\($m.Name -eq '<InitSystems>b__168_0'\\) { Write-Output \\(\"=== filter on \" + $t.FullName + \" ===\"\\); foreach \\($i in $m.Body.Instructions\\) { Write-Output \\($i.OpCode.ToString\\(\\) + \"  \" + $i.Operand\\) } } } })"
     ]
   }
 }
