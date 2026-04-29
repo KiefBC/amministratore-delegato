@@ -45,8 +45,6 @@ public sealed class WeaponHolder : Component
 
 	protected override void OnStart()
 	{
-		Log.Info( "WeaponHolder OnStart fired" );
-
 		var boneObject = BodyRenderer.GetBoneObject( HandBone );
 		if ( boneObject is not null && Weapon is not null )
 		{
@@ -161,10 +159,12 @@ public sealed class WeaponHolder : Component
 		if ( !trace.Hit )
 		{
 			Log.Info( "Shot - missed" );
+			SpawnDebugMarker( endPos, Color.Yellow );
 			return;
 		}
 
 		Log.Info( $"Shot hit {trace.GameObject?.Name}" );
+		SpawnDebugMarker( trace.HitPosition, Color.Red );
 
 		var hitObject = trace.GameObject;
 		while ( hitObject.IsValid() )
@@ -177,5 +177,20 @@ public sealed class WeaponHolder : Component
 			}
 			hitObject = hitObject.Parent;
 		}
+	}
+
+	private void SpawnDebugMarker( Vector3 position, Color color )
+	{
+		var go = new GameObject();
+		go.Name = "ShotDebug";
+		go.WorldPosition = position;
+		go.WorldScale = Vector3.One * 0.1f;
+
+		var renderer = go.Components.Create<ModelRenderer>();
+		renderer.Model = Model.Load( "models/dev/sphere.vmdl" );
+		renderer.Tint = color;
+
+		var marker = go.Components.Create<DebugMarker>();
+		marker.Lifetime = 2f;
 	}
 }
