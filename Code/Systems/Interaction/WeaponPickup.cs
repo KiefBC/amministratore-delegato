@@ -11,6 +11,13 @@ public sealed class WeaponPickup : Component, IInteractable
 		= CitizenAnimationHelper.HoldTypes.Pistol;
 
 	/// <summary>
+	/// One-handed (Right/Left) or two-handed (Both). Only affects Pistol/HoldItem holdtypes.
+	/// </summary>
+	[Property]
+	public CitizenAnimationHelper.Hand Handedness { get; set; }
+		= CitizenAnimationHelper.Hand.Right;
+
+	/// <summary>
 	/// How close the player must be (world units) for the prompt to appear and Use to equip.
 	/// </summary>
 	[Property]

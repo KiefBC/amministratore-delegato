@@ -65,6 +65,7 @@ public sealed class Inventory : Component
 		if ( behavior.IsValid() )
 		{
 			behavior.HoldType = pickup.HoldType;
+			behavior.Handedness = pickup.Handedness;
 			behavior.Damage = pickup.Damage;
 			behavior.Range = pickup.Range;
 			behavior.WeaponOffset = pickup.WeaponOffset;

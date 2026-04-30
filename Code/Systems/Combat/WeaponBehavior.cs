@@ -16,6 +16,10 @@ public sealed class WeaponBehavior : Component
 	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
 		= CitizenAnimationHelper.HoldTypes.Pistol;
 
+	[Property]
+	public CitizenAnimationHelper.Hand Handedness { get; set; }
+		= CitizenAnimationHelper.Hand.Right;
+
 	/// <summary>
 	/// Damage dealt per shot.
 	/// </summary>
@@ -64,6 +68,7 @@ public sealed class WeaponBehavior : Component
 		if ( aiming )
 		{
 			AnimHelper.HoldType = HoldType;
+			AnimHelper.Handedness = Handedness;
 			AnimHelper.IsWeaponLowered = false;
 		}
 		else
