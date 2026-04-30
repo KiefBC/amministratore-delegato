@@ -41,7 +41,10 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	/// Current health. Host-authoritative — clients receive updates via Sync.
 	/// Mutate only through <see cref="OnDamage"/>.
 	/// </summary>
-	[Sync( SyncFlags.FromHost )]
+	// Networking pre-baked for future PvP. Disabled in solo dev because [Sync] makes
+	// the engine attempt Steam P2P sessions, which spams "Session Failed" timeouts.
+	// Re-enable when wiring multiplayer.
+	//[Sync( SyncFlags.FromHost )]
 	public float Health { get; set; }
 
 	private float _lastHealth;

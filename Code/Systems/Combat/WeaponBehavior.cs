@@ -5,21 +5,12 @@ using Sandbox.Citizen;
 /// Firearm behavior — aim, fire, holster. Reads the currently equipped weapon from
 /// <see cref="Inventory"/> on the same GameObject; stats (Damage/Range/HoldType/offsets)
 /// are copied in by <see cref="Inventory.Equip"/> from the world <see cref="WeaponPickup"/>.
-///
-/// (Conceptually "WeaponBehavior" — class name retained so existing scene wiring resolves
-/// without re-adding the component.)
 /// </summary>
-public sealed class WeaponHolder : Component
+public sealed class WeaponBehavior : Component
 {
 	[Property] public SkinnedModelRenderer BodyRenderer { get; set; }
 	[Property] public CitizenAnimationHelper AnimHelper { get; set; }
 	[Property] public Inventory Inventory { get; set; }
-
-	/// <summary>
-	/// Legacy field kept so existing scene wiring (the disabled per-player ChairInteraction
-	/// reference) doesn't error. Unused — sit/stand is handled by SittableInteractable now.
-	/// </summary>
-	[Property] public ChairInteraction Sit { get; set; }
 
 	[Property]
 	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
@@ -45,19 +36,14 @@ public sealed class WeaponHolder : Component
 	[Property] public Angles WeaponAngleOffset { get; set; } = Angles.Zero;
 	[Property] public Vector3 WeaponScale { get; set; } = Vector3.One;
 
-	/// <summary>
-	/// Stub kept for legacy <c>PickupPrompt.razor</c> binding. Always null —
-	/// pickup detection lives in <see cref="InteractionSystem"/> now. The
-	/// prompt simply never shows; the new InteractPrompt (Stage 2.5) will replace it.
-	/// </summary>
-	public WeaponPickup NearbyPickup => null;
-
 	private GameObject Weapon => Inventory?.Equipped;
 	private bool _holstered;
 
 	protected override void OnStart()
 	{
 		Inventory ??= Components.Get<Inventory>();
+		BodyRenderer ??= Components.Get<SkinnedModelRenderer>();
+		AnimHelper ??= Components.Get<CitizenAnimationHelper>();
 	}
 
 	protected override void OnUpdate()

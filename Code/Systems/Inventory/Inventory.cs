@@ -2,11 +2,11 @@ using Sandbox;
 
 /// <summary>
 /// Owns the player's currently equipped world item — what's parented to the hand
-/// bone, what behaviors are active, what stats apply. Decoupled from <see cref="WeaponHolder"/>:
-/// inventory says "this thing is held", behavior components (WeaponHolder for firearms,
+/// bone, what behaviors are active, what stats apply. Decoupled from <see cref="WeaponBehavior"/>:
+/// inventory says "this thing is held", behavior components (WeaponBehavior for firearms,
 /// future MeleeBehavior, etc.) read from inventory and react when their kind is equipped.
 ///
-/// Lives on the player Body GameObject (alongside <see cref="WeaponHolder"/>).
+/// Lives on the player Body GameObject (alongside <see cref="WeaponBehavior"/>).
 /// </summary>
 public sealed class Inventory : Component
 {
@@ -35,7 +35,7 @@ public sealed class Inventory : Component
 
 	/// <summary>
 	/// Pick up a world item. Drops whatever is currently equipped, parents the new
-	/// item to the hand bone, copies its weapon stats onto the active <see cref="WeaponHolder"/>
+	/// item to the hand bone, copies its weapon stats onto the active <see cref="WeaponBehavior"/>
 	/// behavior, disables its colliders, and removes the <see cref="WeaponPickup"/> marker.
 	/// </summary>
 	public void Equip( GameObject worldItem )
@@ -61,7 +61,7 @@ public sealed class Inventory : Component
 			col.Enabled = false;
 		}
 
-		var behavior = Components.Get<WeaponHolder>();
+		var behavior = Components.Get<WeaponBehavior>();
 		if ( behavior.IsValid() )
 		{
 			behavior.HoldType = pickup.HoldType;

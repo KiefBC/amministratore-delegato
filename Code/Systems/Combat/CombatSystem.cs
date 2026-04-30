@@ -29,7 +29,10 @@ public sealed class CombatSystem : GameObjectSystem<CombatSystem>
 		BroadcastDamaged( targetGo, info );
 	}
 
-	[Rpc.Broadcast]
+	// Networking pre-baked for future PvP. Disabled in solo dev because [Rpc]-marked
+	// methods on networked systems make the engine attempt Steam P2P sessions, which
+	// spams "Session Failed" timeouts in the console. Re-enable when wiring multiplayer.
+	//[Rpc.Broadcast]
 	private void BroadcastDamaged( GameObject targetGo, DamageInfo info )
 	{
 		var resolved = targetGo?.Components.GetInAncestorsOrSelf<Component.IDamageable>();

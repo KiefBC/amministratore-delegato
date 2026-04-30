@@ -11,7 +11,10 @@ public sealed class EconomySystem : GameObjectSystem<EconomySystem>
 	/// <summary>
 	/// Current balance. Synced from host. Mutate via <see cref="Add"/> / <see cref="TrySpend"/>.
 	/// </summary>
-	[Sync( SyncFlags.FromHost )]
+	// Networking pre-baked for future PvP. Disabled in solo dev because [Sync]/[Rpc]-marked
+	// types make the engine attempt Steam P2P sessions, which spams "Session Failed (Timed
+	// out attempting to negotiate rendezvous)" in the console. Re-enable when wiring multiplayer.
+	//[Sync( SyncFlags.FromHost )]
 	public int Money { get; set; }
 
 	public EconomySystem( Scene scene ) : base( scene )
@@ -52,7 +55,8 @@ public sealed class EconomySystem : GameObjectSystem<EconomySystem>
 		return true;
 	}
 
-	[Rpc.Broadcast]
+	// Networking pre-baked — see comment on Money for why this is disabled in solo dev.
+	//[Rpc.Broadcast]
 	private void BroadcastChanged( int delta )
 	{
 		Scene.RunEvent<IMoneyChangedListener>( l => l.OnMoneyChanged( Money, delta ) );

@@ -314,71 +314,16 @@
               }
             },
             {
-              "__type": "WeaponHolder",
-              "__guid": "d8a1dccb-1b1c-4db2-99aa-043a6c8b95ae",
+              "__type": "Inventory",
+              "__guid": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
               "__enabled": true,
               "Flags": 0,
-              "AnimHelper": {
-                "_type": "component",
-                "component_id": "349063aa-8953-41f2-8b2c-e59a102f6254",
-                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "CitizenAnimationHelper"
-              },
               "BodyRenderer": {
                 "_type": "component",
                 "component_id": "d2898695-f228-4930-89dc-353c84ea4454",
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
                 "component_type": "SkinnedModelRenderer"
               },
-              "Damage": 25,
-              "HoldType": "Pistol",
-              "Inventory": {
-                "_type": "component",
-                "component_id": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
-                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "Inventory"
-              },
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null,
-              "Range": 5000,
-              "Sit": {
-                "_type": "component",
-                "component_id": "a116a4e2-753c-411d-a53d-5260a3af55a7",
-                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "ChairInteraction"
-              },
-              "WeaponAngleOffset": "0,0,0",
-              "WeaponOffset": "0,0,-6.64799976",
-              "WeaponScale": "1,1,1"
-            },
-            {
-              "__type": "ChairInteraction",
-              "__guid": "a116a4e2-753c-411d-a53d-5260a3af55a7",
-              "__enabled": false,
-              "Flags": 0,
-              "Controller": {
-                "_type": "component",
-                "component_id": "d0d8f914-7324-4dd2-b286-937edf4714bc",
-                "go": "02d90cc4-1163-4d25-891b-2555279f2cbb",
-                "component_type": "PlayerController"
-              },
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null
-            },
-            {
-              "__type": "Inventory",
-              "__guid": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
-              "__enabled": true,
-              "Flags": 0,
-              "BodyRenderer": null,
               "HandBone": "hold_R",
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
@@ -409,6 +354,27 @@
               "Patrol": null,
               "Physics": null,
               "Team": "Player"
+            },
+            {
+              "__type": "WeaponBehavior",
+              "__guid": "8242a54a-5bc2-46e9-8cda-5f8818a51326",
+              "__enabled": true,
+              "Flags": 0,
+              "AnimHelper": null,
+              "BodyRenderer": null,
+              "Damage": 25,
+              "HoldType": "Pistol",
+              "Inventory": null,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Range": 5000,
+              "WeaponAngleOffset": "0,0,0",
+              "WeaponOffset": "0,0,0",
+              "WeaponScale": "1,1,1"
             }
           ],
           "Children": [
@@ -8318,19 +8284,6 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.PickupPrompt",
-              "__guid": "ebf4cd3a-ed9c-4a7d-a665-a7dc93a79846",
-              "__enabled": false,
-              "Flags": 0,
-              "Holder": null,
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null
-            },
-            {
               "__type": "Sandbox.Crosshair",
               "__guid": "0b13b61d-b81b-43f1-a1c3-012c74cf0827",
               "__enabled": true,
@@ -8378,42 +8331,6 @@
               "ScaleStrategy": "ConsistentHeight",
               "TargetCamera": null,
               "ZIndex": 100
-            },
-            {
-              "__type": "Sandbox.PickupPrompt",
-              "__guid": "62156d58-7967-4914-9f1a-b26fa6d2c196",
-              "__enabled": false,
-              "Flags": 0,
-              "Holder": {
-                "_type": "component",
-                "component_id": "d8a1dccb-1b1c-4db2-99aa-043a6c8b95ae",
-                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "WeaponHolder"
-              },
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null
-            },
-            {
-              "__type": "Sandbox.SitPrompt",
-              "__guid": "6bf594bd-4fe7-4c81-bfa7-04b1b399d917",
-              "__enabled": false,
-              "Flags": 0,
-              "Interaction": {
-                "_type": "component",
-                "component_id": "a116a4e2-753c-411d-a53d-5260a3af55a7",
-                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "ChairInteraction"
-              },
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null
             },
             {
               "__type": "Sandbox.InteractPrompt",
