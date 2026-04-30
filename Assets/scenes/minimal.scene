@@ -217,6 +217,41 @@
           "OnComponentFixedUpdate": null,
           "OnComponentStart": null,
           "OnComponentUpdate": null
+        },
+        {
+          "__type": "UIStateManager",
+          "__guid": "a2c5e1f0-1101-4f01-9e34-8a8c4f1e1a01",
+          "__enabled": true,
+          "Flags": 0,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "PlayerController": {
+            "_type": "component",
+            "component_id": "d0d8f914-7324-4dd2-b286-937edf4714bc",
+            "go": "02d90cc4-1163-4d25-891b-2555279f2cbb",
+            "component_type": "PlayerController"
+          }
+        },
+        {
+          "__type": "RarityConfig",
+          "__guid": "a2c5e1f0-1101-4f02-9e34-8a8c4f1e1a02",
+          "__enabled": true,
+          "Flags": 0,
+          "CommonColor": "1,1,1,1",
+          "EpicColor": "0.69,0.32,0.87,1",
+          "LegendaryColor": "1,0.65,0,1",
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "RareColor": "0.3,0.58,1,1",
+          "UncommonColor": "0.46,0.86,0.49,1"
         }
       ],
       "Children": [
@@ -314,8 +349,8 @@
               }
             },
             {
-              "__type": "Inventory",
-              "__guid": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
+              "__type": "Equipment",
+              "__guid": "967c839c-7655-4c7f-adb1-96d6edfe7c5d",
               "__enabled": true,
               "Flags": 0,
               "BodyRenderer": {
@@ -364,9 +399,10 @@
               "AnimHelper": null,
               "BodyRenderer": null,
               "Damage": 25,
+              "Equipment": null,
               "Handedness": "Right",
               "HoldType": "Pistol",
-              "Inventory": null,
+              "MagazineSize": 7,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
@@ -374,9 +410,25 @@
               "OnComponentStart": null,
               "OnComponentUpdate": null,
               "Range": 5000,
+              "ReloadDuration": 1.5,
               "WeaponAngleOffset": "0,0,0",
               "WeaponOffset": "0,0,0",
               "WeaponScale": "1,1,1"
+            },
+            {
+              "__type": "Backpack",
+              "__guid": "b2c5e1f0-1101-4f03-9e34-8a8c4f1e1a03",
+              "__enabled": true,
+              "Flags": 0,
+              "Cols": 6,
+              "MoneyPickupPrefab": null,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Rows": 4
             }
           ],
           "Children": [
@@ -2965,7 +3017,7 @@
           "OnComponentUpdate": null,
           "Patrol": null,
           "Physics": null,
-          "Team": "Player"
+          "Team": "Enemy"
         }
       ],
       "Children": []
@@ -6880,7 +6932,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Position",
-                "Value": "-16.5161533,-1.24628878,-2.28881836E-05"
+                "Value": "-20.4892349,-1.84621239,-2.7179718E-05"
               },
               {
                 "Target": {
@@ -6888,7 +6940,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Rotation",
-                "Value": "-2.23517418E-07,-2.68220901E-07,0.122970462,0.992409766"
+                "Value": "-2.98023224E-07,-2.98023224E-07,0.137468636,0.990505457"
               },
               {
                 "Target": {
@@ -6904,7 +6956,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Position",
-                "Value": "-8.43850803,-25.4748192,18.7136936"
+                "Value": "-14.476532,-26.600256,24.458271"
               },
               {
                 "Target": {
@@ -6912,7 +6964,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Rotation",
-                "Value": "0.548529565,-0.094209522,-0.775860608,0.297122866"
+                "Value": "-0.632842422,0.235854805,-0.178929284,-0.715450406"
               },
               {
                 "Target": {
@@ -6928,7 +6980,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Position",
-                "Value": "11.6925087,-4.91142273E-05,-0.000104188919"
+                "Value": "11.6925058,-4.99486923E-05,-0.000105142593"
               },
               {
                 "Target": {
@@ -6936,7 +6988,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Rotation",
-                "Value": "-1.99303031E-06,5.66244125E-07,0.0301842093,-0.999544621"
+                "Value": "-1.96695328E-06,5.66244125E-07,0.0301842541,-0.999544561"
               },
               {
                 "Target": {
@@ -6952,7 +7004,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Position",
-                "Value": "11.4816628,3.12328339E-05,-6.69956207E-05"
+                "Value": "11.4816637,3.11732292E-05,-6.68764114E-05"
               },
               {
                 "Target": {
@@ -6960,7 +7012,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Rotation",
-                "Value": "0.704695642,-0.0222176313,-0.0532007143,-0.707163692"
+                "Value": "0.704695642,-0.0222176239,-0.0532007068,-0.707163692"
               },
               {
                 "Target": {
@@ -6976,7 +7028,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Position",
-                "Value": "-9.28214836,-24.6988964,-20.2901802"
+                "Value": "-15.7518864,-26.0111828,-25.5001068"
               },
               {
                 "Target": {
@@ -6984,7 +7036,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Rotation",
-                "Value": "-0.57668674,0.117784172,-0.718715191,0.370146364"
+                "Value": "0.56863606,-0.241402283,-0.278613776,-0.735358953"
               },
               {
                 "Target": {
@@ -7000,7 +7052,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Position",
-                "Value": "11.6925297,-3.23057175E-05,1.31130219E-06"
+                "Value": "11.6925297,-3.19480896E-05,1.1920929E-06"
               },
               {
                 "Target": {
@@ -7008,7 +7060,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Rotation",
-                "Value": "-2.38418579E-06,5.96046448E-08,-0.0301856846,0.999544501"
+                "Value": "-2.39908695E-06,6.70552254E-08,-0.0301856995,0.999544501"
               },
               {
                 "Target": {
@@ -7024,7 +7076,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Position",
-                "Value": "11.4816637,6.30617142E-05,-7.5340271E-05"
+                "Value": "11.4816628,6.15119934E-05,-7.57575035E-05"
               },
               {
                 "Target": {
@@ -7032,7 +7084,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Rotation",
-                "Value": "0.707604945,-0.0219993461,0.0532981306,0.704251647"
+                "Value": "0.707604885,-0.0219993591,0.0532981306,0.704251647"
               },
               {
                 "Target": {
@@ -7048,7 +7100,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Position",
-                "Value": "-34.083931,20.9446507,5.34057617E-05"
+                "Value": "-38.1785698,28.850666,6.53266907E-05"
               },
               {
                 "Target": {
@@ -7056,7 +7108,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Rotation",
-                "Value": "-0.959653795,0.281184852,8.94069672E-08,-2.93552876E-06"
+                "Value": "-0.927890658,0.372852743,1.49011612E-07,-3.03983688E-06"
               },
               {
                 "Target": {
@@ -7072,7 +7124,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Position",
-                "Value": "3.59376907,2.6345253E-05,-6.04987144E-05"
+                "Value": "3.59376907,2.67028809E-05,-6.04987144E-05"
               },
               {
                 "Target": {
@@ -7080,7 +7132,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Rotation",
-                "Value": "2.68220901E-07,-6.10947609E-07,0.201891378,0.979408145"
+                "Value": "2.38418579E-07,-6.2584877E-07,0.201891318,0.979408145"
               },
               {
                 "Target": {
@@ -7144,7 +7196,7 @@
                   "IdValue": "5ce6f4b8-eb5d-41c5-acaa-1ebd2d73446a"
                 },
                 "Property": "Position",
-                "Value": "16.5252151,-9.77516174E-05,-1.66893005E-05"
+                "Value": "16.5252151,-9.7990036E-05,-1.66893005E-05"
               },
               {
                 "Target": {
@@ -7192,7 +7244,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Position",
-                "Value": "17.8480988,0.000115394592,-4.33921814E-05"
+                "Value": "17.8480988,0.000116348267,-4.19616699E-05"
               },
               {
                 "Target": {
@@ -7200,7 +7252,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Rotation",
-                "Value": "-5.96046448E-08,-2.5331974E-07,0.0171018541,0.999853909"
+                "Value": "-8.94069672E-08,-2.83122063E-07,0.0171017945,0.999853849"
               },
               {
                 "Target": {
@@ -7216,7 +7268,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Position",
-                "Value": "16.525198,1.1920929E-05,-3.38554382E-05"
+                "Value": "16.5251961,1.28746033E-05,-3.48091125E-05"
               },
               {
                 "Target": {
@@ -7224,7 +7276,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Rotation",
-                "Value": "-0.0224070102,-0.0104060471,-0.51063323,0.859443307"
+                "Value": "-0.0224069953,-0.0104060769,-0.510633171,0.859443188"
               }
             ],
             "MovedObjects": []
@@ -8536,6 +8588,55 @@
             }
           ],
           "Children": []
+        },
+        {
+          "__guid": "c2c5e1f0-1101-4f04-9e34-8a8c4f1e1a04",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Inventory",
+          "Position": "0,0,0",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.ScreenPanel",
+              "__guid": "c2c5e1f0-1101-4f05-9e34-8a8c4f1e1a05",
+              "__enabled": true,
+              "Flags": 0,
+              "AutoScreenScale": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Opacity": 1,
+              "Scale": 1,
+              "ScaleStrategy": "ConsistentHeight",
+              "TargetCamera": null,
+              "ZIndex": 200
+            },
+            {
+              "__type": "Sandbox.InventoryPanel",
+              "__guid": "c2c5e1f0-1101-4f06-9e34-8a8c4f1e1a06",
+              "__enabled": true,
+              "Flags": 0,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null
+            }
+          ],
+          "Children": []
         }
       ]
     },
@@ -8657,8 +8758,14 @@
               "__enabled": true,
               "Flags": 0,
               "Damage": 25,
+              "DisplayName": "",
+              "GridHeight": 1,
+              "GridWidth": 1,
               "Handedness": "Right",
               "HoldType": "Pistol",
+              "Icon": "",
+              "MagazineSize": 7,
+              "MaxStack": 1,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
@@ -8667,9 +8774,13 @@
               "OnComponentUpdate": null,
               "PickupRange": 100,
               "Range": 5000,
+              "Rarity": "Common",
+              "ReloadDuration": 1.5,
+              "Value": 0,
               "WeaponAngleOffset": "-11.5679998,-8.44799995,0",
               "WeaponOffset": "3.01600003,-0.864000022,2.12800002",
-              "WeaponScale": "0.680000007,0.680000007,0.680000007"
+              "WeaponScale": "0.680000007,0.680000007,0.680000007",
+              "Weight": 0
             }
           ],
           "Children": []
@@ -9358,6 +9469,9 @@
       "CustomBounds": false
     },
     "GameObjectSystems": {
+      "Sandbox.MovieMaker.MovieRecorderSystem": {
+        "DisableClientRecording": false
+      },
       "Sandbox.SelectionSetsSystem": {
         "Data": {
           "SelectionSets": []
@@ -9367,9 +9481,6 @@
         "Storage": {
           "$blob": "c7e0731d-eb2b-4b7c-be24-5301459ae2d2"
         }
-      },
-      "Sandbox.MovieMaker.MovieRecorderSystem": {
-        "DisableClientRecording": false
       }
     }
   },

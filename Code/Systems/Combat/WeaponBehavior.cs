@@ -3,8 +3,8 @@ using Sandbox.Citizen;
 
 /// <summary>
 /// Firearm behavior — aim, fire, holster, reload. Reads the currently equipped weapon
-/// from <see cref="Inventory"/> on the same GameObject; stats (Damage/Range/HoldType/
-/// MagazineSize/ReloadDuration/offsets) are copied in by <see cref="Inventory.Equip"/>
+/// from <see cref="Equipment"/> on the same GameObject; stats (Damage/Range/HoldType/
+/// MagazineSize/ReloadDuration/offsets) are copied in by <see cref="Equipment.Equip"/>
 /// from the world <see cref="WeaponPickup"/>.
 ///
 /// Firing behavior is gated by a small state machine — see <see cref="WeaponState"/>.
@@ -13,7 +13,7 @@ public sealed class WeaponBehavior : Component
 {
 	[Property] public SkinnedModelRenderer BodyRenderer { get; set; }
 	[Property] public CitizenAnimationHelper AnimHelper { get; set; }
-	[Property] public Inventory Inventory { get; set; }
+	[Property] public Equipment Equipment { get; set; }
 
 	[Property]
 	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
@@ -76,7 +76,7 @@ public sealed class WeaponBehavior : Component
 		Empty,
 	}
 
-	private GameObject Weapon => Inventory?.Equipped;
+	private GameObject Weapon => Equipment?.Equipped;
 	private bool _holstered;
 	private WeaponState _state = WeaponState.Idle;
 	private int _currentAmmo;
@@ -108,13 +108,13 @@ public sealed class WeaponBehavior : Component
 
 	protected override void OnStart()
 	{
-		Inventory ??= Components.Get<Inventory>();
+		Equipment ??= Components.Get<Equipment>();
 		BodyRenderer ??= Components.Get<SkinnedModelRenderer>();
 		AnimHelper ??= Components.Get<CitizenAnimationHelper>();
 	}
 
 	/// <summary>
-	/// Called by <see cref="Inventory.Equip"/> after weapon stats are copied. Resets
+	/// Called by <see cref="Equipment.Equip"/> after weapon stats are copied. Resets
 	/// the state machine to <see cref="WeaponState.Idle"/> with a full magazine and
 	/// broadcasts so the HUD can refresh.
 	/// </summary>

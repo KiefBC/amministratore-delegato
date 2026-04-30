@@ -1,0 +1,262 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Linq;
+@namespace Sandbox
+@inherits PanelComponent
+@implements IInventoryChangedListener
+
+<root class="@(IsOpen ? "open" : "")" @onmouseup=@((PanelEvent e) => OnRootMouseUp(e as MousePanelEvent))>
+	@if ( IsOpen && _backpack.IsValid() )
+	{
+		<div class="inventory">
+			<div class="header">
+				<span class="title">Inventory</span>
+				<div class="sort-buttons">
+					<div class="sort-button" @onclick=@(() => Sort(Backpack.SortMode.New))>New</div>
+					<div class="sort-button" @onclick=@(() => Sort(Backpack.SortMode.Worth))>Worth</div>
+					<div class="sort-button" @onclick=@(() => Sort(Backpack.SortMode.Weight))>Weight</div>
+				</div>
+			</div>
+
+			<div class="grid">
+				@for ( int r = 0; r < _backpack.Rows; r++ )
+				{
+					<div class="grid-row">
+						@for ( int c = 0; c < _backpack.Cols; c++ )
+						{
+							var row = r;
+							var col = c;
+							var item = _backpack.Slots[row, col];
+							var selected = _backpack.Selected is var sel && sel.HasValue && sel.Value.row == row && sel.Value.col == col;
+							<div class="cell @(item.IsValid() ? "filled" : "empty") @(selected ? "selected" : "")"
+								 style="@CellStyle(item, selected)"
+								 @onmousedown=@((PanelEvent e) => OnCellMouseDown(e as MousePanelEvent, row, col))
+								 @onmouseup=@((PanelEvent e) => OnCellMouseUp(e as MousePanelEvent, row, col))>
+								@if ( item.IsValid() )
+								{
+									@if ( !string.IsNullOrEmpty( item.Icon ) )
+									{
+										<div class="icon" style="background-image: url(@item.Icon);"></div>
+									}
+									else
+									{
+										<div class="icon-fallback">@FallbackLabel(item)</div>
+									}
+									@if ( item.StackCount > 1 )
+									{
+										<div class="stack">@FormatStack(item)</div>
+									}
+								}
+							</div>
+						}
+					</div>
+				}
+			</div>
+
+			<div class="footer">
+				<span class="hint">Tab / Esc to close · Right-click to use · Drag to move · Drag out to drop</span>
+			</div>
+		</div>
+
+		@if ( _dragging && _dragSource.HasValue )
+		{
+			var ghostItem = _backpack.Slots[_dragSource.Value.row, _dragSource.Value.col];
+			if ( ghostItem.IsValid() && !string.IsNullOrEmpty( ghostItem.Icon ) )
+			{
+				<div class="drag-ghost" style="left: @(_mousePos.x - 32)px; top: @(_mousePos.y - 32)px; background-image: url(@ghostItem.Icon);"></div>
+			}
+		}
+	}
+</root>
+
+@code {
+	private const float DragThresholdPx = 6f;
+
+	private Backpack _backpack;
+	private UIStateManager _uiState;
+	private GameObject _player;
+
+	private bool _isOpen;
+	private (int row, int col)? _dragSource;
+	private bool _dragging;
+	private Vector2 _mouseDownPos;
+	private Vector2 _mousePos;
+
+	public bool IsOpen => _isOpen;
+
+	public void OnInventoryChanged( Backpack backpack )
+	{
+		// Listener trigger — BuildHash picks up the new state on the next layout.
+	}
+
+	protected override void OnStart()
+	{
+		_player = Scene.GetAllComponents<PlayerController>()
+			.FirstOrDefault( p => !p.IsProxy )?.GameObject;
+		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
+		_uiState = _player?.Components.Get<UIStateManager>();
+	}
+
+	protected override void OnUpdate()
+	{
+		_mousePos = Mouse.Position;
+
+		if ( Input.Pressed( "Inventory" ) )
+		{
+			Toggle();
+		}
+		else if ( _isOpen && Input.EscapePressed )
+		{
+			Close();
+		}
+
+		if ( _isOpen && _dragSource.HasValue && !_dragging )
+		{
+			if ( (_mousePos - _mouseDownPos).Length > DragThresholdPx )
+			{
+				_dragging = true;
+			}
+		}
+	}
+
+	private void Toggle()
+	{
+		if ( _isOpen ) Close();
+		else Open();
+	}
+
+	private void Open()
+	{
+		if ( _isOpen ) return;
+		_isOpen = true;
+		_uiState?.RequestUIFocus( this );
+	}
+
+	private void Close()
+	{
+		if ( !_isOpen ) return;
+		_isOpen = false;
+		_dragSource = null;
+		_dragging = false;
+		_uiState?.ReleaseUIFocus( this );
+		_backpack?.ClearSelection();
+	}
+
+	private void OnCellMouseDown( MousePanelEvent e, int row, int col )
+	{
+		if ( e is null || !_backpack.IsValid() ) return;
+
+		if ( e.MouseButton == MouseButtons.Right )
+		{
+			var item = _backpack.Slots[row, col];
+			if ( item.IsValid() ) item.OnUse( _player );
+			return;
+		}
+
+		if ( e.MouseButton != MouseButtons.Left ) return;
+
+		_mouseDownPos = _mousePos;
+		_dragSource = (row, col);
+		_dragging = false;
+	}
+
+	private void OnCellMouseUp( MousePanelEvent e, int row, int col )
+	{
+		if ( e is null || e.MouseButton != MouseButtons.Left ) return;
+		if ( !_backpack.IsValid() || !_dragSource.HasValue ) return;
+
+		var src = _dragSource.Value;
+		var wasDragging = _dragging;
+		_dragSource = null;
+		_dragging = false;
+
+		if ( !wasDragging )
+		{
+			// Click without drag = select / toggle selection.
+			if ( _backpack.Selected is var sel && sel.HasValue && sel.Value == (row, col) )
+				_backpack.ClearSelection();
+			else
+				_backpack.Select( row, col );
+			return;
+		}
+
+		_backpack.MoveSlot( src.row, src.col, row, col );
+	}
+
+	/// <summary>
+	/// Mouse-up on the panel root (outside any cell) when dragging = drop the held
+	/// slot into the world.
+	/// </summary>
+	private void OnRootMouseUp( MousePanelEvent e )
+	{
+		if ( e is null || e.MouseButton != MouseButtons.Left ) return;
+		if ( !_backpack.IsValid() || !_dragSource.HasValue || !_dragging ) return;
+
+		var src = _dragSource.Value;
+		_dragSource = null;
+		_dragging = false;
+		_backpack.DropToWorld( src.row, src.col );
+	}
+
+	private string CellStyle( BaseItem item, bool selected )
+	{
+		// s&box CSS doesn't support `inset` shadows OR CSS custom properties, so
+		// rarity = a colored border, selection = an outer green box-shadow. Both
+		// stack visually without conflicting in the same `box-shadow` declaration.
+		var sb = new System.Text.StringBuilder();
+
+		if ( item.IsValid() )
+		{
+			var rarityCfg = _player?.Components.Get<RarityConfig>();
+			if ( rarityCfg is not null )
+			{
+				var c = rarityCfg.GetColor( item.Rarity );
+				sb.Append( $"border: 2px solid rgba({(int)(c.r * 255)},{(int)(c.g * 255)},{(int)(c.b * 255)},0.85);" );
+			}
+		}
+
+		if ( selected )
+		{
+			sb.Append( "box-shadow: 0 0 12px 2px rgba(111,220,124,0.85);" );
+		}
+
+		return sb.ToString();
+	}
+
+	private string FallbackLabel( BaseItem item )
+	{
+		if ( !item.IsValid() ) return "";
+		var name = string.IsNullOrEmpty( item.DisplayName ) ? item.GameObject.Name : item.DisplayName;
+		if ( string.IsNullOrEmpty( name ) ) return "?";
+		return name.Substring( 0, System.Math.Min( 3, name.Length ) ).ToUpperInvariant();
+	}
+
+	private string FormatStack( BaseItem item )
+	{
+		if ( item is MoneyPickup ) return $"${item.StackCount:N0}";
+		return $"x{item.StackCount}";
+	}
+
+	private void Sort( Backpack.SortMode mode )
+	{
+		_backpack?.Sort( mode );
+	}
+
+	protected override int BuildHash()
+	{
+		if ( _backpack is null ) return _isOpen ? 1 : 0;
+		var sel = _backpack.Selected;
+		var slotHash = 0;
+		for ( int r = 0; r < _backpack.Rows; r++ )
+		{
+			for ( int c = 0; c < _backpack.Cols; c++ )
+			{
+				var item = _backpack.Slots[r, c];
+				slotHash = System.HashCode.Combine( slotHash, item?.GetHashCode() ?? 0, item?.StackCount ?? 0 );
+			}
+		}
+		return System.HashCode.Combine(
+			_isOpen, _dragging, _dragSource, sel, slotHash,
+			_dragging ? ((int)_mousePos.x, (int)_mousePos.y) : (0, 0) );
+	}
+}

@@ -1,0 +1,135 @@
+@import "/Systems/UI/_theme.scss";
+
+InventoryPanel {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	pointer-events: none;
+
+	&.open {
+		pointer-events: auto;
+		background-color: rgba( 0, 0, 0, 0.35 );
+	}
+
+	.inventory {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		flex-direction: column;
+		gap: 12px;
+		padding: 18px 22px 14px 22px;
+		background-color: $panel-bg;
+		border-radius: $panel-radius;
+		font-family: $font-default;
+		min-width: 460px;
+	}
+
+	.header {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: 14px;
+	}
+
+	.title {
+		color: $text-primary;
+		font-size: $text-large;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+	}
+
+	.sort-buttons {
+		flex-direction: row;
+		gap: 6px;
+	}
+
+	.sort-button {
+		padding: 6px 14px;
+		background-color: rgba( 255, 255, 255, 0.08 );
+		border-radius: $panel-radius-small;
+		color: $text-primary;
+		font-size: $text-small;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+		transition: $transition-fast;
+		cursor: pointer;
+
+		&:hover {
+			background-color: rgba( 255, 255, 255, 0.18 );
+			color: $accent-warning;
+		}
+	}
+
+	.grid {
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.grid-row {
+		flex-direction: row;
+		gap: 6px;
+	}
+
+	.cell {
+		width: 64px;
+		height: 64px;
+		background-color: rgba( 0, 0, 0, 0.5 );
+		border-radius: $panel-radius-small;
+		position: relative;
+		transition: $transition-fast;
+		// box-shadow (rarity glow + optional selection layer) is set inline by C# —
+		// s&box CSS doesn't support `var(--name)` custom properties, so the full
+		// shadow string is composed in InventoryPanel.razor's CellStyle().
+	}
+
+	.icon {
+		width: 100%;
+		height: 100%;
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: center center;
+	}
+
+	.icon-fallback {
+		width: 100%;
+		height: 100%;
+		justify-content: center;
+		align-items: center;
+		color: $text-primary;
+		font-size: $text-large;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+	}
+
+	.stack {
+		position: absolute;
+		bottom: 2px;
+		right: 4px;
+		color: $text-key;
+		font-size: 14px;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+	}
+
+	.footer {
+		justify-content: center;
+	}
+
+	.hint {
+		color: $text-secondary;
+		font-size: $text-eyebrow;
+		text-shadow: $text-shadow-default;
+	}
+
+	.drag-ghost {
+		position: absolute;
+		width: 64px;
+		height: 64px;
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: center center;
+		opacity: 0.85;
+		pointer-events: none;
+	}
+}

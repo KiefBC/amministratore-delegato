@@ -3,12 +3,14 @@ using Sandbox;
 /// <summary>
 /// Owns the player's currently equipped world item — what's parented to the hand
 /// bone, what behaviors are active, what stats apply. Decoupled from <see cref="WeaponBehavior"/>:
-/// inventory says "this thing is held", behavior components (WeaponBehavior for firearms,
-/// future MeleeBehavior, etc.) read from inventory and react when their kind is equipped.
+/// equipment says "this thing is held", behavior components (WeaponBehavior for firearms,
+/// future MeleeBehavior, etc.) read from equipment and react when their kind is equipped.
 ///
-/// Lives on the player Body GameObject (alongside <see cref="WeaponBehavior"/>).
+/// Lives on the player Body GameObject (alongside <see cref="WeaponBehavior"/> and
+/// <see cref="Backpack"/>). Distinct from Backpack: Equipment is the one slot parented
+/// to <c>hold_R</c> with active behavior; Backpack is bag storage.
 /// </summary>
-public sealed class Inventory : Component
+public sealed class Equipment : Component
 {
 	/// <summary>
 	/// Skinned model that exposes the hand bone we attach equipped items to.
@@ -34,9 +36,11 @@ public sealed class Inventory : Component
 	}
 
 	/// <summary>
-	/// Pick up a world item. Drops whatever is currently equipped, parents the new
-	/// item to the hand bone, copies its weapon stats onto the active <see cref="WeaponBehavior"/>
-	/// behavior, disables its colliders, and removes the <see cref="WeaponPickup"/> marker.
+	/// Equip a world item (or a bag item being pulled out). Drops whatever is currently
+	/// equipped back to the Backpack, parents the new item to the hand bone, copies its
+	/// weapon stats onto the active <see cref="WeaponBehavior"/>, and disables its
+	/// colliders. The item's <see cref="WeaponPickup"/> Component is preserved so
+	/// metadata (Value, Weight, Rarity) stays attached for future drops/swaps.
 	/// </summary>
 	public void Equip( GameObject worldItem )
 	{
@@ -49,12 +53,17 @@ public sealed class Inventory : Component
 		var bone = BodyRenderer.GetBoneObject( HandBone );
 		if ( bone is null ) return;
 
+		// Send the previously-held item back to the bag before attaching the new one.
 		Drop();
 
 		worldItem.SetParent( bone, false );
 		worldItem.LocalPosition = pickup.WeaponOffset;
 		worldItem.LocalRotation = Rotation.From( pickup.WeaponAngleOffset );
 		worldItem.LocalScale = pickup.WeaponScale;
+		worldItem.Enabled = true;
+
+		var renderer = worldItem.Components.Get<ModelRenderer>();
+		if ( renderer.IsValid() ) renderer.Enabled = true;
 
 		foreach ( var col in worldItem.Components.GetAll<Collider>() )
 		{
@@ -77,21 +86,49 @@ public sealed class Inventory : Component
 		}
 
 		Equipped = worldItem;
-		pickup.Destroy();
 
 		Log.Info( $"Equipped {worldItem.Name}" );
 		Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, Equipped ) );
 	}
 
 	/// <summary>
-	/// Destroy the currently equipped item. Stub for now — future "drop to ground"
-	/// would re-enable colliders, unparent, and reattach a WeaponPickup component.
+	/// Clear the equipment slot without sending the item back to the bag. Used by
+	/// <see cref="Backpack.DropToWorld"/> when the held weapon itself is the slot
+	/// being dropped — the bag doesn't need to receive it (it's about to leave the
+	/// player entirely).
+	/// </summary>
+	public void UnequipWithoutStoring()
+	{
+		if ( !Equipped.IsValid() ) return;
+		Equipped = null;
+		Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, null ) );
+	}
+
+	/// <summary>
+	/// Unequip the currently held item and route it back to the Backpack as a stored
+	/// (renderer-disabled) bag item. Callers usually invoke <see cref="Equip"/>
+	/// instead, which calls Drop internally before attaching the new item.
 	/// </summary>
 	public void Drop()
 	{
-		if ( !Equipped.IsValid() ) return;
-		Equipped.Destroy();
+		if ( !Equipped.IsValid() )
+		{
+			Equipped = null;
+			return;
+		}
+
+		var dropped = Equipped;
 		Equipped = null;
+
+		var backpack = Components.Get<Backpack>();
+		var item = dropped.Components.Get<BaseItem>();
+		if ( backpack.IsValid() && item.IsValid() && backpack.StoreFromHand( item ) )
+		{
+			Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, null ) );
+			return;
+		}
+
+		dropped.Destroy();
 		Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, null ) );
 	}
 }

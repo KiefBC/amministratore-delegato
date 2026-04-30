@@ -1,7 +1,14 @@
 using Sandbox;
 using Sandbox.Citizen;
 
-public sealed class WeaponPickup : Component, IInteractable
+/// <summary>
+/// World weapon pickup + bag-resident weapon record. As a world GameObject: the
+/// player presses E to add it to their <see cref="Backpack"/> (or auto-equip if
+/// hands are empty). Once in the bag, this Component carries forward the weapon's
+/// stats so they survive equip/unequip cycles — <see cref="Equipment.Equip"/>
+/// reads them when transferring to <see cref="WeaponBehavior"/>.
+/// </summary>
+public sealed class WeaponPickup : BaseItem, IInteractable
 {
 	/// <summary>
 	/// Hold type the player adopts when picking up this weapon.
@@ -76,15 +83,46 @@ public sealed class WeaponPickup : Component, IInteractable
 	[Property]
 	public Vector3 WeaponScale { get; set; } = Vector3.One;
 
+	public WeaponPickup()
+	{
+		MaxStack = 1;
+	}
+
+	/// <summary>
+	/// Right-click in the inventory equips this weapon, swapping out whatever is
+	/// currently held (the previous weapon returns to the bag via Equipment.Drop →
+	/// Backpack.StoreFromHand).
+	/// </summary>
+	public override void OnUse( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+		var equipment = player.Components.GetInDescendantsOrSelf<Equipment>();
+		equipment?.Equip( GameObject );
+	}
+
 	Vector3 IInteractable.InteractPosition => WorldPosition;
 	float IInteractable.InteractRange => PickupRange;
-	string IInteractable.Prompt => "Press E to Equip";
+	string IInteractable.Prompt => "Press E to Pick Up";
 	bool IInteractable.CanInteract( GameObject player ) => true;
 
 	void IInteractable.Interact( GameObject player )
 	{
 		if ( !player.IsValid() ) return;
-		var inventory = player.Components.GetInDescendantsOrSelf<Inventory>();
-		inventory?.Equip( GameObject );
+
+		var equipment = player.Components.GetInDescendantsOrSelf<Equipment>();
+		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
+		if ( !equipment.IsValid() || !backpack.IsValid() ) return;
+
+		// First weapon goes straight to the hand bone; the bag tracks it so the UI
+		// reflects everything the player owns.
+		if ( !equipment.Equipped.IsValid() )
+		{
+			equipment.Equip( GameObject );
+			backpack.TrackEquipped( this );
+			return;
+		}
+
+		// Subsequent pickups land in the bag for the player to swap to later.
+		backpack.TryAdd( this );
 	}
 }

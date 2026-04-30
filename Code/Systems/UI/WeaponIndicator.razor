@@ -64,7 +64,7 @@
 
 	private string AmmoClass => _state == WeaponBehavior.WeaponState.Empty ? "ammo-empty" : "";
 
-	public void OnEquipmentChanged( Inventory inventory, GameObject equipped )
+	public void OnEquipmentChanged( Equipment equipment, GameObject equipped )
 	{
 		_weaponName = equipped?.Name;
 		if ( equipped is not null ) _holstered = false;
@@ -86,10 +86,10 @@
 
 	protected override void OnStart()
 	{
-		var inventory = Scene.GetAllComponents<Inventory>().FirstOrDefault();
-		if ( inventory?.Equipped.IsValid() == true )
+		var equipment = Scene.GetAllComponents<Equipment>().FirstOrDefault();
+		if ( equipment?.Equipped.IsValid() == true )
 		{
-			_weaponName = inventory.Equipped.Name;
+			_weaponName = equipment.Equipped.Name;
 		}
 
 		_weapon = Scene.GetAllComponents<WeaponBehavior>().FirstOrDefault();
