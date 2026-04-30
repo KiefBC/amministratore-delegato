@@ -84,7 +84,7 @@ public sealed class WeaponBehavior : Component
 			AnimHelper.HoldType = CitizenAnimationHelper.HoldTypes.None;
 		}
 
-		if ( Input.Pressed( "Attack1" ) && !_holstered && hasWeapon )
+		if ( Input.Pressed( "Attack1" ) && aiming )
 		{
 			Fire();
 		}
