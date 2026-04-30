@@ -22,6 +22,15 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	[Step( 10f )]
 	public float MaxHealth { get; set; } = 100f;
 
+	/// <summary>
+	/// Money paid to the player who lands the killing blow on this unit. 0 = no payout.
+	/// Wired via <see cref="IUnitDiedListener"/> + <see cref="DeathBountyPayer"/>.
+	/// </summary>
+	[Property]
+	[Range( 0, 1000 )]
+	[Step( 10 )]
+	public int Bounty { get; set; } = 0;
+
 	[Property]
 	public SkinnedModelRenderer ModelRenderer { get; set; }
 
@@ -48,6 +57,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	public float Health { get; set; }
 
 	private float _lastHealth;
+	private GameObject _lastAttacker;
 
 	public bool IsDead => Health <= 0f;
 
@@ -65,6 +75,13 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	{
 		if ( !Networking.IsHost ) return;
 		if ( IsDead ) return;
+
+		// Track the last hostile hitter so Die() can credit the kill. Heals (negative
+		// damage) shouldn't overwrite — otherwise a friendly heal could rob the killer.
+		if ( info.Damage > 0f )
+		{
+			_lastAttacker = info.Attacker;
+		}
 
 		Health = float.Clamp( Health - info.Damage, 0f, MaxHealth );
 	}
@@ -109,5 +126,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		{
 			Patrol.Enabled = false;
 		}
+
+		Scene.RunEvent<IUnitDiedListener>( l => l.OnUnitDied( this, _lastAttacker ) );
 	}
 }

@@ -337,6 +337,7 @@
               "__guid": "7495be4a-cc9f-4431-aff8-db77fd967100",
               "__enabled": true,
               "Flags": 0,
+              "Bounty": 0,
               "MaxHealth": 100,
               "ModelRenderer": {
                 "_type": "component",
@@ -2946,6 +2947,25 @@
           "Static": true,
           "Surface": null,
           "SurfaceVelocity": "0,0,0"
+        },
+        {
+          "__type": "UnitComponent",
+          "__guid": "d73ec7e2-d076-481b-8e2d-d0f00a6b66fc",
+          "__enabled": true,
+          "Flags": 0,
+          "Bounty": 80,
+          "MaxHealth": 100,
+          "ModelRenderer": null,
+          "Name": null,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "Patrol": null,
+          "Physics": null,
+          "Team": "Player"
         }
       ],
       "Children": []
@@ -6792,6 +6812,14 @@
               },
               {
                 "Target": {
+                  "Type": "Component",
+                  "IdValue": "e18aee90-d3c4-4b35-8842-39dcc7c5a80e"
+                },
+                "Property": "Bounty",
+                "Value": 100
+              },
+              {
+                "Target": {
                   "Type": "GameObject",
                   "IdValue": "89b21fc1-bb8c-49f1-9f24-fa39a7c51618"
                 },
@@ -9256,6 +9284,56 @@
               "Children": []
             }
           ]
+        }
+      ]
+    },
+    {
+      "__guid": "45a917d3-a30b-4b84-a19c-87e3716ee359",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "Systems",
+      "Position": "0,0,0",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "",
+      "Enabled": true,
+      "NetworkMode": 2,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [],
+      "Children": [
+        {
+          "__guid": "5dc827d3-731f-45de-96fa-6d41c1d1fb2b",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Bounty Payer",
+          "Position": "0,0,0",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "DeathBountyPayer",
+              "__guid": "9eefff31-10be-4cc8-96e4-1e159da6e8ef",
+              "__enabled": true,
+              "Flags": 0,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null
+            }
+          ],
+          "Children": []
         }
       ]
     }
