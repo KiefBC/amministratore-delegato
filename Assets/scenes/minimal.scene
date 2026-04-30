@@ -396,10 +396,25 @@
               "__guid": "8242a54a-5bc2-46e9-8cda-5f8818a51326",
               "__enabled": true,
               "Flags": 0,
-              "AnimHelper": null,
-              "BodyRenderer": null,
+              "AnimHelper": {
+                "_type": "component",
+                "component_id": "349063aa-8953-41f2-8b2c-e59a102f6254",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "CitizenAnimationHelper"
+              },
+              "BodyRenderer": {
+                "_type": "component",
+                "component_id": "d2898695-f228-4930-89dc-353c84ea4454",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "SkinnedModelRenderer"
+              },
               "Damage": 25,
-              "Equipment": null,
+              "Equipment": {
+                "_type": "component",
+                "component_id": "967c839c-7655-4c7f-adb1-96d6edfe7c5d",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "Equipment"
+              },
               "Handedness": "Right",
               "HoldType": "Pistol",
               "MagazineSize": 7,
@@ -8758,7 +8773,7 @@
               "__enabled": true,
               "Flags": 0,
               "Damage": 25,
-              "DisplayName": "",
+              "DisplayName": "Glock",
               "GridHeight": 1,
               "GridWidth": 1,
               "Handedness": "Right",
@@ -8776,11 +8791,11 @@
               "Range": 5000,
               "Rarity": "Common",
               "ReloadDuration": 1.5,
-              "Value": 0,
+              "Value": 200,
               "WeaponAngleOffset": "-11.5679998,-8.44799995,0",
               "WeaponOffset": "3.01600003,-0.864000022,2.12800002",
               "WeaponScale": "0.680000007,0.680000007,0.680000007",
-              "Weight": 0
+              "Weight": 1
             }
           ],
           "Children": []

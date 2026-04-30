@@ -5,7 +5,8 @@
 @inherits PanelComponent
 @implements IInventoryChangedListener
 
-<root class="@(IsOpen ? "open" : "")" @onmouseup=@((PanelEvent e) => OnRootMouseUp(e as MousePanelEvent))>
+<root class="@(IsOpen ? "open" : "")"
+	@onmouseup=@((PanelEvent e) => OnRootMouseUp(e as MousePanelEvent))>
 	@if ( IsOpen && _backpack.IsValid() )
 	{
 		<div class="inventory">
@@ -63,7 +64,38 @@
 			var ghostItem = _backpack.Slots[_dragSource.Value.row, _dragSource.Value.col];
 			if ( ghostItem.IsValid() && !string.IsNullOrEmpty( ghostItem.Icon ) )
 			{
-				<div class="drag-ghost" style="left: @(_mousePos.x - 32)px; top: @(_mousePos.y - 32)px; background-image: url(@ghostItem.Icon);"></div>
+				<div class="drag-ghost" style="left: @(PanelMousePos.x - 32)px; top: @(PanelMousePos.y - 32)px; background-image: url(@ghostItem.Icon);"></div>
+			}
+		}
+
+		@if ( !_dragging && _hoveredSlot.HasValue )
+		{
+			var hoverItem = _backpack.Slots[_hoveredSlot.Value.row, _hoveredSlot.Value.col];
+			if ( hoverItem.IsValid() )
+			{
+				<div class="tooltip" style="left: @(PanelMousePos.x + 18)px; top: @(PanelMousePos.y + 18)px;">
+					<div class="tooltip-header">
+						<span class="tooltip-name">@TooltipName(hoverItem)</span>
+						<span class="tooltip-rarity rarity-@hoverItem.Rarity.ToString().ToLowerInvariant()">@hoverItem.Rarity</span>
+					</div>
+					<div class="tooltip-divider"></div>
+					<div class="tooltip-rows">
+						@foreach ( var (label, value) in TooltipRows( hoverItem ) )
+						{
+							@if ( label == "—" )
+							{
+								<div class="tooltip-divider"></div>
+							}
+							else
+							{
+								<div class="tooltip-row">
+									<span class="tooltip-label">@label</span>
+									<span class="tooltip-value">@value</span>
+								</div>
+							}
+						}
+					</div>
+				</div>
 			}
 		}
 	}
@@ -81,6 +113,13 @@
 	private bool _dragging;
 	private Vector2 _mouseDownPos;
 	private Vector2 _mousePos;
+	private (int row, int col)? _hoveredSlot;
+	private Sandbox.UI.Panel _gridPanel;
+
+	// Tooltip and drag-ghost positions live in panel-space (CSS px), where
+	// `Panel.MousePosition` already reports cursor coords scaled by `ConsistentHeight`.
+	// `Mouse.Position` is raw screen pixels which mismatch CSS units at non-1080p.
+	private Vector2 PanelMousePos => Panel?.MousePosition ?? Vector2.Zero;
 
 	public bool IsOpen => _isOpen;
 
@@ -117,6 +156,92 @@
 				_dragging = true;
 			}
 		}
+
+		PollHoveredSlot();
+	}
+
+	/// <summary>
+	/// Razor `@onmouseover`/`@onmouseout` aren't reliably wired in s&amp;box's parser,
+	/// so we resolve hover by walking the grid's child panels and hit-testing the
+	/// cursor against each cell's screen-space bounds. Cell index ordering matches
+	/// the razor render loop: rows top-to-bottom, cells left-to-right within a row.
+	/// </summary>
+	private void PollHoveredSlot()
+	{
+		if ( !_isOpen || !_backpack.IsValid() || Panel is null )
+		{
+			SetHover( null, "early-out" );
+			return;
+		}
+
+		// `@ref` doesn't bind on plain <div> in s&box's razor parser, so we find
+		// the grid by class-name walk each frame.
+		_gridPanel ??= FindByClass( Panel, "grid" );
+		if ( _gridPanel is null )
+		{
+			SetHover( null, "no-grid-panel" );
+			return;
+		}
+
+		var screenPos = Mouse.Position;
+		var panelPos = Panel.MousePosition;
+		int rowCount = 0;
+		int cellCount = 0;
+		Sandbox.UI.Panel firstCell = null;
+		int r = 0;
+		foreach ( var rowPanel in _gridPanel.Children )
+		{
+			rowCount++;
+			int c = 0;
+			foreach ( var cellPanel in rowPanel.Children )
+			{
+				cellCount++;
+				firstCell ??= cellPanel;
+				if ( cellPanel.IsInside( screenPos ) )
+				{
+					SetHover( (r, c), $"hit-screen r={r} c={c} mouse={screenPos} cellRect={cellPanel.Box.Rect}" );
+					return;
+				}
+				if ( cellPanel.IsInside( panelPos ) )
+				{
+					SetHover( (r, c), $"hit-panel r={r} c={c} panelMouse={panelPos} cellRect={cellPanel.Box.Rect}" );
+					return;
+				}
+				c++;
+			}
+			r++;
+		}
+
+		var firstRect = firstCell?.Box.Rect.ToString() ?? "(none)";
+		var gridRect = _gridPanel.Box.Rect;
+		SetHover( null, $"no-hit screen={screenPos} panel={panelPos} grid={gridRect} cell0={firstRect} rows={rowCount} cells={cellCount}" );
+	}
+
+	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
+	{
+		if ( root is null ) return null;
+		if ( root.HasClass( className ) ) return root;
+		foreach ( var child in root.Children )
+		{
+			var found = FindByClass( child, className );
+			if ( found is not null ) return found;
+		}
+		return null;
+	}
+
+	private float _lastLogTime;
+
+	private void SetHover( (int row, int col)? newHover, string reason )
+	{
+		// Throttled diagnostic — emit every ~0.5s so we can watch mouse coords
+		// update as the user moves around.
+		var stateChanged = !newHover.Equals( _hoveredSlot );
+		if ( stateChanged || Time.Now - _lastLogTime > 0.5f )
+		{
+			Log.Info( $"[Inv] hover {_hoveredSlot} -> {newHover} ({reason})" );
+			_lastLogTime = Time.Now;
+		}
+		_hoveredSlot = newHover;
 	}
 
 	private void Toggle()
@@ -130,6 +255,7 @@
 		if ( _isOpen ) return;
 		_isOpen = true;
 		_uiState?.RequestUIFocus( this );
+		Log.Info( $"[Inv] Opened. _gridPanel={(_gridPanel is null ? "NULL" : "captured")}, Panel={(Panel is null ? "NULL" : "ok")}" );
 	}
 
 	private void Close()
@@ -138,6 +264,8 @@
 		_isOpen = false;
 		_dragSource = null;
 		_dragging = false;
+		_hoveredSlot = null;
+		_gridPanel = null;
 		_uiState?.ReleaseUIFocus( this );
 		_backpack?.ClearSelection();
 	}
@@ -242,6 +370,43 @@
 		_backpack?.Sort( mode );
 	}
 
+	private string TooltipName( BaseItem item )
+	{
+		if ( !string.IsNullOrEmpty( item.DisplayName ) ) return item.DisplayName;
+		return item.GameObject?.Name ?? "Item";
+	}
+
+	private System.Collections.Generic.IEnumerable<(string Label, string Value)> TooltipRows( BaseItem item )
+	{
+		var rows = new System.Collections.Generic.List<(string, string)>();
+
+		if ( item is MoneyPickup money )
+		{
+			rows.Add( ("Total", $"${money.StackCount:N0}") );
+			return rows;
+		}
+
+		rows.Add( ("Value", $"${item.Value * item.StackCount:N0}") );
+		rows.Add( ("Weight", $"{item.Weight * item.StackCount}") );
+
+		if ( item.StackCount > 1 )
+		{
+			rows.Add( ("Stack", $"{item.StackCount} / {item.MaxStack}") );
+		}
+
+		if ( item is WeaponPickup weapon )
+		{
+			rows.Add( ("—", "") );
+			rows.Add( ("Damage", $"{weapon.Damage:0}") );
+			rows.Add( ("Range", $"{weapon.Range:0}") );
+			rows.Add( ("Magazine", $"{weapon.MagazineSize}") );
+			rows.Add( ("Reload", $"{weapon.ReloadDuration:0.0}s") );
+			rows.Add( ("Hold Type", $"{weapon.HoldType}") );
+		}
+
+		return rows;
+	}
+
 	protected override int BuildHash()
 	{
 		if ( _backpack is null ) return _isOpen ? 1 : 0;
@@ -255,8 +420,11 @@
 				slotHash = System.HashCode.Combine( slotHash, item?.GetHashCode() ?? 0, item?.StackCount ?? 0 );
 			}
 		}
+		var pmp = PanelMousePos;
+		var movingMouseHash = (_dragging || _hoveredSlot.HasValue)
+			? ((int)pmp.x, (int)pmp.y)
+			: (0, 0);
 		return System.HashCode.Combine(
-			_isOpen, _dragging, _dragSource, sel, slotHash,
-			_dragging ? ((int)_mousePos.x, (int)_mousePos.y) : (0, 0) );
+			_isOpen, _dragging, _dragSource, sel, slotHash, _hoveredSlot, movingMouseHash );
 	}
 }
