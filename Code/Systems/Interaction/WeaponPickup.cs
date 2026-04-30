@@ -42,6 +42,22 @@ public sealed class WeaponPickup : Component, IInteractable
 	public float Range { get; set; } = 5000f;
 
 	/// <summary>
+	/// Rounds in a full magazine. Picked-up weapons start with a full mag.
+	/// </summary>
+	[Property]
+	[Range( 1, 100 )]
+	[Step( 1 )]
+	public int MagazineSize { get; set; } = 7;
+
+	/// <summary>
+	/// Seconds spent in the Reloading state before ammo refills.
+	/// </summary>
+	[Property]
+	[Range( 0.1f, 5f )]
+	[Step( 0.1f )]
+	public float ReloadDuration { get; set; } = 1.5f;
+
+	/// <summary>
 	/// Local-space position offset to apply when this weapon is held in the hand bone.
 	/// Tune in the editor for each weapon — pistol vs rifle vs bat all need different grips.
 	/// </summary>

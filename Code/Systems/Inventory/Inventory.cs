@@ -68,9 +68,12 @@ public sealed class Inventory : Component
 			behavior.Handedness = pickup.Handedness;
 			behavior.Damage = pickup.Damage;
 			behavior.Range = pickup.Range;
+			behavior.MagazineSize = pickup.MagazineSize;
+			behavior.ReloadDuration = pickup.ReloadDuration;
 			behavior.WeaponOffset = pickup.WeaponOffset;
 			behavior.WeaponAngleOffset = pickup.WeaponAngleOffset;
 			behavior.WeaponScale = pickup.WeaponScale;
+			behavior.OnEquipped();
 		}
 
 		Equipped = worldItem;

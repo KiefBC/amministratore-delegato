@@ -5,13 +5,24 @@
 @inherits PanelComponent
 @implements IEquipmentChangedListener
 @implements IHolsterChangedListener
+@implements IWeaponStateChangedListener
 
 <root>
 	@if ( !string.IsNullOrEmpty( _weaponName ) )
 	{
-		<div class="weapon @(_holstered ? "holstered" : "")">
-			<span class="state">@(_holstered ? "Holstered" : "Equipped")</span>
+		<div class="weapon @PanelStateClass">
+			<span class="state">@StateLabel</span>
 			<span class="name">@_weaponName</span>
+			@if ( _state == WeaponBehavior.WeaponState.Reloading )
+			{
+				<div class="reload-bar-bg">
+					<div class="reload-bar-fill" style="width: @(_reloadProgress * 100)%;"></div>
+				</div>
+			}
+			else
+			{
+				<span class="ammo @AmmoClass">@_currentAmmo / @_magazineSize</span>
+			}
 		</div>
 	}
 </root>
@@ -19,17 +30,58 @@
 @code {
 	private string _weaponName;
 	private bool _holstered;
+	private WeaponBehavior _weapon;
+
+	private WeaponBehavior.WeaponState _state = WeaponBehavior.WeaponState.Idle;
+	private int _currentAmmo;
+	private int _magazineSize = 1;
+	private float _reloadProgress;
+
+	private string PanelStateClass
+	{
+		get
+		{
+			if ( _holstered ) return "holstered";
+			if ( _state == WeaponBehavior.WeaponState.Reloading ) return "reloading";
+			if ( _state == WeaponBehavior.WeaponState.Empty ) return "empty";
+			return "";
+		}
+	}
+
+	private string StateLabel
+	{
+		get
+		{
+			if ( _holstered ) return "Holstered";
+			return _state switch
+			{
+				WeaponBehavior.WeaponState.Reloading => "Reloading",
+				WeaponBehavior.WeaponState.Empty => "Empty",
+				_ => "Equipped",
+			};
+		}
+	}
+
+	private string AmmoClass => _state == WeaponBehavior.WeaponState.Empty ? "ammo-empty" : "";
 
 	public void OnEquipmentChanged( Inventory inventory, GameObject equipped )
 	{
 		_weaponName = equipped?.Name;
-		// New pickup is drawn by default — Inventory.Equip doesn't holster.
 		if ( equipped is not null ) _holstered = false;
 	}
 
 	public void OnHolsterChanged( WeaponBehavior weapon, bool holstered )
 	{
 		_holstered = holstered;
+	}
+
+	public void OnWeaponStateChanged( WeaponBehavior weapon )
+	{
+		_weapon = weapon;
+		_state = weapon.State;
+		_currentAmmo = weapon.CurrentAmmo;
+		_magazineSize = weapon.MagazineSize;
+		_reloadProgress = weapon.ReloadProgress;
 	}
 
 	protected override void OnStart()
@@ -40,12 +92,27 @@
 			_weaponName = inventory.Equipped.Name;
 		}
 
-		var weapon = Scene.GetAllComponents<WeaponBehavior>().FirstOrDefault();
-		if ( weapon is not null )
+		_weapon = Scene.GetAllComponents<WeaponBehavior>().FirstOrDefault();
+		if ( _weapon is not null )
 		{
-			_holstered = weapon.IsHolstered;
+			_holstered = _weapon.IsHolstered;
+			_state = _weapon.State;
+			_currentAmmo = _weapon.CurrentAmmo;
+			_magazineSize = _weapon.MagazineSize;
 		}
 	}
 
-	protected override int BuildHash() => System.HashCode.Combine( _weaponName, _holstered );
+	protected override void OnUpdate()
+	{
+		// Reload progress is continuous — sample it each frame so the bar animates
+		// smoothly. The state-change broadcast only fires on transitions, not per-tick.
+		if ( _state == WeaponBehavior.WeaponState.Reloading && _weapon is not null )
+		{
+			_reloadProgress = _weapon.ReloadProgress;
+		}
+	}
+
+	protected override int BuildHash() => System.HashCode.Combine(
+		_weaponName, _holstered, _state, _currentAmmo, _magazineSize,
+		_state == WeaponBehavior.WeaponState.Reloading ? (int)(_reloadProgress * 100) : 0 );
 }
