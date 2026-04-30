@@ -314,25 +314,6 @@
               }
             },
             {
-              "__type": "Inventory",
-              "__guid": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
-              "__enabled": true,
-              "Flags": 0,
-              "BodyRenderer": {
-                "_type": "component",
-                "component_id": "d2898695-f228-4930-89dc-353c84ea4454",
-                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "SkinnedModelRenderer"
-              },
-              "HandBone": "hold_R",
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null
-            },
-            {
               "__type": "UnitComponent",
               "__guid": "7495be4a-cc9f-4431-aff8-db77fd967100",
               "__enabled": true,
@@ -354,27 +335,6 @@
               "Patrol": null,
               "Physics": null,
               "Team": "Player"
-            },
-            {
-              "__type": "WeaponBehavior",
-              "__guid": "8242a54a-5bc2-46e9-8cda-5f8818a51326",
-              "__enabled": true,
-              "Flags": 0,
-              "AnimHelper": null,
-              "BodyRenderer": null,
-              "Damage": 25,
-              "HoldType": "Pistol",
-              "Inventory": null,
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null,
-              "Range": 5000,
-              "WeaponAngleOffset": "0,0,0",
-              "WeaponOffset": "0,0,0",
-              "WeaponScale": "1,1,1"
             }
           ],
           "Children": [
@@ -8331,18 +8291,6 @@
               "ScaleStrategy": "ConsistentHeight",
               "TargetCamera": null,
               "ZIndex": 100
-            },
-            {
-              "__type": "Sandbox.InteractPrompt",
-              "__guid": "314d79e6-317d-4353-97d0-c5e3f793e6bc",
-              "__enabled": true,
-              "Flags": 0,
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null
             }
           ],
           "Children": []
@@ -8460,25 +8408,6 @@
               "OverrideMassCenter": false,
               "RigidbodyFlags": 0,
               "StartAsleep": false
-            },
-            {
-              "__type": "WeaponPickup",
-              "__guid": "ec154d7f-4b2d-4997-93b6-a840f43a5cfb",
-              "__enabled": true,
-              "Flags": 0,
-              "Damage": 25,
-              "HoldType": "Pistol",
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null,
-              "PickupRange": 100,
-              "Range": 5000,
-              "WeaponAngleOffset": "-11.5679998,-8.44799995,0",
-              "WeaponOffset": "3.01600003,-0.864000022,2.12800002",
-              "WeaponScale": "0.680000007,0.680000007,0.680000007"
             }
           ],
           "Children": []
@@ -8640,20 +8569,6 @@
           "OverrideMassCenter": false,
           "RigidbodyFlags": 0,
           "StartAsleep": false
-        },
-        {
-          "__type": "SittableInteractable",
-          "__guid": "dd987b4e-fa69-42ac-b930-13f41acc3224",
-          "__enabled": true,
-          "Flags": 0,
-          "Chair": null,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "SitRange": 100
         }
       ],
       "Children": [
