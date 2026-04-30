@@ -1,0 +1,40 @@
+@import "/Systems/UI/_theme.scss";
+
+HitMarker {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	pointer-events: none;
+
+	.marker {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: $hitmark-size;
+		height: $hitmark-size;
+		transform: translate( -50%, -50% );
+	}
+
+	.line {
+		position: absolute;
+		width: $hitmark-line-width;
+		height: $hitmark-line-height;
+		background-color: $text-primary;
+		box-shadow: $dot-shadow;
+	}
+
+	.marker.hit .line {
+		background-color: $text-primary;
+	}
+
+	.marker.kill .line {
+		background-color: $accent-danger-strong;
+		width: $hitmark-line-width-kill;
+		height: $hitmark-line-height-kill;
+	}
+
+	.line.top-left { top: 2px; left: 2px; transform: rotate( 45deg ); transform-origin: left; }
+	.line.top-right { top: 2px; right: 2px; transform: rotate( -45deg ); transform-origin: right; }
+	.line.bottom-left { bottom: 2px; left: 2px; transform: rotate( -45deg ); transform-origin: left; }
+	.line.bottom-right { bottom: 2px; right: 2px; transform: rotate( 45deg ); transform-origin: right; }
+}

@@ -1,0 +1,40 @@
+@import "/Systems/UI/_theme.scss";
+
+WeaponIndicator {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	pointer-events: none;
+
+	.weapon {
+		position: absolute;
+		right: $corner-margin;
+		bottom: $corner-margin;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 2px;
+		padding: 10px 16px;
+		background-color: $panel-bg;
+		border-radius: $panel-radius;
+		font-family: $font-default;
+		transition: opacity 0.15s ease-out;
+
+		&.holstered {
+			opacity: $inactive-opacity;
+		}
+	}
+
+	.state {
+		color: $text-secondary;
+		font-size: $text-eyebrow;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+	}
+
+	.name {
+		color: $text-primary;
+		font-size: $text-large;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+	}
+}

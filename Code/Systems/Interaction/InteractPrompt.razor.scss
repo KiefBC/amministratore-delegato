@@ -1,0 +1,27 @@
+@import "/Systems/UI/_theme.scss";
+
+InteractPrompt {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	pointer-events: none;
+
+	.prompt {
+		position: absolute;
+		left: 50%;
+		bottom: $prompt-margin-bottom;
+		transform: translateX( -50% );
+		color: $text-primary;
+		font-size: $text-prompt;
+		text-shadow: $text-shadow-default;
+		background-color: $panel-bg-prompt;
+		padding: $panel-padding-prompt;
+		border-radius: $panel-radius-small;
+		font-family: $font-default;
+	}
+
+	.key {
+		color: $text-key;
+		font-weight: bold;
+	}
+}
