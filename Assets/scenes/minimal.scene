@@ -363,6 +363,7 @@
               "AnimHelper": null,
               "BodyRenderer": null,
               "Damage": 25,
+              "Handedness": "Right",
               "HoldType": "Pistol",
               "Inventory": null,
               "OnComponentDestroy": null,
@@ -2971,7 +2972,7 @@
           "__version": 2,
           "Flags": 0,
           "Name": "Main Camera",
-          "Position": "-385.38855,-60.4086609,92.0910797",
+          "Position": "-385.38855,-60.4086609,92.040062",
           "Rotation": "0,0,0,1",
           "Scale": "1,1,1",
           "Tags": "",
@@ -6851,7 +6852,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Position",
-                "Value": "-8.52586365,-0.396164894,-1.70469284E-05"
+                "Value": "-16.5161533,-1.24628878,-2.28881836E-05"
               },
               {
                 "Target": {
@@ -6859,7 +6860,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Rotation",
-                "Value": "-2.98023224E-08,-1.78813934E-07,0.0938982964,0.995581388"
+                "Value": "-2.23517418E-07,-2.68220901E-07,0.122970462,0.992409766"
               },
               {
                 "Target": {
@@ -6875,7 +6876,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Position",
-                "Value": "-4.2077117,-13.1738758,12.3801994"
+                "Value": "-8.43850803,-25.4748192,18.7136936"
               },
               {
                 "Target": {
@@ -6883,7 +6884,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Rotation",
-                "Value": "-0.678563535,0.229236931,0.00795805454,-0.697810769"
+                "Value": "0.548529565,-0.094209522,-0.775860608,0.297122866"
               },
               {
                 "Target": {
@@ -6899,7 +6900,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Position",
-                "Value": "11.6925077,-4.27961349E-05,-0.000106215477"
+                "Value": "11.6925087,-4.91142273E-05,-0.000104188919"
               },
               {
                 "Target": {
@@ -6907,7 +6908,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Rotation",
-                "Value": "-1.93715096E-06,5.36441803E-07,0.0301841348,-0.999544561"
+                "Value": "-1.99303031E-06,5.66244125E-07,0.0301842093,-0.999544621"
               },
               {
                 "Target": {
@@ -6923,7 +6924,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Position",
-                "Value": "11.4816589,3.11732292E-05,-6.83069229E-05"
+                "Value": "11.4816628,3.12328339E-05,-6.69956207E-05"
               },
               {
                 "Target": {
@@ -6931,7 +6932,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Rotation",
-                "Value": "0.704695582,-0.0222176611,-0.0532006845,-0.707163692"
+                "Value": "0.704695642,-0.0222176313,-0.0532007143,-0.707163692"
               },
               {
                 "Target": {
@@ -6947,7 +6948,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Position",
-                "Value": "-4.85667801,-12.8031578,-12.9609766"
+                "Value": "-9.28214836,-24.6988964,-20.2901802"
               },
               {
                 "Target": {
@@ -6955,7 +6956,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Rotation",
-                "Value": "0.640624762,-0.238144055,-0.0473262221,-0.728455901"
+                "Value": "-0.57668674,0.117784172,-0.718715191,0.370146364"
               },
               {
                 "Target": {
@@ -6971,7 +6972,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Position",
-                "Value": "11.6925297,-3.29017639E-05,2.02655792E-06"
+                "Value": "11.6925297,-3.23057175E-05,1.31130219E-06"
               },
               {
                 "Target": {
@@ -6979,7 +6980,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Rotation",
-                "Value": "-2.33948231E-06,2.98023224E-08,-0.0301856995,0.999544442"
+                "Value": "-2.38418579E-06,5.96046448E-08,-0.0301856846,0.999544501"
               },
               {
                 "Target": {
@@ -6995,7 +6996,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Position",
-                "Value": "11.4816647,6.29425049E-05,-7.43865967E-05"
+                "Value": "11.4816637,6.30617142E-05,-7.5340271E-05"
               },
               {
                 "Target": {
@@ -7003,7 +7004,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Rotation",
-                "Value": "0.707605004,-0.0219993293,0.0532981455,0.704251647"
+                "Value": "0.707604945,-0.0219993461,0.0532981306,0.704251647"
               },
               {
                 "Target": {
@@ -7019,7 +7020,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Position",
-                "Value": "-21.7585526,8.20916843,2.52723694E-05"
+                "Value": "-34.083931,20.9446507,5.34057617E-05"
               },
               {
                 "Target": {
@@ -7027,7 +7028,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Rotation",
-                "Value": "-0.995869517,0.0907972753,-7.4505806E-08,-2.62260437E-06"
+                "Value": "-0.959653795,0.281184852,8.94069672E-08,-2.93552876E-06"
               },
               {
                 "Target": {
@@ -7043,7 +7044,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Position",
-                "Value": "3.59376931,2.62260437E-05,-6.0737133E-05"
+                "Value": "3.59376907,2.6345253E-05,-6.04987144E-05"
               },
               {
                 "Target": {
@@ -7051,7 +7052,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Rotation",
-                "Value": "2.08616257E-07,-7.4505806E-07,0.201891318,0.979408145"
+                "Value": "2.68220901E-07,-6.10947609E-07,0.201891378,0.979408145"
               },
               {
                 "Target": {
@@ -7115,7 +7116,7 @@
                   "IdValue": "5ce6f4b8-eb5d-41c5-acaa-1ebd2d73446a"
                 },
                 "Property": "Position",
-                "Value": "16.5252132,-9.65595245E-05,-1.66893005E-05"
+                "Value": "16.5252151,-9.77516174E-05,-1.66893005E-05"
               },
               {
                 "Target": {
@@ -7163,7 +7164,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Position",
-                "Value": "17.8480988,0.000113010406,-4.43458557E-05"
+                "Value": "17.8480988,0.000115394592,-4.33921814E-05"
               },
               {
                 "Target": {
@@ -7171,7 +7172,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Rotation",
-                "Value": "-5.96046448E-08,-2.5331974E-07,0.0171018988,0.999853969"
+                "Value": "-5.96046448E-08,-2.5331974E-07,0.0171018541,0.999853909"
               },
               {
                 "Target": {
@@ -7187,7 +7188,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Position",
-                "Value": "16.5251999,1.1920929E-05,-3.19480896E-05"
+                "Value": "16.525198,1.1920929E-05,-3.38554382E-05"
               },
               {
                 "Target": {
@@ -7195,7 +7196,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Rotation",
-                "Value": "-0.0224070176,-0.0104060471,-0.51063323,0.859443426"
+                "Value": "-0.0224070102,-0.0104060471,-0.51063323,0.859443307"
               }
             ],
             "MovedObjects": []
@@ -8253,7 +8254,7 @@
           "__guid": "9fd1b5e1-ab69-4e24-9cdc-d70b57fade2c",
           "__version": 2,
           "Flags": 0,
-          "Name": "Screen",
+          "Name": "Crosshair",
           "Position": "0,0,0",
           "Rotation": "0,0,0,1",
           "Scale": "1,1,1",
@@ -8294,6 +8295,19 @@
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
               "OnComponentUpdate": null
+            },
+            {
+              "__type": "Sandbox.HitMarker",
+              "__guid": "2d73ca0c-0cef-4dde-97d5-2fa61fde132a",
+              "__enabled": true,
+              "Flags": 0,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "PlayerRoot": null
             }
           ],
           "Children": []
@@ -8335,6 +8349,154 @@
             {
               "__type": "Sandbox.InteractPrompt",
               "__guid": "314d79e6-317d-4353-97d0-c5e3f793e6bc",
+              "__enabled": true,
+              "Flags": 0,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null
+            }
+          ],
+          "Children": []
+        },
+        {
+          "__guid": "23695fec-b3ec-4979-aa9b-c60a2d79b547",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Health",
+          "Position": "0,0,0",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.ScreenPanel",
+              "__guid": "2d1bc458-739f-4f6b-8ff1-a718321df7b3",
+              "__enabled": true,
+              "Flags": 0,
+              "AutoScreenScale": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Opacity": 1,
+              "Scale": 1,
+              "ScaleStrategy": "ConsistentHeight",
+              "TargetCamera": null,
+              "ZIndex": 100
+            },
+            {
+              "__type": "Sandbox.HealthBar",
+              "__guid": "248f220e-1e4a-422f-8746-2e79dc57a41d",
+              "__enabled": true,
+              "Flags": 0,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Player": null
+            }
+          ],
+          "Children": []
+        },
+        {
+          "__guid": "b14301f0-4b63-483d-9b3e-b64dd776cc34",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Equpped",
+          "Position": "0,0,0",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.ScreenPanel",
+              "__guid": "545e6edf-9648-4118-b340-af463e0a0779",
+              "__enabled": true,
+              "Flags": 0,
+              "AutoScreenScale": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Opacity": 1,
+              "Scale": 1,
+              "ScaleStrategy": "ConsistentHeight",
+              "TargetCamera": null,
+              "ZIndex": 100
+            },
+            {
+              "__type": "Sandbox.WeaponIndicator",
+              "__guid": "4aece710-9c8e-46aa-80cd-972e5a47c617",
+              "__enabled": true,
+              "Flags": 0,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null
+            }
+          ],
+          "Children": []
+        },
+        {
+          "__guid": "36a0a94f-8b1d-4aa4-844c-ef91b76be9b9",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Money",
+          "Position": "0,0,0",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.ScreenPanel",
+              "__guid": "1c7ee2dd-76ef-440f-b4ca-d6a448223b3f",
+              "__enabled": true,
+              "Flags": 0,
+              "AutoScreenScale": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Opacity": 1,
+              "Scale": 1,
+              "ScaleStrategy": "ConsistentHeight",
+              "TargetCamera": null,
+              "ZIndex": 100
+            },
+            {
+              "__type": "Sandbox.MoneyDisplay",
+              "__guid": "7395051b-e855-475c-850e-f19574d01a4f",
               "__enabled": true,
               "Flags": 0,
               "OnComponentDestroy": null,
@@ -8467,6 +8629,7 @@
               "__enabled": true,
               "Flags": 0,
               "Damage": 25,
+              "Handedness": "Right",
               "HoldType": "Pistol",
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
@@ -8481,234 +8644,6 @@
               "WeaponScale": "0.680000007,0.680000007,0.680000007"
             }
           ],
-          "Children": []
-        }
-      ]
-    },
-    {
-      "__guid": "93929331-d6e8-466b-b4ab-3e12183b1b53",
-      "__version": 2,
-      "Flags": 0,
-      "Name": "Office Chair",
-      "Position": "-95.7038727,-288.832428,6.87390566E-05",
-      "Rotation": "0,0,0,1",
-      "Scale": "1,1,1",
-      "Tags": "",
-      "Enabled": true,
-      "NetworkMode": 2,
-      "NetworkFlags": 0,
-      "NetworkOrphaned": 0,
-      "NetworkTransmit": true,
-      "OwnerTransfer": 1,
-      "Components": [
-        {
-          "__type": "Sandbox.Prop",
-          "__guid": "66f3f9a6-f987-4c19-85c9-bd96c265174b",
-          "__enabled": true,
-          "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "Health": 0,
-          "IsStatic": false,
-          "MaterialGroup": null,
-          "Model": "models/chairs/chair20.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnPropBreak": null,
-          "OnPropTakeDamage": null,
-          "StartAsleep": false,
-          "Tint": "1,1,1,1"
-        },
-        {
-          "__type": "Sandbox.BaseChair",
-          "__guid": "89687b00-071a-4923-94aa-45aa96c76465",
-          "__enabled": true,
-          "Flags": 0,
-          "ExitPoints": [
-            {
-              "_type": "gameobject",
-              "go": "ad6198e0-39cf-49e9-90c6-719889812c01"
-            }
-          ],
-          "EyePosition": {
-            "_type": "gameobject",
-            "go": "3b1da20d-589b-4e42-b244-07742c64eabd"
-          },
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "PitchRange": "-90,70",
-          "SeatPosition": {
-            "_type": "gameobject",
-            "go": "ac1c806a-70ab-47be-9e85-249b14e8e53b"
-          },
-          "SitHeight": 0.32142854,
-          "SitPose": "ChairCrossed",
-          "TooltipDescription": "Lets the Citizen sit on the chair",
-          "TooltipIcon": "airline_seat_recline_normal",
-          "TooltipTitle": "Sit",
-          "YawRange": "-120,120"
-        },
-        {
-          "__type": "Sandbox.ModelRenderer",
-          "__guid": "8a8f8a0b-aa16-4f48-a089-3d45a139d048",
-          "__enabled": true,
-          "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "CreateAttachments": false,
-          "LodOverride": null,
-          "MaterialGroup": null,
-          "MaterialOverride": null,
-          "Materials": null,
-          "Model": "models/chairs/chair20.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "RenderOptions": {
-            "GameLayer": true,
-            "OverlayLayer": false,
-            "BloomLayer": false,
-            "AfterUILayer": false
-          },
-          "RenderType": "On",
-          "Tint": "1,1,1,1"
-        },
-        {
-          "__type": "Sandbox.ModelCollider",
-          "__guid": "34cd7b35-9c78-4436-a514-d11e3b2044f4",
-          "__enabled": true,
-          "Flags": 0,
-          "ColliderFlags": 0,
-          "Elasticity": null,
-          "Friction": null,
-          "IsTrigger": false,
-          "Model": "models/chairs/chair20.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnObjectTriggerEnter": null,
-          "OnObjectTriggerExit": null,
-          "OnTriggerEnter": null,
-          "OnTriggerExit": null,
-          "RollingResistance": null,
-          "Static": false,
-          "Surface": null,
-          "SurfaceVelocity": "0,0,0"
-        },
-        {
-          "__type": "Sandbox.Rigidbody",
-          "__guid": "14eb919c-7fb3-4eb2-ba19-6c95181c3501",
-          "__enabled": true,
-          "Flags": 0,
-          "AngularDamping": 0,
-          "EnableImpactDamage": true,
-          "EnhancedCcd": false,
-          "Gravity": true,
-          "GravityScale": 1,
-          "ImpactDamage": 0,
-          "LinearDamping": 0,
-          "Locking": {
-            "X": false,
-            "Y": false,
-            "Z": false,
-            "Pitch": false,
-            "Yaw": false,
-            "Roll": false
-          },
-          "MassCenterOverride": "0,0,0",
-          "MassOverride": 0,
-          "MinImpactDamageSpeed": 500,
-          "MotionEnabled": true,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OverrideMassCenter": false,
-          "RigidbodyFlags": 0,
-          "StartAsleep": false
-        },
-        {
-          "__type": "SittableInteractable",
-          "__guid": "dd987b4e-fa69-42ac-b930-13f41acc3224",
-          "__enabled": true,
-          "Flags": 0,
-          "Chair": null,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "SitRange": 100
-        }
-      ],
-      "Children": [
-        {
-          "__guid": "3b1da20d-589b-4e42-b244-07742c64eabd",
-          "__version": 2,
-          "Flags": 0,
-          "Name": "Eye Level",
-          "Position": "0,0,49.5816383",
-          "Rotation": "0,0,0,1",
-          "Scale": "1,1,1",
-          "Tags": "",
-          "Enabled": true,
-          "NetworkMode": 2,
-          "NetworkFlags": 0,
-          "NetworkOrphaned": 0,
-          "NetworkTransmit": true,
-          "OwnerTransfer": 1,
-          "Components": [],
-          "Children": []
-        },
-        {
-          "__guid": "ac1c806a-70ab-47be-9e85-249b14e8e53b",
-          "__version": 2,
-          "Flags": 0,
-          "Name": "Sitting",
-          "Position": "0,0,0.666565895",
-          "Rotation": "0,0,0,1",
-          "Scale": "1,1,1",
-          "Tags": "",
-          "Enabled": true,
-          "NetworkMode": 2,
-          "NetworkFlags": 0,
-          "NetworkOrphaned": 0,
-          "NetworkTransmit": true,
-          "OwnerTransfer": 1,
-          "Components": [],
-          "Children": []
-        },
-        {
-          "__guid": "ad6198e0-39cf-49e9-90c6-719889812c01",
-          "__version": 2,
-          "Flags": 0,
-          "Name": "Exit",
-          "Position": "21.119236,0,14.8426962",
-          "Rotation": "0,0,0,1",
-          "Scale": "1,1,1",
-          "Tags": "",
-          "Enabled": true,
-          "NetworkMode": 2,
-          "NetworkFlags": 0,
-          "NetworkOrphaned": 0,
-          "NetworkTransmit": true,
-          "OwnerTransfer": 1,
-          "Components": [],
           "Children": []
         }
       ]
@@ -8840,11 +8775,11 @@
       "Children": []
     },
     {
-      "__guid": "43521d4e-7ca2-4538-9860-66777fa540c8",
+      "__guid": "498cefa6-115f-40e7-b6ee-abff8d5954c5",
       "__version": 2,
       "Flags": 0,
-      "Name": "Antique Chair",
-      "Position": "-174.47699,-242.540405,11.1422443",
+      "Name": "Furniture",
+      "Position": "0,0,0",
       "Rotation": "0,0,0,1",
       "Scale": "1,1,1",
       "Tags": "",
@@ -8854,138 +8789,475 @@
       "NetworkOrphaned": 0,
       "NetworkTransmit": true,
       "OwnerTransfer": 1,
-      "Components": [
+      "Components": [],
+      "Children": [
         {
-          "__type": "Sandbox.Prop",
-          "__guid": "cf18522b-cc0a-4fb4-a484-6f38011df51e",
-          "__enabled": true,
+          "__guid": "43521d4e-7ca2-4538-9860-66777fa540c8",
+          "__version": 2,
           "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "Health": 0,
-          "IsStatic": false,
-          "MaterialGroup": null,
-          "Model": "models/antique_chair.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnPropBreak": null,
-          "OnPropTakeDamage": null,
-          "StartAsleep": false,
-          "Tint": "1,1,1,1"
+          "Name": "Antique Chair",
+          "Position": "-174.147491,-242.540405,11.1422443",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.Prop",
+              "__guid": "cf18522b-cc0a-4fb4-a484-6f38011df51e",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "Health": 0,
+              "IsStatic": false,
+              "MaterialGroup": null,
+              "Model": "models/antique_chair.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnPropBreak": null,
+              "OnPropTakeDamage": null,
+              "StartAsleep": false,
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelRenderer",
+              "__guid": "0e203398-5e42-4fd7-b7ab-a59e6fd8d7b4",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "CreateAttachments": false,
+              "LodOverride": null,
+              "MaterialGroup": null,
+              "MaterialOverride": null,
+              "Materials": null,
+              "Model": "models/antique_chair.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "RenderOptions": {
+                "GameLayer": true,
+                "OverlayLayer": false,
+                "BloomLayer": false,
+                "AfterUILayer": false
+              },
+              "RenderType": "On",
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelCollider",
+              "__guid": "f0681243-9126-4470-a9ad-409c3b96a299",
+              "__enabled": true,
+              "Flags": 0,
+              "ColliderFlags": 0,
+              "Elasticity": null,
+              "Friction": null,
+              "IsTrigger": false,
+              "Model": "models/antique_chair.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnObjectTriggerEnter": null,
+              "OnObjectTriggerExit": null,
+              "OnTriggerEnter": null,
+              "OnTriggerExit": null,
+              "RollingResistance": null,
+              "Static": false,
+              "Surface": null,
+              "SurfaceVelocity": "0,0,0"
+            },
+            {
+              "__type": "Sandbox.Rigidbody",
+              "__guid": "27651d9c-06b3-4f03-a549-e7e76e9f595e",
+              "__enabled": true,
+              "Flags": 0,
+              "AngularDamping": 0,
+              "EnableImpactDamage": true,
+              "EnhancedCcd": false,
+              "Gravity": true,
+              "GravityScale": 1,
+              "ImpactDamage": 0,
+              "LinearDamping": 0,
+              "Locking": {
+                "X": false,
+                "Y": false,
+                "Z": false,
+                "Pitch": false,
+                "Yaw": false,
+                "Roll": false
+              },
+              "MassCenterOverride": "0,0,0",
+              "MassOverride": 90,
+              "MinImpactDamageSpeed": 500,
+              "MotionEnabled": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OverrideMassCenter": false,
+              "RigidbodyFlags": 0,
+              "StartAsleep": false
+            },
+            {
+              "__type": "Sandbox.BaseChair",
+              "__guid": "4be9785b-c8ac-4461-a321-6ab16a03dbc2",
+              "__enabled": true,
+              "Flags": 0,
+              "ExitPoints": [
+                {
+                  "_type": "gameobject",
+                  "go": "906453a9-2319-4e24-abf9-fe99392c160f"
+                }
+              ],
+              "EyePosition": {
+                "_type": "gameobject",
+                "go": "bb5f342a-2a88-4e67-99a7-b4dccdf49fb0"
+              },
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "PitchRange": "-90.3120041,70.1600189",
+              "SeatPosition": {
+                "_type": "gameobject",
+                "go": "9d51edbc-d756-4186-8a32-027e0d5b8b45"
+              },
+              "SitHeight": 0,
+              "SitPose": "ChairForward",
+              "TooltipDescription": "",
+              "TooltipIcon": "airline_seat_recline_normal",
+              "TooltipTitle": "Sit",
+              "YawRange": "-119.759964,120.048027"
+            },
+            {
+              "__type": "SittableInteractable",
+              "__guid": "7485b4e0-11a3-41be-a5ea-8711db3a7239",
+              "__enabled": true,
+              "Flags": 0,
+              "Chair": {
+                "_type": "component",
+                "component_id": "4be9785b-c8ac-4461-a321-6ab16a03dbc2",
+                "go": "43521d4e-7ca2-4538-9860-66777fa540c8",
+                "component_type": "BaseChair"
+              },
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "SitRange": 100
+            }
+          ],
+          "Children": [
+            {
+              "__guid": "bb5f342a-2a88-4e67-99a7-b4dccdf49fb0",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Eye Level",
+              "Position": "20.2536469,0,46.6619339",
+              "Rotation": "0,0,0,1",
+              "Scale": "0.200000003,0.200000003,0.200000003",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [],
+              "Children": []
+            },
+            {
+              "__guid": "9d51edbc-d756-4186-8a32-027e0d5b8b45",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Sitting",
+              "Position": "28.8942719,0,-1.97201252",
+              "Rotation": "0,0,0,1",
+              "Scale": "1,1,1",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [],
+              "Children": []
+            },
+            {
+              "__guid": "906453a9-2319-4e24-abf9-fe99392c160f",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Exit",
+              "Position": "57.692421,0,27.2891521",
+              "Rotation": "0,0,0,1",
+              "Scale": "1,1,1",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [],
+              "Children": []
+            }
+          ]
         },
         {
-          "__type": "Sandbox.ModelRenderer",
-          "__guid": "0e203398-5e42-4fd7-b7ab-a59e6fd8d7b4",
-          "__enabled": true,
+          "__guid": "93929331-d6e8-466b-b4ab-3e12183b1b53",
+          "__version": 2,
           "Flags": 0,
-          "BodyGroups": 18446744073709551615,
-          "CreateAttachments": false,
-          "LodOverride": null,
-          "MaterialGroup": null,
-          "MaterialOverride": null,
-          "Materials": null,
-          "Model": "models/antique_chair.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "RenderOptions": {
-            "GameLayer": true,
-            "OverlayLayer": false,
-            "BloomLayer": false,
-            "AfterUILayer": false
-          },
-          "RenderType": "On",
-          "Tint": "1,1,1,1"
-        },
-        {
-          "__type": "Sandbox.ModelCollider",
-          "__guid": "f0681243-9126-4470-a9ad-409c3b96a299",
-          "__enabled": true,
-          "Flags": 0,
-          "ColliderFlags": 0,
-          "Elasticity": null,
-          "Friction": null,
-          "IsTrigger": false,
-          "Model": "models/antique_chair.vmdl",
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OnObjectTriggerEnter": null,
-          "OnObjectTriggerExit": null,
-          "OnTriggerEnter": null,
-          "OnTriggerExit": null,
-          "RollingResistance": null,
-          "Static": false,
-          "Surface": null,
-          "SurfaceVelocity": "0,0,0"
-        },
-        {
-          "__type": "Sandbox.Rigidbody",
-          "__guid": "27651d9c-06b3-4f03-a549-e7e76e9f595e",
-          "__enabled": true,
-          "Flags": 0,
-          "AngularDamping": 0,
-          "EnableImpactDamage": true,
-          "EnhancedCcd": false,
-          "Gravity": true,
-          "GravityScale": 1,
-          "ImpactDamage": 0,
-          "LinearDamping": 0,
-          "Locking": {
-            "X": false,
-            "Y": false,
-            "Z": false,
-            "Pitch": false,
-            "Yaw": false,
-            "Roll": false
-          },
-          "MassCenterOverride": "0,0,0",
-          "MassOverride": 90,
-          "MinImpactDamageSpeed": 500,
-          "MotionEnabled": true,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "OverrideMassCenter": false,
-          "RigidbodyFlags": 0,
-          "StartAsleep": false
-        },
-        {
-          "__type": "Sandbox.BaseChair",
-          "__guid": "4be9785b-c8ac-4461-a321-6ab16a03dbc2",
-          "__enabled": true,
-          "Flags": 0,
-          "ExitPoints": [],
-          "EyePosition": null,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "PitchRange": "-90.3120041,70.1600189",
-          "SeatPosition": null,
-          "SitHeight": 0,
-          "SitPose": "Chair",
-          "TooltipDescription": "",
-          "TooltipIcon": "airline_seat_recline_normal",
-          "TooltipTitle": "Sit",
-          "YawRange": "-119.759964,120.048027"
+          "Name": "Office Chair",
+          "Position": "-95.7038727,-288.832428,6.87390566E-05",
+          "Rotation": "0,0,0,1",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.Prop",
+              "__guid": "66f3f9a6-f987-4c19-85c9-bd96c265174b",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "Health": 0,
+              "IsStatic": false,
+              "MaterialGroup": null,
+              "Model": "models/chairs/chair20.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnPropBreak": null,
+              "OnPropTakeDamage": null,
+              "StartAsleep": false,
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.BaseChair",
+              "__guid": "89687b00-071a-4923-94aa-45aa96c76465",
+              "__enabled": true,
+              "Flags": 0,
+              "ExitPoints": [
+                {
+                  "_type": "gameobject",
+                  "go": "ad6198e0-39cf-49e9-90c6-719889812c01"
+                }
+              ],
+              "EyePosition": {
+                "_type": "gameobject",
+                "go": "3b1da20d-589b-4e42-b244-07742c64eabd"
+              },
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "PitchRange": "-90,70",
+              "SeatPosition": {
+                "_type": "gameobject",
+                "go": "ac1c806a-70ab-47be-9e85-249b14e8e53b"
+              },
+              "SitHeight": 0.32142854,
+              "SitPose": "ChairCrossed",
+              "TooltipDescription": "Lets the Citizen sit on the chair",
+              "TooltipIcon": "airline_seat_recline_normal",
+              "TooltipTitle": "Sit",
+              "YawRange": "-120,120"
+            },
+            {
+              "__type": "Sandbox.ModelRenderer",
+              "__guid": "8a8f8a0b-aa16-4f48-a089-3d45a139d048",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "CreateAttachments": false,
+              "LodOverride": null,
+              "MaterialGroup": null,
+              "MaterialOverride": null,
+              "Materials": null,
+              "Model": "models/chairs/chair20.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "RenderOptions": {
+                "GameLayer": true,
+                "OverlayLayer": false,
+                "BloomLayer": false,
+                "AfterUILayer": false
+              },
+              "RenderType": "On",
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelCollider",
+              "__guid": "34cd7b35-9c78-4436-a514-d11e3b2044f4",
+              "__enabled": true,
+              "Flags": 0,
+              "ColliderFlags": 0,
+              "Elasticity": null,
+              "Friction": null,
+              "IsTrigger": false,
+              "Model": "models/chairs/chair20.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnObjectTriggerEnter": null,
+              "OnObjectTriggerExit": null,
+              "OnTriggerEnter": null,
+              "OnTriggerExit": null,
+              "RollingResistance": null,
+              "Static": false,
+              "Surface": null,
+              "SurfaceVelocity": "0,0,0"
+            },
+            {
+              "__type": "Sandbox.Rigidbody",
+              "__guid": "14eb919c-7fb3-4eb2-ba19-6c95181c3501",
+              "__enabled": true,
+              "Flags": 0,
+              "AngularDamping": 0,
+              "EnableImpactDamage": true,
+              "EnhancedCcd": false,
+              "Gravity": true,
+              "GravityScale": 1,
+              "ImpactDamage": 0,
+              "LinearDamping": 0,
+              "Locking": {
+                "X": true,
+                "Y": true,
+                "Z": true,
+                "Pitch": true,
+                "Yaw": true,
+                "Roll": true
+              },
+              "MassCenterOverride": "0,0,0",
+              "MassOverride": 0,
+              "MinImpactDamageSpeed": 500,
+              "MotionEnabled": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OverrideMassCenter": false,
+              "RigidbodyFlags": 0,
+              "StartAsleep": false
+            },
+            {
+              "__type": "SittableInteractable",
+              "__guid": "dd987b4e-fa69-42ac-b930-13f41acc3224",
+              "__enabled": true,
+              "Flags": 0,
+              "Chair": {
+                "_type": "component",
+                "component_id": "89687b00-071a-4923-94aa-45aa96c76465",
+                "go": "93929331-d6e8-466b-b4ab-3e12183b1b53",
+                "component_type": "BaseChair"
+              },
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "SitRange": 100
+            }
+          ],
+          "Children": [
+            {
+              "__guid": "3b1da20d-589b-4e42-b244-07742c64eabd",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Eye Level",
+              "Position": "0,0,49.5816383",
+              "Rotation": "0,0,0,1",
+              "Scale": "1,1,1",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [],
+              "Children": []
+            },
+            {
+              "__guid": "ac1c806a-70ab-47be-9e85-249b14e8e53b",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Sitting",
+              "Position": "0,0,0.666565895",
+              "Rotation": "0,0,0,1",
+              "Scale": "1,1,1",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [],
+              "Children": []
+            },
+            {
+              "__guid": "ad6198e0-39cf-49e9-90c6-719889812c01",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Exit",
+              "Position": "21.119236,0,14.8426962",
+              "Rotation": "0,0,0,1",
+              "Scale": "1,1,1",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [],
+              "Children": []
+            }
+          ]
         }
-      ],
-      "Children": []
+      ]
     }
   ],
   "SceneProperties": {

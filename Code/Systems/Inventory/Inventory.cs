@@ -77,6 +77,7 @@ public sealed class Inventory : Component
 		pickup.Destroy();
 
 		Log.Info( $"Equipped {worldItem.Name}" );
+		Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, Equipped ) );
 	}
 
 	/// <summary>
@@ -88,5 +89,6 @@ public sealed class Inventory : Component
 		if ( !Equipped.IsValid() ) return;
 		Equipped.Destroy();
 		Equipped = null;
+		Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, null ) );
 	}
 }

@@ -43,6 +43,13 @@ public sealed class WeaponBehavior : Component
 	private GameObject Weapon => Inventory?.Equipped;
 	private bool _holstered;
 
+	/// <summary>
+	/// True when the weapon has been manually holstered by the player. Read-only — toggle
+	/// via the in-game holster input. Subscribe to <see cref="IHolsterChangedListener"/>
+	/// to react to changes.
+	/// </summary>
+	public bool IsHolstered => _holstered;
+
 	protected override void OnStart()
 	{
 		Inventory ??= Components.Get<Inventory>();
@@ -60,6 +67,7 @@ public sealed class WeaponBehavior : Component
 		{
 			_holstered = !_holstered;
 			Weapon.Enabled = !_holstered;
+			Scene.RunEvent<IHolsterChangedListener>( l => l.OnHolsterChanged( this, _holstered ) );
 		}
 
 		var hasWeapon = Weapon.IsValid();

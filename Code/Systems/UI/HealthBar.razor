@@ -1,0 +1,132 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Linq;
+@namespace Sandbox
+@inherits PanelComponent
+@implements IDamagedListener
+
+<root>
+	@if ( Player is not null )
+	{
+		<div class="health @FlashClass">
+			<div class="bar-bg">
+				<div class="bar-fill" style="width: @(Pct * 100)%; background-color: @FillColor;"></div>
+			</div>
+			<div class="numbers">@_displayHealth.ToString( "F0" ) / @_maxHealth.ToString( "F0" )</div>
+		</div>
+	}
+</root>
+
+@code {
+	/// <summary>
+	/// The player's UnitComponent. Auto-found in OnStart by Team == Player if not wired.
+	/// </summary>
+	[Property] public UnitComponent Player { get; set; }
+
+	private const float FlashDuration = 0.25f;
+
+	private float _displayHealth;
+	private float _maxHealth = 100f;
+	private float _flashTimer;
+
+	private float Pct => _maxHealth > 0f ? float.Clamp( _displayHealth / _maxHealth, 0f, 1f ) : 0f;
+	private string FlashClass => _flashTimer > 0f ? "flash-hit" : "";
+
+	private string FillColor
+	{
+		get
+		{
+			return Pct switch
+			{
+				> 0.6f => "#6fdc7c",
+				> 0.3f => "#f0c040",
+				_ => "#ff5c5c"
+			};
+		}
+	}
+
+	public void OnDamaged( Component.IDamageable target, DamageInfo info )
+	{
+		if ( Player is null ) return;
+		if ( target is not UnitComponent unit || unit != Player ) return;
+
+		_displayHealth = Player.Health;
+		if ( info.Damage > 0f ) _flashTimer = FlashDuration;
+	}
+
+	protected override void OnStart()
+	{
+		Player ??= Scene.GetAllComponents<UnitComponent>()
+			.FirstOrDefault( u => u.Team == TeamType.Player );
+
+		if ( Player is not null )
+		{
+			_displayHealth = Player.Health;
+			_maxHealth = Player.MaxHealth;
+		}
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( _flashTimer > 0f )
+		{
+			_flashTimer -= Time.Delta;
+		}
+
+		// Catch any health change that didn't come through OnDamaged (e.g. respawn, debug button).
+		if ( Player is not null && Player.Health != _displayHealth )
+		{
+			_displayHealth = Player.Health;
+		}
+	}
+
+	protected override int BuildHash() => System.HashCode.Combine( _displayHealth, _maxHealth, _flashTimer > 0f );
+}
+
+<style>
+	root {
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		pointer-events: none;
+	}
+
+	.health {
+		position: absolute;
+		left: 32px;
+		bottom: 32px;
+		flex-direction: column;
+		gap: 4px;
+		padding: 10px 14px;
+		background-color: rgba( 0, 0, 0, 0.55 );
+		border-radius: 8px;
+		font-family: Roboto, sans-serif;
+		min-width: 240px;
+		transition: all 0.1s ease-out;
+	}
+
+	.health.flash-hit {
+		background-color: rgba( 180, 30, 30, 0.7 );
+	}
+
+	.bar-bg {
+		width: 100%;
+		height: 14px;
+		background-color: rgba( 0, 0, 0, 0.7 );
+		border-radius: 4px;
+		overflow: hidden;
+	}
+
+	.bar-fill {
+		height: 100%;
+		transition: width 0.15s ease-out, background-color 0.2s ease-out;
+	}
+
+	.numbers {
+		color: white;
+		font-size: 16px;
+		font-weight: bold;
+		text-shadow: 0px 0px 4px rgba( 0, 0, 0, 0.9 );
+		align-self: flex-end;
+	}
+</style>

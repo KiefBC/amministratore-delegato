@@ -1,0 +1,103 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Linq;
+@namespace Sandbox
+@inherits PanelComponent
+@implements IDamagedListener
+
+<root>
+	@if ( _hitTimer > 0f )
+	{
+		<div class="marker @(_wasKill ? "kill" : "hit")">
+			<div class="line top-left"></div>
+			<div class="line top-right"></div>
+			<div class="line bottom-left"></div>
+			<div class="line bottom-right"></div>
+		</div>
+	}
+</root>
+
+@code {
+	/// <summary>
+	/// The player root GameObject. Used to filter damage events to those *we* dealt.
+	/// Auto-found in OnStart by walking from a UnitComponent on Team.Player up to Root.
+	/// </summary>
+	[Property] public GameObject PlayerRoot { get; set; }
+
+	private const float HitDuration = 0.18f;
+	private const float KillDuration = 0.4f;
+
+	private float _hitTimer;
+	private bool _wasKill;
+
+	public void OnDamaged( Component.IDamageable target, DamageInfo info )
+	{
+		if ( PlayerRoot is null ) return;
+		if ( info.Attacker != PlayerRoot ) return;
+
+		var kill = target is UnitComponent unit && unit.IsDead;
+		_wasKill = kill;
+		_hitTimer = kill ? KillDuration : HitDuration;
+	}
+
+	protected override void OnStart()
+	{
+		if ( PlayerRoot is null )
+		{
+			var playerUnit = Scene.GetAllComponents<UnitComponent>()
+				.FirstOrDefault( u => u.Team == TeamType.Player );
+			PlayerRoot = playerUnit?.GameObject?.Root;
+		}
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( _hitTimer > 0f )
+		{
+			_hitTimer -= Time.Delta;
+		}
+	}
+
+	protected override int BuildHash() => System.HashCode.Combine( _hitTimer > 0f, _wasKill );
+}
+
+<style>
+	root {
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		pointer-events: none;
+	}
+
+	.marker {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 24px;
+		height: 24px;
+		transform: translate( -50%, -50% );
+	}
+
+	.line {
+		position: absolute;
+		width: 8px;
+		height: 2px;
+		background-color: white;
+		box-shadow: 0px 0px 2px 1px rgba( 0, 0, 0, 0.7 );
+	}
+
+	.marker.hit .line {
+		background-color: white;
+	}
+
+	.marker.kill .line {
+		background-color: #ff4040;
+		width: 12px;
+		height: 3px;
+	}
+
+	.line.top-left { top: 2px; left: 2px; transform: rotate( 45deg ); transform-origin: left; }
+	.line.top-right { top: 2px; right: 2px; transform: rotate( -45deg ); transform-origin: right; }
+	.line.bottom-left { bottom: 2px; left: 2px; transform: rotate( -45deg ); transform-origin: left; }
+	.line.bottom-right { bottom: 2px; right: 2px; transform: rotate( 45deg ); transform-origin: right; }
+</style>
