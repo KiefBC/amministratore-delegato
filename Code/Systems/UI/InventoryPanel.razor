@@ -384,24 +384,30 @@
 		// stack visually without conflicting in the same `box-shadow` declaration.
 		// During an active drag we drop both: the user is focused on the ghost +
 		// drop target, and rarity borders on every other slot become visual noise.
-		if ( _dragging ) return "";
+		//
+		// IMPORTANT: always emit explicit `border:` and `box-shadow:` declarations.
+		// Returning "" or omitting a property when transitioning a cell from filled
+		// → empty leaves the previous inline declarations visually applied (s&box's
+		// CSS parser doesn't reset cleared inline properties to class defaults). The
+		// fallback "none" forces a clean reset.
+		if ( _dragging ) return "border: none; box-shadow: none;";
 
 		var sb = new System.Text.StringBuilder();
 
-		if ( item.IsValid() )
+		var rarityCfg = item.IsValid() ? _player?.Components.Get<RarityConfig>() : null;
+		if ( rarityCfg is not null )
 		{
-			var rarityCfg = _player?.Components.Get<RarityConfig>();
-			if ( rarityCfg is not null )
-			{
-				var c = rarityCfg.GetColor( item.Rarity );
-				sb.Append( $"border: 2px solid rgba({(int)(c.r * 255)},{(int)(c.g * 255)},{(int)(c.b * 255)},0.85);" );
-			}
+			var c = rarityCfg.GetColor( item.Rarity );
+			sb.Append( $"border: 2px solid rgba({(int)(c.r * 255)},{(int)(c.g * 255)},{(int)(c.b * 255)},0.85);" );
+		}
+		else
+		{
+			sb.Append( "border: none;" );
 		}
 
-		if ( selected )
-		{
-			sb.Append( "box-shadow: 0 0 12px 2px rgba(111,220,124,0.85);" );
-		}
+		sb.Append( selected
+			? "box-shadow: 0 0 12px 2px rgba(111,220,124,0.85);"
+			: "box-shadow: none;" );
 
 		return sb.ToString();
 	}
