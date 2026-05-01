@@ -28,8 +28,16 @@ InventoryPanel {
 	// `position: relative` anchor for the tooltip — flex parents in s&box CSS
 	// don't reliably take `position: absolute` children out of flow, so we put the
 	// styled flex inventory inside this plain non-flex anchor instead.
+	//
+	// Default: in-flex (centered by `.center-wrap`). Once the user grabs the title
+	// bar to move the panel, `.absolute` is added and inline `left/top` take over.
+	// The tooltip's `left: 100%` keeps it pinned to the inventory either way.
 	.inventory-anchor {
 		position: relative;
+
+		&.absolute {
+			position: absolute;
+		}
 	}
 
 	.inventory {
@@ -54,6 +62,8 @@ InventoryPanel {
 		font-size: $text-large;
 		font-weight: bold;
 		text-shadow: $text-shadow-default;
+		// The title doubles as the panel-drag handle.
+		cursor: move;
 	}
 
 	.sort-buttons {
@@ -158,6 +168,17 @@ InventoryPanel {
 		justify-content: center;
 		align-items: center;
 		opacity: 0.85;
+		pointer-events: none;
+	}
+
+	// Outline that previews where the inventory panel will land while the user
+	// drags its title bar. Same role as `.drag-ghost` for items, just sized to
+	// the whole panel — committed on mouse-up.
+	.panel-ghost {
+		position: absolute;
+		background-color: rgba( 255, 255, 255, 0.06 );
+		border: 2px solid rgba( 255, 255, 255, 0.55 );
+		border-radius: $panel-radius;
 		pointer-events: none;
 	}
 
