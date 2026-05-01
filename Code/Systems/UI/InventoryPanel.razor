@@ -382,15 +382,17 @@
 		// s&box CSS doesn't support `inset` shadows OR CSS custom properties, so
 		// rarity = a colored border, selection = an outer green box-shadow. Both
 		// stack visually without conflicting in the same `box-shadow` declaration.
-		// During an active drag we drop both: the user is focused on the ghost +
-		// drop target, and rarity borders on every other slot become visual noise.
 		//
 		// IMPORTANT: always emit explicit `border:` and `box-shadow:` declarations.
 		// Returning "" or omitting a property when transitioning a cell from filled
 		// → empty leaves the previous inline declarations visually applied (s&box's
 		// CSS parser doesn't reset cleared inline properties to class defaults). The
 		// fallback "none" forces a clean reset.
-		if ( _dragging ) return "border: none; box-shadow: none;";
+		//
+		// Note: the drag-source cell is rendered with `item == null` from the razor
+		// loop, so it falls through to the `border: none` branch below — no special
+		// `_dragging` early-return needed (and adding one would also wipe the borders
+		// of every *other* slot mid-drag, which the user explicitly does NOT want).
 
 		var sb = new System.Text.StringBuilder();
 
