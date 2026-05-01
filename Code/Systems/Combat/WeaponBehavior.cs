@@ -15,6 +15,8 @@ public sealed class WeaponBehavior : Component
 	[Property] public CitizenAnimationHelper AnimHelper { get; set; }
 	[Property] public Equipment Equipment { get; set; }
 
+	private UIStateManager _uiState;
+
 	[Property]
 	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
 		= CitizenAnimationHelper.HoldTypes.Pistol;
@@ -111,6 +113,7 @@ public sealed class WeaponBehavior : Component
 		Equipment ??= Components.Get<Equipment>();
 		BodyRenderer ??= Components.Get<SkinnedModelRenderer>();
 		AnimHelper ??= Components.Get<CitizenAnimationHelper>();
+		_uiState = Components.GetInAncestorsOrSelf<UIStateManager>();
 	}
 
 	/// <summary>
@@ -130,6 +133,14 @@ public sealed class WeaponBehavior : Component
 		if ( AnimHelper is null ) return;
 
 		ApplyWeaponOffset();
+
+		// Suspend all weapon input (fire/aim/holster/reload) while a UI mode owns the
+		// cursor — otherwise inventory clicks would also fire the held weapon.
+		if ( _uiState?.IsAnyUIOpen == true )
+		{
+			AnimHelper.HoldType = CitizenAnimationHelper.HoldTypes.None;
+			return;
+		}
 
 		if ( Input.Pressed( "Slot1" ) && Weapon.IsValid() )
 		{

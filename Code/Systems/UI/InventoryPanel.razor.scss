@@ -4,17 +4,32 @@ InventoryPanel {
 	width: 100%;
 	height: 100%;
 	position: absolute;
+	top: 0;
+	left: 0;
 	pointer-events: none;
-	// Flex-center the inventory; CSS `transform: translate(-50%, -50%)` isn't
-	// reliable in s&box's CSS parser and made Box.Rect report a different
-	// position than where the panel actually rendered, breaking hit-testing.
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
 
 	&.open {
 		pointer-events: auto;
 		background-color: rgba( 0, 0, 0, 0.35 );
+	}
+
+	// Flex-center container holds the inventory anchor. The drag-ghost is a sibling
+	// of `.center-wrap`, so its `position: absolute` + inline left/top can follow
+	// the cursor without interacting with flex flow.
+	.center-wrap {
+		width: 100%;
+		height: 100%;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
+
+	// Non-flex wrapper around the inventory box. Exists purely to be the
+	// `position: relative` anchor for the tooltip — flex parents in s&box CSS
+	// don't reliably take `position: absolute` children out of flow, so we put the
+	// styled flex inventory inside this plain non-flex anchor instead.
+	.inventory-anchor {
+		position: relative;
 	}
 
 	.inventory {
@@ -57,7 +72,8 @@ InventoryPanel {
 		transition: $transition-fast;
 		cursor: pointer;
 
-		&:hover {
+		// `.hover` is set from C# polling; native `:hover` is unreliable on plain divs.
+		&.hover {
 			background-color: rgba( 255, 255, 255, 0.18 );
 			color: $accent-warning;
 		}
@@ -137,12 +153,22 @@ InventoryPanel {
 		background-size: contain;
 		background-repeat: no-repeat;
 		background-position: center center;
+		background-color: rgba( 0, 0, 0, 0.5 );
+		border-radius: $panel-radius-small;
+		justify-content: center;
+		align-items: center;
 		opacity: 0.85;
 		pointer-events: none;
 	}
 
+	// Anchored to `.inventory-anchor` (its non-flex parent). `left: 100%` puts the
+	// tooltip immediately right of the inventory box; `top: 0` aligns with the box
+	// top. No C# coord math required — pure CSS keeps this resolution-independent.
 	.tooltip {
 		position: absolute;
+		left: 100%;
+		top: 0;
+		margin-left: 12px;
 		flex-direction: column;
 		min-width: 200px;
 		padding: 10px 12px;

@@ -5,17 +5,18 @@
 @inherits PanelComponent
 @implements IInventoryChangedListener
 
-<root class="@(IsOpen ? "open" : "")"
-	@onmouseup=@((PanelEvent e) => OnRootMouseUp(e as MousePanelEvent))>
+<root class="@(IsOpen ? "open" : "")">
 	@if ( IsOpen && _backpack.IsValid() )
 	{
+		<div class="center-wrap">
+		<div class="inventory-anchor">
 		<div class="inventory">
 			<div class="header">
 				<span class="title">Inventory</span>
 				<div class="sort-buttons">
-					<div class="sort-button" @onclick=@(() => Sort(Backpack.SortMode.New))>New</div>
-					<div class="sort-button" @onclick=@(() => Sort(Backpack.SortMode.Worth))>Worth</div>
-					<div class="sort-button" @onclick=@(() => Sort(Backpack.SortMode.Weight))>Weight</div>
+					<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.New ? "hover" : "")">New</div>
+					<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Worth ? "hover" : "")">Worth</div>
+					<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Weight ? "hover" : "")">Weight</div>
 				</div>
 			</div>
 
@@ -27,12 +28,16 @@
 						{
 							var row = r;
 							var col = c;
-							var item = _backpack.Slots[row, col];
-							var selected = _backpack.Selected is var sel && sel.HasValue && sel.Value.row == row && sel.Value.col == col;
+							// While dragging, the source cell renders as empty so the user
+							// sees the item leave its slot and follow the cursor.
+							var isDragSource = _dragging && _dragSource.HasValue
+								&& _dragSource.Value.row == row && _dragSource.Value.col == col;
+							var item = isDragSource ? null : _backpack.Slots[row, col];
+							var selected = !isDragSource
+								&& _backpack.Selected is var sel && sel.HasValue
+								&& sel.Value.row == row && sel.Value.col == col;
 							<div class="cell @(item.IsValid() ? "filled" : "empty") @(selected ? "selected" : "")"
-								 style="@CellStyle(item, selected)"
-								 @onmousedown=@((PanelEvent e) => OnCellMouseDown(e as MousePanelEvent, row, col))
-								 @onmouseup=@((PanelEvent e) => OnCellMouseUp(e as MousePanelEvent, row, col))>
+								 style="@CellStyle(item, selected)">
 								@if ( item.IsValid() )
 								{
 									@if ( !string.IsNullOrEmpty( item.Icon ) )
@@ -59,21 +64,12 @@
 			</div>
 		</div>
 
-		@if ( _dragging && _dragSource.HasValue )
-		{
-			var ghostItem = _backpack.Slots[_dragSource.Value.row, _dragSource.Value.col];
-			if ( ghostItem.IsValid() && !string.IsNullOrEmpty( ghostItem.Icon ) )
-			{
-				<div class="drag-ghost" style="left: @(PanelMousePos.x - 32)px; top: @(PanelMousePos.y - 32)px; background-image: url(@ghostItem.Icon);"></div>
-			}
-		}
-
 		@if ( !_dragging && _hoveredSlot.HasValue )
 		{
 			var hoverItem = _backpack.Slots[_hoveredSlot.Value.row, _hoveredSlot.Value.col];
 			if ( hoverItem.IsValid() )
 			{
-				<div class="tooltip" style="left: @(PanelMousePos.x + 18)px; top: @(PanelMousePos.y + 18)px;">
+				<div class="tooltip">
 					<div class="tooltip-header">
 						<span class="tooltip-name">@TooltipName(hoverItem)</span>
 						<span class="tooltip-rarity rarity-@hoverItem.Rarity.ToString().ToLowerInvariant()">@hoverItem.Rarity</span>
@@ -98,6 +94,23 @@
 				</div>
 			}
 		}
+		</div>
+		</div>
+
+		@if ( _dragging && _dragSource.HasValue )
+		{
+			var ghostItem = _backpack.Slots[_dragSource.Value.row, _dragSource.Value.col];
+			if ( ghostItem.IsValid() )
+			{
+				<div class="drag-ghost"
+					 style="left: @(CursorCss.x - 32)px; top: @(CursorCss.y - 32)px; @GhostBackground(ghostItem)">
+					@if ( string.IsNullOrEmpty( ghostItem.Icon ) )
+					{
+						<div class="icon-fallback">@FallbackLabel(ghostItem)</div>
+					}
+				</div>
+			}
+		}
 	}
 </root>
 
@@ -114,12 +127,25 @@
 	private Vector2 _mouseDownPos;
 	private Vector2 _mousePos;
 	private (int row, int col)? _hoveredSlot;
+	private Backpack.SortMode? _hoveredSortButton;
 	private Sandbox.UI.Panel _gridPanel;
+	private Sandbox.UI.Panel _sortButtonsPanel;
 
-	// Tooltip and drag-ghost positions live in panel-space (CSS px), where
-	// `Panel.MousePosition` already reports cursor coords scaled by `ConsistentHeight`.
-	// `Mouse.Position` is raw screen pixels which mismatch CSS units at non-1080p.
-	private Vector2 PanelMousePos => Panel?.MousePosition ?? Vector2.Zero;
+	// `Mouse.Position` is raw screen pixels; inline `style="left: Xpx"` is interpreted
+	// in CSS pixels (the ScreenPanel runs at ConsistentHeight=1080). Convert via the
+	// physical screen height so the ghost lands directly under the cursor at any res.
+	// (We tried `Panel.MousePosition` first — at non-1080p its values placed the ghost
+	// far off the cursor, so we compute the conversion ourselves.)
+	private Vector2 CursorCss
+	{
+		get
+		{
+			var sh = Screen.Height;
+			if ( sh <= 1 ) return Mouse.Position;
+			var scale = 1080f / sh;
+			return new Vector2( Mouse.Position.x * scale, Mouse.Position.y * scale );
+		}
+	}
 
 	public bool IsOpen => _isOpen;
 
@@ -158,53 +184,109 @@
 		}
 
 		PollHoveredSlot();
+		PollHoveredSortButton();
+		PollMouseInput();
 	}
 
 	/// <summary>
-	/// Razor `@onmouseover`/`@onmouseout` aren't reliably wired in s&amp;box's parser,
-	/// so we resolve hover by walking the grid's child panels and hit-testing the
-	/// cursor against each cell's screen-space bounds. Cell index ordering matches
-	/// the razor render loop: rows top-to-bottom, cells left-to-right within a row.
+	/// Razor mouse handlers (`@onmousedown`, `@onmouseup`, `@onclick`) don't reliably
+	/// fire on plain &lt;div&gt; elements in s&amp;box's parser, so all click/drag
+	/// behavior is driven by polling `Input.Pressed/Released` here against the
+	/// already-polled `_hoveredSlot` / `_hoveredSortButton`.
+	/// </summary>
+	private void PollMouseInput()
+	{
+		if ( !_isOpen || !_backpack.IsValid() || Panel is null ) return;
+
+		if ( Input.Pressed( "Attack1" ) )
+		{
+			if ( _hoveredSortButton.HasValue )
+			{
+				_backpack.Sort( _hoveredSortButton.Value );
+			}
+			else if ( _hoveredSlot.HasValue )
+			{
+				var (row, col) = _hoveredSlot.Value;
+				if ( _backpack.Slots[row, col].IsValid() )
+				{
+					_dragSource = (row, col);
+					_mouseDownPos = _mousePos;
+					_dragging = false;
+					// Clear any prior selection so a stale green glow doesn't linger
+					// on the source cell during the drag.
+					_backpack.ClearSelection();
+				}
+			}
+		}
+
+		if ( Input.Released( "Attack1" ) && _dragSource.HasValue )
+		{
+			var src = _dragSource.Value;
+			var wasDragging = _dragging;
+			_dragSource = null;
+			_dragging = false;
+
+			if ( wasDragging )
+			{
+				if ( _hoveredSlot.HasValue && _hoveredSlot.Value != src )
+				{
+					_backpack.MoveSlot( src.row, src.col, _hoveredSlot.Value.row, _hoveredSlot.Value.col );
+				}
+				else if ( !_hoveredSlot.HasValue )
+				{
+					_backpack.DropToWorld( src.row, src.col );
+				}
+			}
+			else
+			{
+				// Click without drag → toggle selection on the source cell.
+				if ( _backpack.Selected is var sel && sel.HasValue && sel.Value == src )
+					_backpack.ClearSelection();
+				else
+					_backpack.Select( src.row, src.col );
+			}
+		}
+
+		if ( Input.Pressed( "Attack2" ) && _hoveredSlot.HasValue )
+		{
+			var (row, col) = _hoveredSlot.Value;
+			var item = _backpack.Slots[row, col];
+			if ( item.IsValid() ) item.OnUse( _player );
+		}
+	}
+
+	/// <summary>
+	/// `@ref` doesn't reliably bind on plain &lt;div&gt; elements in s&amp;box's razor
+	/// parser, so we resolve the hovered slot by walking the grid panel's children
+	/// each frame and hit-testing each cell against `Mouse.Position`. Cell index
+	/// ordering matches the razor render loop: rows top-to-bottom, cells left-to-
+	/// right within a row.
 	/// </summary>
 	private void PollHoveredSlot()
 	{
 		if ( !_isOpen || !_backpack.IsValid() || Panel is null )
 		{
-			SetHover( null, "early-out" );
+			_hoveredSlot = null;
 			return;
 		}
 
-		// `@ref` doesn't bind on plain <div> in s&box's razor parser, so we find
-		// the grid by class-name walk each frame.
 		_gridPanel ??= FindByClass( Panel, "grid" );
 		if ( _gridPanel is null )
 		{
-			SetHover( null, "no-grid-panel" );
+			_hoveredSlot = null;
 			return;
 		}
 
 		var screenPos = Mouse.Position;
-		var panelPos = Panel.MousePosition;
-		int rowCount = 0;
-		int cellCount = 0;
-		Sandbox.UI.Panel firstCell = null;
 		int r = 0;
 		foreach ( var rowPanel in _gridPanel.Children )
 		{
-			rowCount++;
 			int c = 0;
 			foreach ( var cellPanel in rowPanel.Children )
 			{
-				cellCount++;
-				firstCell ??= cellPanel;
 				if ( cellPanel.IsInside( screenPos ) )
 				{
-					SetHover( (r, c), $"hit-screen r={r} c={c} mouse={screenPos} cellRect={cellPanel.Box.Rect}" );
-					return;
-				}
-				if ( cellPanel.IsInside( panelPos ) )
-				{
-					SetHover( (r, c), $"hit-panel r={r} c={c} panelMouse={panelPos} cellRect={cellPanel.Box.Rect}" );
+					_hoveredSlot = (r, c);
 					return;
 				}
 				c++;
@@ -212,9 +294,48 @@
 			r++;
 		}
 
-		var firstRect = firstCell?.Box.Rect.ToString() ?? "(none)";
-		var gridRect = _gridPanel.Box.Rect;
-		SetHover( null, $"no-hit screen={screenPos} panel={panelPos} grid={gridRect} cell0={firstRect} rows={rowCount} cells={cellCount}" );
+		_hoveredSlot = null;
+	}
+
+	/// <summary>
+	/// Same polling pattern as cells: walk the sort-buttons panel's children and
+	/// match cursor position against each button's screen-space bounds. Order in the
+	/// razor template is New / Worth / Weight.
+	/// </summary>
+	private void PollHoveredSortButton()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_hoveredSortButton = null;
+			return;
+		}
+
+		_sortButtonsPanel ??= FindByClass( Panel, "sort-buttons" );
+		if ( _sortButtonsPanel is null )
+		{
+			_hoveredSortButton = null;
+			return;
+		}
+
+		var screenPos = _mousePos;
+		int i = 0;
+		foreach ( var child in _sortButtonsPanel.Children )
+		{
+			if ( child.IsInside( screenPos ) )
+			{
+				_hoveredSortButton = i switch
+				{
+					0 => Backpack.SortMode.New,
+					1 => Backpack.SortMode.Worth,
+					2 => Backpack.SortMode.Weight,
+					_ => (Backpack.SortMode?)null,
+				};
+				return;
+			}
+			i++;
+		}
+
+		_hoveredSortButton = null;
 	}
 
 	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
@@ -229,21 +350,6 @@
 		return null;
 	}
 
-	private float _lastLogTime;
-
-	private void SetHover( (int row, int col)? newHover, string reason )
-	{
-		// Throttled diagnostic — emit every ~0.5s so we can watch mouse coords
-		// update as the user moves around.
-		var stateChanged = !newHover.Equals( _hoveredSlot );
-		if ( stateChanged || Time.Now - _lastLogTime > 0.5f )
-		{
-			Log.Info( $"[Inv] hover {_hoveredSlot} -> {newHover} ({reason})" );
-			_lastLogTime = Time.Now;
-		}
-		_hoveredSlot = newHover;
-	}
-
 	private void Toggle()
 	{
 		if ( _isOpen ) Close();
@@ -255,7 +361,6 @@
 		if ( _isOpen ) return;
 		_isOpen = true;
 		_uiState?.RequestUIFocus( this );
-		Log.Info( $"[Inv] Opened. _gridPanel={(_gridPanel is null ? "NULL" : "captured")}, Panel={(Panel is null ? "NULL" : "ok")}" );
 	}
 
 	private void Close()
@@ -265,65 +370,11 @@
 		_dragSource = null;
 		_dragging = false;
 		_hoveredSlot = null;
+		_hoveredSortButton = null;
 		_gridPanel = null;
+		_sortButtonsPanel = null;
 		_uiState?.ReleaseUIFocus( this );
 		_backpack?.ClearSelection();
-	}
-
-	private void OnCellMouseDown( MousePanelEvent e, int row, int col )
-	{
-		if ( e is null || !_backpack.IsValid() ) return;
-
-		if ( e.MouseButton == MouseButtons.Right )
-		{
-			var item = _backpack.Slots[row, col];
-			if ( item.IsValid() ) item.OnUse( _player );
-			return;
-		}
-
-		if ( e.MouseButton != MouseButtons.Left ) return;
-
-		_mouseDownPos = _mousePos;
-		_dragSource = (row, col);
-		_dragging = false;
-	}
-
-	private void OnCellMouseUp( MousePanelEvent e, int row, int col )
-	{
-		if ( e is null || e.MouseButton != MouseButtons.Left ) return;
-		if ( !_backpack.IsValid() || !_dragSource.HasValue ) return;
-
-		var src = _dragSource.Value;
-		var wasDragging = _dragging;
-		_dragSource = null;
-		_dragging = false;
-
-		if ( !wasDragging )
-		{
-			// Click without drag = select / toggle selection.
-			if ( _backpack.Selected is var sel && sel.HasValue && sel.Value == (row, col) )
-				_backpack.ClearSelection();
-			else
-				_backpack.Select( row, col );
-			return;
-		}
-
-		_backpack.MoveSlot( src.row, src.col, row, col );
-	}
-
-	/// <summary>
-	/// Mouse-up on the panel root (outside any cell) when dragging = drop the held
-	/// slot into the world.
-	/// </summary>
-	private void OnRootMouseUp( MousePanelEvent e )
-	{
-		if ( e is null || e.MouseButton != MouseButtons.Left ) return;
-		if ( !_backpack.IsValid() || !_dragSource.HasValue || !_dragging ) return;
-
-		var src = _dragSource.Value;
-		_dragSource = null;
-		_dragging = false;
-		_backpack.DropToWorld( src.row, src.col );
 	}
 
 	private string CellStyle( BaseItem item, bool selected )
@@ -331,6 +382,10 @@
 		// s&box CSS doesn't support `inset` shadows OR CSS custom properties, so
 		// rarity = a colored border, selection = an outer green box-shadow. Both
 		// stack visually without conflicting in the same `box-shadow` declaration.
+		// During an active drag we drop both: the user is focused on the ghost +
+		// drop target, and rarity borders on every other slot become visual noise.
+		if ( _dragging ) return "";
+
 		var sb = new System.Text.StringBuilder();
 
 		if ( item.IsValid() )
@@ -365,9 +420,16 @@
 		return $"x{item.StackCount}";
 	}
 
-	private void Sort( Backpack.SortMode mode )
+	/// <summary>
+	/// Drag-ghost background. With a baked icon we render `background-image: url(...)`;
+	/// otherwise the ghost is empty and the fallback label inside it provides the
+	/// visual. Empty `url()` crashes the render tree, so guard the path.
+	/// </summary>
+	private string GhostBackground( BaseItem item )
 	{
-		_backpack?.Sort( mode );
+		return string.IsNullOrEmpty( item.Icon )
+			? ""
+			: $"background-image: url({item.Icon});";
 	}
 
 	private string TooltipName( BaseItem item )
@@ -420,11 +482,12 @@
 				slotHash = System.HashCode.Combine( slotHash, item?.GetHashCode() ?? 0, item?.StackCount ?? 0 );
 			}
 		}
-		var pmp = PanelMousePos;
-		var movingMouseHash = (_dragging || _hoveredSlot.HasValue)
-			? ((int)pmp.x, (int)pmp.y)
-			: (0, 0);
+		// Drag ghost follows the cursor, so its position needs to invalidate the
+		// hash every mouse-move while dragging. Tooltip is now grid-anchored, so
+		// hover doesn't need the same per-pixel rebuild.
+		var pmp = CursorCss;
+		var movingMouseHash = _dragging ? ((int)pmp.x, (int)pmp.y) : (0, 0);
 		return System.HashCode.Combine(
-			_isOpen, _dragging, _dragSource, sel, slotHash, _hoveredSlot, movingMouseHash );
+			_isOpen, _dragging, _dragSource, sel, slotHash, _hoveredSlot, _hoveredSortButton, movingMouseHash );
 	}
 }
