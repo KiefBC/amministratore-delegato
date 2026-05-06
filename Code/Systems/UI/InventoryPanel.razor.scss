@@ -244,7 +244,8 @@ InventoryPanel {
 		top: 0;
 		width: 286px;
 		height: 478px;
-		pointer-events: none;
+		pointer-events: auto;
+		cursor: pointer;
 	}
 
 	.preview-floor {

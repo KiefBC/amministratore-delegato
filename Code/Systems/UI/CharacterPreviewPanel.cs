@@ -8,22 +8,30 @@ namespace Sandbox;
 /// </summary>
 public sealed class CharacterPreviewPanel : ScenePanel
 {
+	private const float PreviewScale = 1.8f;
+	private const float RotationSensitivity = 0.35f;
+	private const float InitialYaw = 158f;
+
 	private readonly Scene _previewScene;
 	private readonly CameraComponent _camera;
 	private readonly SkinnedModelRenderer _previewRenderer;
 	private readonly GameObject _modelObject;
+	private readonly System.Collections.Generic.Dictionary<System.Guid, SkinnedModelRenderer> _clothingRenderers = new();
 
 	private Model _shownModel;
 	private ulong _shownBodyGroups;
 	private string _shownMaterialGroup;
 	private Color _shownTint;
-	private float _yaw;
+	private float _yaw = InitialYaw;
+	private bool _isRotating;
+	private Vector2 _lastMousePosition;
 
 	public GameObject SourcePlayer { get; set; }
 
 	public CharacterPreviewPanel()
 	{
 		AddClass( "character-preview-panel" );
+		AcceptsFocus = true;
 
 		_previewScene = new Scene
 		{
@@ -45,15 +53,18 @@ public sealed class CharacterPreviewPanel : ScenePanel
 	{
 		base.Tick();
 
-		var renderer = SourcePlayer?.Components.GetInDescendantsOrSelf<SkinnedModelRenderer>();
+		var renderer = FindBodyRenderer();
 		if ( !renderer.IsValid() || renderer.Model is null )
 		{
 			_modelObject.Enabled = false;
+			ClearClothing();
 			return;
 		}
 
 		_modelObject.Enabled = true;
 		UpdatePreviewModel( renderer );
+		UpdatePreviewClothing( renderer );
+		PollRotationInput();
 		UpdatePreviewTransform();
 
 		RenderNextFrame();
@@ -61,6 +72,7 @@ public sealed class CharacterPreviewPanel : ScenePanel
 
 	public override void Delete( bool immediate = false )
 	{
+		ClearClothing();
 		_previewScene?.Destroy();
 		base.Delete( immediate );
 	}
@@ -69,13 +81,13 @@ public sealed class CharacterPreviewPanel : ScenePanel
 	{
 		var cameraObject = _previewScene.CreateObject( true );
 		cameraObject.Name = "Preview Camera";
-		cameraObject.WorldPosition = new Vector3( 108f, -186f, 78f );
-		cameraObject.WorldRotation = Rotation.LookAt( new Vector3( 0f, 0f, 48f ) - cameraObject.WorldPosition );
+		cameraObject.WorldPosition = new Vector3( 118f, -214f, 82f );
+		cameraObject.WorldRotation = Rotation.LookAt( new Vector3( 0f, 0f, 54f ) - cameraObject.WorldPosition );
 
 		var camera = cameraObject.Components.Create<CameraComponent>();
 		camera.IsMainCamera = true;
 		camera.Priority = 1000;
-		camera.FieldOfView = 28f;
+		camera.FieldOfView = 34f;
 		camera.ZNear = 2f;
 		camera.ZFar = 512f;
 		camera.ClearFlags = ClearFlags.All;
@@ -89,8 +101,8 @@ public sealed class CharacterPreviewPanel : ScenePanel
 		var modelObject = _previewScene.CreateObject( true );
 		modelObject.Name = "Preview Character";
 		modelObject.WorldPosition = Vector3.Zero;
-		modelObject.WorldRotation = Rotation.FromYaw( 158f );
-		modelObject.WorldScale = Vector3.One;
+		modelObject.WorldRotation = Rotation.FromYaw( InitialYaw );
+		modelObject.WorldScale = Vector3.One * PreviewScale;
 		return modelObject;
 	}
 
@@ -124,36 +136,120 @@ public sealed class CharacterPreviewPanel : ScenePanel
 	{
 		if ( _shownModel != renderer.Model )
 		{
-			_previewRenderer.Model = renderer.Model;
 			_shownModel = renderer.Model;
 			_shownBodyGroups = ulong.MaxValue;
 			_shownMaterialGroup = null;
 			_shownTint = default;
 		}
 
-		if ( _shownBodyGroups != renderer.BodyGroups )
+		CopyRendererState( renderer, _previewRenderer );
+		_shownTint = renderer.Tint;
+		_shownBodyGroups = renderer.BodyGroups;
+		_shownMaterialGroup = renderer.MaterialGroup;
+	}
+
+	private void UpdatePreviewClothing( SkinnedModelRenderer bodyRenderer )
+	{
+		var seen = new System.Collections.Generic.HashSet<System.Guid>();
+
+		foreach ( var sourceRenderer in SourcePlayer.Components.GetAll<SkinnedModelRenderer>( FindMode.EnabledInSelfAndDescendants ) )
 		{
-			_previewRenderer.BodyGroups = renderer.BodyGroups;
-			_shownBodyGroups = renderer.BodyGroups;
+			if ( !sourceRenderer.IsValid() || sourceRenderer == bodyRenderer || sourceRenderer.Model is null )
+				continue;
+
+			seen.Add( sourceRenderer.Id );
+
+			if ( !_clothingRenderers.TryGetValue( sourceRenderer.Id, out var previewRenderer ) || !previewRenderer.IsValid() )
+			{
+				var clothingObject = _previewScene.CreateObject( true );
+				clothingObject.Name = $"Preview Clothing - {sourceRenderer.GameObject.Name}";
+				clothingObject.SetParent( _modelObject, false );
+				clothingObject.LocalPosition = Vector3.Zero;
+				clothingObject.LocalRotation = Rotation.Identity;
+				clothingObject.LocalScale = Vector3.One;
+
+				previewRenderer = clothingObject.Components.Create<SkinnedModelRenderer>();
+				previewRenderer.UseAnimGraph = false;
+				_clothingRenderers[sourceRenderer.Id] = previewRenderer;
+			}
+
+			CopyRendererState( sourceRenderer, previewRenderer );
+			previewRenderer.BoneMergeTarget = _previewRenderer;
 		}
 
-		if ( _shownMaterialGroup != renderer.MaterialGroup )
+		foreach ( var id in new System.Collections.Generic.List<System.Guid>( _clothingRenderers.Keys ) )
 		{
-			_previewRenderer.MaterialGroup = renderer.MaterialGroup;
-			_shownMaterialGroup = renderer.MaterialGroup;
+			if ( seen.Contains( id ) ) continue;
+
+			var renderer = _clothingRenderers[id];
+			if ( renderer.IsValid() )
+			{
+				renderer.GameObject.Destroy();
+			}
+
+			_clothingRenderers.Remove( id );
+		}
+	}
+
+	private void CopyRendererState( SkinnedModelRenderer source, SkinnedModelRenderer target )
+	{
+		target.CopyFrom( source );
+		target.UseAnimGraph = false;
+	}
+
+	private SkinnedModelRenderer FindBodyRenderer()
+	{
+		var unit = SourcePlayer?.Components.GetInDescendantsOrSelf<UnitComponent>();
+		if ( unit.IsValid() && unit.ModelRenderer.IsValid() )
+			return unit.ModelRenderer;
+
+		var equipment = SourcePlayer?.Components.GetInDescendantsOrSelf<Equipment>();
+		if ( equipment.IsValid() && equipment.BodyRenderer.IsValid() )
+			return equipment.BodyRenderer;
+
+		return SourcePlayer?.Components.GetInDescendantsOrSelf<SkinnedModelRenderer>();
+	}
+
+	private void ClearClothing()
+	{
+		foreach ( var renderer in _clothingRenderers.Values )
+		{
+			if ( renderer.IsValid() )
+			{
+				renderer.GameObject.Destroy();
+			}
 		}
 
-		if ( _shownTint != renderer.Tint )
-		{
-			_previewRenderer.Tint = renderer.Tint;
-			_shownTint = renderer.Tint;
-		}
-
+		_clothingRenderers.Clear();
 	}
 
 	private void UpdatePreviewTransform()
 	{
-		_yaw += Time.Delta * 10f;
-		_modelObject.WorldRotation = Rotation.FromYaw( 158f + _yaw );
+		_modelObject.WorldRotation = Rotation.FromYaw( _yaw );
+	}
+
+	private void PollRotationInput()
+	{
+		var mousePosition = Mouse.Position;
+
+		if ( Input.Pressed( "Attack1" ) && IsInside( mousePosition ) )
+		{
+			_isRotating = true;
+			_lastMousePosition = mousePosition;
+			SetMouseCapture( true );
+			Focus();
+		}
+
+		if ( _isRotating && (Input.Released( "Attack1" ) || !Input.Down( "Attack1" )) )
+		{
+			_isRotating = false;
+			SetMouseCapture( false );
+		}
+
+		if ( !_isRotating ) return;
+
+		var delta = mousePosition - _lastMousePosition;
+		_yaw += delta.x * RotationSensitivity;
+		_lastMousePosition = mousePosition;
 	}
 }
