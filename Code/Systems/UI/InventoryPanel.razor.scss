@@ -175,7 +175,7 @@ InventoryPanel {
 		position: relative;
 		background-color: rgba( 0, 0, 0, 0.52 );
 		border: 2px solid rgba( 255, 255, 255, 0.5 );
-		box-shadow: inset 0 0 12px rgba( 255, 255, 255, 0.05 );
+		box-shadow: 0 0 12px rgba( 255, 255, 255, 0.05 );
 	}
 
 	.quick-key {
@@ -238,108 +238,24 @@ InventoryPanel {
 		justify-content: center;
 	}
 
-	.player-shadow {
+	.character-preview-panel {
 		position: absolute;
-		left: 72px;
-		bottom: 8px;
-		width: 144px;
+		left: 0;
+		top: 0;
+		width: 286px;
+		height: 478px;
+		pointer-events: none;
+	}
+
+	.preview-floor {
+		position: absolute;
+		left: 68px;
+		bottom: 9px;
+		width: 150px;
 		height: 24px;
 		border-radius: 50%;
-		background-color: rgba( 0, 0, 0, 0.38 );
-	}
-
-	.paperdoll {
-		position: absolute;
-		width: 178px;
-		height: 430px;
-		left: 54px;
-		top: 18px;
-	}
-
-	.paperdoll-head,
-	.paperdoll-neck,
-	.paperdoll-torso,
-	.paperdoll-arm,
-	.paperdoll-leg,
-	.paperdoll-weapon,
-	.paperdoll-shield {
-		position: absolute;
-		background-color: rgba( 210, 218, 226, 0.92 );
-		border: 1px solid rgba( 255, 255, 255, 0.38 );
-		box-shadow: inset 0 -18px 26px rgba( 0, 0, 0, 0.28 );
-	}
-
-	.paperdoll-head {
-		width: 48px;
-		height: 60px;
-		left: 65px;
-		top: 0;
-		border-radius: 24px 24px 18px 18px;
-	}
-
-	.paperdoll-neck {
-		width: 24px;
-		height: 22px;
-		left: 77px;
-		top: 55px;
-		border-radius: 6px;
-	}
-
-	.paperdoll-torso {
-		width: 90px;
-		height: 150px;
-		left: 44px;
-		top: 70px;
-		border-radius: 35px 35px 24px 24px;
-		background-color: rgba( 62, 69, 76, 0.98 );
-	}
-
-	.paperdoll-arm {
-		width: 31px;
-		height: 160px;
-		top: 82px;
-		border-radius: 15px;
-
-		&.left {
-			left: 18px;
-		}
-
-		&.right {
-			right: 18px;
-		}
-	}
-
-	.paperdoll-leg {
-		width: 36px;
-		height: 184px;
-		top: 214px;
-		border-radius: 16px 16px 20px 20px;
-
-		&.left {
-			left: 50px;
-		}
-
-		&.right {
-			right: 50px;
-		}
-	}
-
-	.paperdoll-weapon {
-		width: 12px;
-		height: 138px;
-		left: 30px;
-		top: 168px;
-		background-color: rgba( 185, 190, 194, 0.94 );
-		border-radius: 6px;
-	}
-
-	.paperdoll-shield {
-		width: 54px;
-		height: 116px;
-		right: -4px;
-		top: 116px;
-		border-radius: 30px 30px 22px 22px;
-		background-color: rgba( 88, 103, 111, 0.84 );
+		background-color: rgba( 0, 0, 0, 0.36 );
+		pointer-events: none;
 	}
 
 	.loadout-column {
