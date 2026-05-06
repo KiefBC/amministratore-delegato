@@ -6,93 +6,234 @@
 <root class="@(IsOpen ? "open" : "")">
 	@if ( IsOpen && _backpack.IsValid() )
 	{
-		<div class="center-wrap">
-		<div class="inventory-anchor @(_panelPosCss.HasValue ? "absolute" : "")" style="@AnchorStyle()">
-		<div class="inventory">
-			<div class="header">
-				<span class="title">Inventory</span>
-				<div class="sort-buttons">
-					<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.New ? "hover" : "")">New</div>
-					<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Worth ? "hover" : "")">Worth</div>
-					<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Weight ? "hover" : "")">Weight</div>
+		<div class="inventory-screen">
+			<div class="top-nav">
+				<div class="nav-left">
+					<span class="nav-bumper">LB</span>
+					<span class="nav-tab muted">Crafting</span>
+					<span class="nav-tab active">Inventory</span>
+					<span class="nav-tab muted">Abilities</span>
+					<span class="nav-tab muted">Map</span>
+					<span class="nav-tab muted">Quests</span>
+					<span class="nav-bumper">RB</span>
+				</div>
+
+				<div class="level-block">
+					<span class="level-label">Level</span>
+					<span class="level-number">@Level</span>
+					<div class="xp-track">
+						<div class="xp-fill" style="width: @(ExperiencePercent * 100)%;"></div>
+					</div>
+					<span class="xp-text">Exp: @Experience / @ExperienceMax</span>
 				</div>
 			</div>
 
-			<div class="grid">
-				@for ( int r = 0; r < _backpack.Rows; r++ )
-				{
-					<div class="grid-row">
-						@for ( int c = 0; c < _backpack.Cols; c++ )
+			<div class="content">
+				<div class="left-rail">
+					<div class="stat-list">
+						@foreach ( var stat in StatRows() )
 						{
-							var row = r;
-							var col = c;
-							var isDragSource = _dragging && _dragSource.HasValue
-								&& _dragSource.Value.row == row && _dragSource.Value.col == col;
-							var item = isDragSource ? default : _backpack.GetItemAt( row, col );
+							<div class="stat-row @stat.ClassName">
+								<div class="stat-icon">@stat.Icon</div>
+								<div class="stat-copy">
+									<span class="stat-label">@stat.Label</span>
+									<span class="stat-value">@stat.Value</span>
+								</div>
+							</div>
+						}
+					</div>
+
+					<div class="quick-slots">
+						@for ( var i = 0; i < QuickSlotKeys.Length; i++ )
+						{
+							var item = QuickItemFor( i );
 							var definition = DefinitionFor( item );
-							var selected = !isDragSource
-								&& _backpack.Selected is var sel && sel.HasValue
-								&& sel.Value.row == row && sel.Value.col == col;
-							<div class="cell @(item.IsValid ? "filled" : "empty") @(selected ? "selected" : "")"
-								 style="@CellStyle(definition, selected)">
+							<div class="quick-slot @(item.IsValid ? "filled" : "empty")">
+								<span class="quick-key">@QuickSlotKeys[i]</span>
 								@if ( item.IsValid && definition is not null )
 								{
 									@if ( !string.IsNullOrEmpty( definition.Icon ) )
 									{
-										<div class="icon" style="background-image: url(@definition.Icon);"></div>
+										<div class="quick-icon" style="background-image: url(@definition.Icon);"></div>
 									}
 									else
 									{
-										<div class="icon-fallback">@FallbackLabel(definition)</div>
+										<div class="icon-fallback">@FallbackLabel( definition )</div>
 									}
+
 									@if ( item.StackCount > 1 )
 									{
-										<div class="stack">@FormatStack(item, definition)</div>
+										<span class="quick-stack">@item.StackCount</span>
 									}
 								}
 							</div>
 						}
+						<span class="quick-title">Consumables</span>
 					</div>
-				}
-			</div>
+				</div>
 
-			<div class="footer">
-				<span class="hint">Tab / Esc to close · Right-click to use · Drag to move · Drag out to drop</span>
-			</div>
-		</div>
-
-		@if ( !_dragging && !_draggingPanel && _hoveredSlot.HasValue )
-		{
-			var hoverItem = _backpack.GetItemAt( _hoveredSlot.Value.row, _hoveredSlot.Value.col );
-			var hoverDefinition = DefinitionFor( hoverItem );
-			if ( hoverItem.IsValid && hoverDefinition is not null )
-			{
-				<div class="tooltip">
-					<div class="tooltip-header">
-						<span class="tooltip-name">@TooltipName(hoverDefinition)</span>
-						<span class="tooltip-rarity rarity-@hoverDefinition.Rarity.ToString().ToLowerInvariant()">@hoverDefinition.Rarity</span>
+				<div class="character-column">
+					<div class="character-stage">
+						<div class="player-shadow"></div>
+						<div class="paperdoll">
+							<div class="paperdoll-head"></div>
+							<div class="paperdoll-neck"></div>
+							<div class="paperdoll-torso"></div>
+							<div class="paperdoll-arm left"></div>
+							<div class="paperdoll-arm right"></div>
+							<div class="paperdoll-leg left"></div>
+							<div class="paperdoll-leg right"></div>
+							<div class="paperdoll-weapon"></div>
+							<div class="paperdoll-shield"></div>
+						</div>
 					</div>
-					<div class="tooltip-divider"></div>
-					<div class="tooltip-rows">
-						@foreach ( var (label, value) in TooltipRows( hoverItem, hoverDefinition ) )
+				</div>
+
+				<div class="loadout-column">
+					<div class="equipment-slots">
+						@foreach ( var slot in EquipmentSlots() )
 						{
-							@if ( label == "-" )
-							{
-								<div class="tooltip-divider"></div>
-							}
-							else
-							{
-								<div class="tooltip-row">
-									<span class="tooltip-label">@label</span>
-									<span class="tooltip-value">@value</span>
-								</div>
-							}
+							var isHover = _hoveredEquipmentSlot == slot.Key;
+							<div class="equipment-slot @(slot.Item.IsValid ? "filled" : "empty") @(isHover ? "hover" : "") @(slot.Key)">
+								@if ( slot.Item.IsValid && slot.Definition is not null )
+								{
+									@if ( !string.IsNullOrEmpty( slot.Definition.Icon ) )
+									{
+										<div class="equipment-icon" style="background-image: url(@slot.Definition.Icon);"></div>
+									}
+									else
+									{
+										<div class="icon-fallback">@FallbackLabel( slot.Definition )</div>
+									}
+								}
+								else
+								{
+									<div class="slot-glyph">@slot.Glyph</div>
+								}
+								<span class="equipment-label">@slot.Label</span>
+							</div>
 						}
 					</div>
 				</div>
-			}
-		}
-		</div>
+
+				<div class="inventory-card">
+					<div class="inventory-meta">
+						<div class="meta-pill">
+							<span class="meta-icon">$</span>
+							<span>@_backpack.Wallet.ToString( "N0" )</span>
+						</div>
+						<div class="meta-pill">
+							<span class="meta-icon">WT</span>
+							<span>@FormatCarryWeight() / @CarryCapacity</span>
+						</div>
+					</div>
+
+					<div class="category-tabs">
+						<span class="category-tab active">Weapons</span>
+						<span class="category-tab">Armor</span>
+						<span class="category-tab">Tools</span>
+						<span class="category-tab">Materials</span>
+					</div>
+
+					<div class="inventory-title">Armor & Weapons</div>
+
+					<div class="grid">
+						@for ( int r = 0; r < _backpack.Rows; r++ )
+						{
+							<div class="grid-row">
+								@for ( int c = 0; c < _backpack.Cols; c++ )
+								{
+									var row = r;
+									var col = c;
+									var isDragSource = _dragging && _dragSource.HasValue
+										&& _dragSource.Value.row == row && _dragSource.Value.col == col;
+									var item = isDragSource ? default : _backpack.GetItemAt( row, col );
+									var definition = DefinitionFor( item );
+									var selected = !isDragSource
+										&& _backpack.Selected is var sel && sel.HasValue
+										&& sel.Value.row == row && sel.Value.col == col;
+									<div class="cell @(item.IsValid ? "filled" : "empty") @(selected ? "selected" : "")"
+										 style="@CellStyle( definition, selected, item.IsValid )">
+										@if ( item.IsValid && definition is not null )
+										{
+											@if ( !string.IsNullOrEmpty( definition.Icon ) )
+											{
+												<div class="icon" style="background-image: url(@definition.Icon);"></div>
+											}
+											else
+											{
+												<div class="icon-fallback">@FallbackLabel( definition )</div>
+											}
+											@if ( item.StackCount > 1 )
+											{
+												<div class="stack">@FormatStack( item, definition )</div>
+											}
+											@if ( item.InstanceId == _backpack.EquippedInstanceId )
+											{
+												<div class="equipped-tag">Equipped</div>
+											}
+										}
+									</div>
+								}
+							</div>
+						}
+					</div>
+
+					<div class="sort-line">
+						<span>Sort by:</span>
+						<div class="sort-buttons">
+							<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Type ? "hover" : "")">Type</div>
+							<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Rarity ? "hover" : "")">Rarity</div>
+							<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Worth ? "hover" : "")">Value</div>
+							<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Weight ? "hover" : "")">Weight</div>
+						</div>
+					</div>
+
+					@if ( !_dragging && _hoveredSlot.HasValue )
+					{
+						var hoverItem = _backpack.GetItemAt( _hoveredSlot.Value.row, _hoveredSlot.Value.col );
+						var hoverDefinition = DefinitionFor( hoverItem );
+						if ( hoverItem.IsValid && hoverDefinition is not null )
+						{
+							<div class="tooltip rarity-@hoverDefinition.Rarity.ToString().ToLowerInvariant()">
+								<div class="tooltip-header">
+									<span class="tooltip-name">@TooltipName( hoverDefinition )</span>
+									<span class="tooltip-rarity">@hoverDefinition.Rarity</span>
+								</div>
+								<div class="tooltip-divider"></div>
+								<div class="tooltip-rows">
+									@foreach ( var (label, value) in TooltipRows( hoverItem, hoverDefinition ) )
+									{
+										@if ( label == "-" )
+										{
+											<div class="tooltip-divider"></div>
+										}
+										else
+										{
+											<div class="tooltip-row">
+												<span class="tooltip-label">@label</span>
+												<span class="tooltip-value">@value</span>
+											</div>
+										}
+									}
+								</div>
+							</div>
+						}
+					}
+				</div>
+
+				<div class="drop-zone @(_hoveredDropZone ? "hover" : "")">
+					<div class="drop-icon"></div>
+					<span>Drop</span>
+				</div>
+			</div>
+
+			<div class="bottom-hints">
+				<span><b>Tab</b> Close inventory</span>
+				<span><b>Mouse 1</b> Drag item</span>
+				<span><b>Mouse 2</b> Equip or use</span>
+				<span><b>Drop rail</b> Drop item</span>
+			</div>
 		</div>
 
 		@if ( _dragging && _dragSource.HasValue )
@@ -102,30 +243,25 @@
 			if ( ghostItem.IsValid && ghostDefinition is not null )
 			{
 				<div class="drag-ghost"
-					 style="left: @(CursorCss.x - 32)px; top: @(CursorCss.y - 32)px; @GhostBackground(ghostDefinition)">
+					 style="left: @(CursorCss.x - 32)px; top: @(CursorCss.y - 32)px; @GhostBackground( ghostDefinition )">
 					@if ( string.IsNullOrEmpty( ghostDefinition.Icon ) )
 					{
-						<div class="icon-fallback">@FallbackLabel(ghostDefinition)</div>
+						<div class="icon-fallback">@FallbackLabel( ghostDefinition )</div>
 					}
 				</div>
 			}
-		}
-
-		@if ( _draggingPanel )
-		{
-			var size = AnchorCssSize();
-			<div class="panel-ghost"
-				 style="left: @(_panelDragPreview.x)px; top: @(_panelDragPreview.y)px; width: @(size.x)px; height: @(size.y)px;">
-			</div>
 		}
 	}
 </root>
 
 @code {
 	private const float DragThresholdPx = 6f;
+	private const int CarryCapacity = 300;
+	private static readonly string[] QuickSlotKeys = { "Z", "X", "C", "V" };
 
 	private Backpack _backpack;
 	private UIStateManager _uiState;
+	private UnitComponent _unit;
 	private GameObject _player;
 
 	private bool _isOpen;
@@ -134,18 +270,18 @@
 	private Vector2 _mouseDownPos;
 	private Vector2 _mousePos;
 	private (int row, int col)? _hoveredSlot;
+	private string _hoveredEquipmentSlot;
+	private bool _hoveredDropZone;
 	private Backpack.SortMode? _hoveredSortButton;
-	private bool _hoveredHeader;
 	private Sandbox.UI.Panel _gridPanel;
 	private Sandbox.UI.Panel _sortButtonsPanel;
-	private Sandbox.UI.Panel _headerPanel;
-	private Sandbox.UI.Panel _inventoryAnchorPanel;
+	private Sandbox.UI.Panel _equipmentSlotsPanel;
+	private Sandbox.UI.Panel _dropZonePanel;
 
-	private Vector2? _panelPosCss;
-	private bool _draggingPanel;
-	private Vector2 _panelDragStartCursor;
-	private Vector2 _panelDragStartPos;
-	private Vector2 _panelDragPreview;
+	private int Level => 1;
+	private int Experience => 55;
+	private int ExperienceMax => 100;
+	private float ExperiencePercent => ExperienceMax > 0 ? float.Clamp( (float)Experience / ExperienceMax, 0f, 1f ) : 0f;
 
 	private Vector2 CursorCss
 	{
@@ -180,6 +316,7 @@
 		}
 		else if ( _isOpen && Input.EscapePressed )
 		{
+			Input.EscapePressed = false;
 			Close();
 		}
 
@@ -193,8 +330,8 @@
 
 		PollHoveredSlot();
 		PollHoveredSortButton();
-		PollHoveredHeader();
-		TickPanelDrag();
+		PollHoveredEquipmentSlot();
+		PollHoveredDropZone();
 		PollMouseInput();
 	}
 
@@ -203,16 +340,7 @@
 		_player = Sandbox.LocalPlayer.GameObject( Scene );
 		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
 		_uiState = _player?.Components.Get<UIStateManager>();
-	}
-
-	private void TickPanelDrag()
-	{
-		if ( !_draggingPanel ) return;
-
-		var sh = Screen.Height;
-		var scale = sh > 1 ? 1080f / sh : 1f;
-		var deltaCss = (_mousePos - _panelDragStartCursor) * scale;
-		_panelDragPreview = _panelDragStartPos + deltaCss;
+		_unit = _player?.Components.GetInDescendantsOrSelf<UnitComponent>();
 	}
 
 	private void PollMouseInput()
@@ -236,16 +364,6 @@
 					_backpack.ClearSelection();
 				}
 			}
-			else if ( _hoveredHeader )
-			{
-				StartPanelDrag();
-			}
-		}
-
-		if ( Input.Released( "Attack1" ) && _draggingPanel )
-		{
-			_panelPosCss = _panelDragPreview;
-			_draggingPanel = false;
 		}
 
 		if ( Input.Released( "Attack1" ) && _dragSource.HasValue )
@@ -263,7 +381,16 @@
 					var toSlot = ToSlot( _hoveredSlot.Value.row, _hoveredSlot.Value.col );
 					GameNetworkRpc.RequestMoveInventorySlot( _player, fromSlot, toSlot );
 				}
-				else if ( !_hoveredSlot.HasValue )
+				else if ( _hoveredEquipmentSlot == "weapon" )
+				{
+					var sourceItem = _backpack.GetItemAt( fromSlot );
+					var definition = DefinitionFor( sourceItem );
+					if ( definition is not null && definition.IsWeapon )
+					{
+						GameNetworkRpc.RequestUseInventorySlot( _player, fromSlot );
+					}
+				}
+				else if ( _hoveredDropZone || (!_hoveredSlot.HasValue && string.IsNullOrEmpty( _hoveredEquipmentSlot )) )
 				{
 					GameNetworkRpc.RequestDropInventorySlot( _player, fromSlot );
 				}
@@ -322,58 +449,6 @@
 		_hoveredSlot = null;
 	}
 
-	private void PollHoveredHeader()
-	{
-		_hoveredHeader = false;
-		if ( !_isOpen || Panel is null ) return;
-
-		_headerPanel ??= FindByClass( Panel, "header" );
-		if ( _headerPanel is null ) return;
-
-		if ( _headerPanel.IsInside( _mousePos ) && !_hoveredSortButton.HasValue )
-		{
-			_hoveredHeader = true;
-		}
-	}
-
-	private void StartPanelDrag()
-	{
-		_draggingPanel = true;
-		_panelDragStartCursor = _mousePos;
-
-		if ( _panelPosCss is { } pos )
-		{
-			_panelDragStartPos = pos;
-		}
-		else
-		{
-			_inventoryAnchorPanel ??= FindByClass( Panel, "inventory-anchor" );
-			var rect = _inventoryAnchorPanel?.Box.Rect ?? default;
-			var sh = Screen.Height;
-			var scale = sh > 1 ? 1080f / sh : 1f;
-			_panelDragStartPos = new Vector2( rect.Left * scale, rect.Top * scale );
-		}
-
-		_panelPosCss = _panelDragStartPos;
-		_panelDragPreview = _panelDragStartPos;
-	}
-
-	private string AnchorStyle()
-	{
-		if ( _panelPosCss is { } pos )
-			return $"left: {pos.x}px; top: {pos.y}px;";
-		return "";
-	}
-
-	private Vector2 AnchorCssSize()
-	{
-		_inventoryAnchorPanel ??= FindByClass( Panel, "inventory-anchor" );
-		var rect = _inventoryAnchorPanel?.Box.Rect ?? default;
-		var sh = Screen.Height;
-		var scale = sh > 1 ? 1080f / sh : 1f;
-		return new Vector2( rect.Width * scale, rect.Height * scale );
-	}
-
 	private void PollHoveredSortButton()
 	{
 		if ( !_isOpen || Panel is null )
@@ -397,9 +472,10 @@
 			{
 				_hoveredSortButton = i switch
 				{
-					0 => Backpack.SortMode.New,
-					1 => Backpack.SortMode.Worth,
-					2 => Backpack.SortMode.Weight,
+					0 => Backpack.SortMode.Type,
+					1 => Backpack.SortMode.Rarity,
+					2 => Backpack.SortMode.Worth,
+					3 => Backpack.SortMode.Weight,
 					_ => (Backpack.SortMode?)null,
 				};
 				return;
@@ -408,6 +484,48 @@
 		}
 
 		_hoveredSortButton = null;
+	}
+
+	private void PollHoveredEquipmentSlot()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_hoveredEquipmentSlot = null;
+			return;
+		}
+
+		_equipmentSlotsPanel ??= FindByClass( Panel, "equipment-slots" );
+		if ( _equipmentSlotsPanel is null )
+		{
+			_hoveredEquipmentSlot = null;
+			return;
+		}
+
+		var screenPos = _mousePos;
+		int i = 0;
+		foreach ( var child in _equipmentSlotsPanel.Children )
+		{
+			if ( child.IsInside( screenPos ) )
+			{
+				_hoveredEquipmentSlot = EquipmentSlotKeys( i );
+				return;
+			}
+			i++;
+		}
+
+		_hoveredEquipmentSlot = null;
+	}
+
+	private void PollHoveredDropZone()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_hoveredDropZone = false;
+			return;
+		}
+
+		_dropZonePanel ??= FindByClass( Panel, "drop-zone" );
+		_hoveredDropZone = _dropZonePanel is not null && _dropZonePanel.IsInside( _mousePos );
 	}
 
 	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
@@ -441,35 +559,38 @@
 		_isOpen = false;
 		_dragSource = null;
 		_dragging = false;
-		_draggingPanel = false;
 		_hoveredSlot = null;
+		_hoveredEquipmentSlot = null;
+		_hoveredDropZone = false;
 		_hoveredSortButton = null;
-		_hoveredHeader = false;
 		_gridPanel = null;
 		_sortButtonsPanel = null;
-		_headerPanel = null;
-		_inventoryAnchorPanel = null;
+		_equipmentSlotsPanel = null;
+		_dropZonePanel = null;
 		_uiState?.ReleaseUIFocus( this );
 		_backpack?.ClearSelection();
 	}
 
-	private string CellStyle( ItemDefinition definition, bool selected )
+	private string CellStyle( ItemDefinition definition, bool selected, bool filled )
 	{
 		var sb = new System.Text.StringBuilder();
 
-		var rarityCfg = definition is not null ? _player?.Components.Get<RarityConfig>() : null;
-		if ( rarityCfg is not null )
+		if ( filled && definition is not null )
 		{
-			var c = rarityCfg.GetColor( definition.Rarity );
-			sb.Append( $"border: 2px solid rgba({(int)(c.r * 255)},{(int)(c.g * 255)},{(int)(c.b * 255)},0.85);" );
+			var rarityCfg = _player?.Components.Get<RarityConfig>();
+			if ( rarityCfg is not null )
+			{
+				var c = rarityCfg.GetColor( definition.Rarity );
+				sb.Append( $"border: 2px solid rgba({(int)(c.r * 255)},{(int)(c.g * 255)},{(int)(c.b * 255)},0.9);" );
+			}
 		}
 		else
 		{
-			sb.Append( "border: none;" );
+			sb.Append( "border: 1px solid rgba(255,255,255,0.28);" );
 		}
 
 		sb.Append( selected
-			? "box-shadow: 0 0 12px 2px rgba(111,220,124,0.85);"
+			? "box-shadow: 0 0 14px 2px rgba(240,194,64,0.85);"
 			: "box-shadow: none;" );
 
 		return sb.ToString();
@@ -485,7 +606,7 @@
 	private string FormatStack( InventoryItemState item, ItemDefinition definition )
 	{
 		if ( definition is not null && definition.IsCurrency ) return $"${item.StackCount:N0}";
-		return $"x{item.StackCount}";
+		return $"{item.StackCount}";
 	}
 
 	private string GhostBackground( ItemDefinition definition )
@@ -522,13 +643,108 @@
 		{
 			rows.Add( ("-", "") );
 			rows.Add( ("Damage", $"{definition.Damage:0}") );
-			rows.Add( ("Range", $"{definition.Range:0}") );
+			rows.Add( ("Fire Rate", $"{FireRate( definition ):0.0}") );
 			rows.Add( ("Magazine", $"{item.Ammo} / {definition.MagazineSize}") );
 			rows.Add( ("Reload", $"{definition.ReloadDuration:0.0}s") );
 			rows.Add( ("Hold Type", $"{definition.HoldType}") );
 		}
 
 		return rows;
+	}
+
+	private System.Collections.Generic.IEnumerable<(string ClassName, string Icon, string Label, string Value)> StatRows()
+	{
+		yield return ("health", "+", "Health", $"{(_unit?.Health ?? 0f):0} / {(_unit?.MaxHealth ?? 100f):0}");
+		yield return ("stamina", "EN", "Stamina", "100");
+		yield return ("armor", "AR", "Armor", "0");
+		yield return ("damage", "DM", "Damage", $"{EquippedDamage():0}");
+		yield return ("speed", "AS", "Attack Speed", $"{EquippedFireRate():0.0}");
+	}
+
+	private System.Collections.Generic.IEnumerable<(string Key, string Label, string Glyph, InventoryItemState Item, ItemDefinition Definition)> EquipmentSlots()
+	{
+		_backpack.TryGetEquipped( out var equippedItem, out var equippedDefinition );
+
+		yield return ("head", "Head Armor", "HD", default, null);
+		yield return ("chest", "Chest Armor", "CH", default, null);
+		yield return ("neck", "Necklace", "NC", default, null);
+		yield return ("legs", "Trousers", "TR", default, null);
+		yield return ("hands", "Gloves", "GL", default, null);
+		yield return ("feet", "Boots", "BT", default, null);
+		yield return ("weapon", "Weapon", "WP", equippedItem, equippedDefinition);
+		yield return ("offhand", "Off Hand", "OH", default, null);
+	}
+
+	private string EquipmentSlotKeys( int index )
+	{
+		return index switch
+		{
+			0 => "head",
+			1 => "chest",
+			2 => "neck",
+			3 => "legs",
+			4 => "hands",
+			5 => "feet",
+			6 => "weapon",
+			7 => "offhand",
+			_ => null,
+		};
+	}
+
+	private InventoryItemState QuickItemFor( int index )
+	{
+		if ( !_backpack.IsValid() ) return default;
+
+		var seen = 0;
+		foreach ( var item in _backpack.Items.Values )
+		{
+			var definition = DefinitionFor( item );
+			if ( definition is null || definition.IsWeapon || definition.IsCurrency ) continue;
+
+			if ( seen == index ) return item;
+			seen++;
+		}
+
+		return default;
+	}
+
+	private int TotalWeight()
+	{
+		if ( !_backpack.IsValid() ) return 0;
+
+		var total = 0;
+		foreach ( var item in _backpack.Items.Values )
+		{
+			var definition = DefinitionFor( item );
+			if ( definition is null ) continue;
+			total += definition.Weight * item.StackCount;
+		}
+
+		return total;
+	}
+
+	private string FormatCarryWeight()
+	{
+		return TotalWeight().ToString( "N0" );
+	}
+
+	private float EquippedDamage()
+	{
+		return _backpack.IsValid() && _backpack.TryGetEquipped( out _, out var definition ) && definition is not null
+			? definition.Damage
+			: 0f;
+	}
+
+	private float EquippedFireRate()
+	{
+		return _backpack.IsValid() && _backpack.TryGetEquipped( out _, out var definition ) && definition is not null
+			? FireRate( definition )
+			: 0f;
+	}
+
+	private float FireRate( ItemDefinition definition )
+	{
+		return definition is not null && definition.FireInterval > 0f ? 1f / definition.FireInterval : 0f;
 	}
 
 	private ItemDefinition DefinitionFor( InventoryItemState item )
@@ -546,28 +762,22 @@
 		if ( _backpack is null ) return _isOpen ? 1 : 0;
 
 		var pmp = CursorCss;
-		var movingMouseHash = (_dragging || _draggingPanel) ? ((int)pmp.x, (int)pmp.y) : (0, 0);
-		var panelPosHash = _panelPosCss.HasValue
-			? ((int)_panelPosCss.Value.x, (int)_panelPosCss.Value.y)
-			: (0, 0);
-		var panelPreviewHash = _draggingPanel
-			? ((int)_panelDragPreview.x, (int)_panelDragPreview.y)
-			: (0, 0);
+		var movingMouseHash = _dragging ? ((int)pmp.x, (int)pmp.y) : (0, 0);
 
 		var hc = new System.HashCode();
 		hc.Add( _isOpen );
 		hc.Add( _backpack.InventoryVersion );
 		hc.Add( _backpack.EquippedInstanceId );
 		hc.Add( _backpack.Wallet );
+		hc.Add( _unit?.Health ?? 0f );
+		hc.Add( _unit?.MaxHealth ?? 0f );
 		hc.Add( _dragging );
-		hc.Add( _draggingPanel );
 		hc.Add( _dragSource );
 		hc.Add( _backpack.Selected );
 		hc.Add( _hoveredSlot );
+		hc.Add( _hoveredEquipmentSlot );
+		hc.Add( _hoveredDropZone );
 		hc.Add( _hoveredSortButton );
-		hc.Add( _hoveredHeader );
-		hc.Add( panelPosHash );
-		hc.Add( panelPreviewHash );
 		hc.Add( movingMouseHash );
 		return hc.ToHashCode();
 	}

@@ -25,6 +25,8 @@ public sealed class Backpack : Component
 	public enum SortMode
 	{
 		New,
+		Type,
+		Rarity,
 		Worth,
 		Weight,
 	}
@@ -265,12 +267,16 @@ public sealed class Backpack : Component
 		{
 			var ad = GetDefinition( a );
 			var bd = GetDefinition( b );
-			return mode switch
+			var primary = mode switch
 			{
+				SortMode.Type => string.Compare( $"{ad?.Kind} {ad?.DisplayName}", $"{bd?.Kind} {bd?.DisplayName}", System.StringComparison.OrdinalIgnoreCase ),
+				SortMode.Rarity => ((int)(bd?.Rarity ?? Rarity.Common)).CompareTo( (int)(ad?.Rarity ?? Rarity.Common) ),
 				SortMode.Worth => ((bd?.Value ?? 0) * b.StackCount).CompareTo( (ad?.Value ?? 0) * a.StackCount ),
 				SortMode.Weight => ((ad?.Weight ?? 0) * a.StackCount).CompareTo( (bd?.Weight ?? 0) * b.StackCount ),
 				_ => a.InstanceId.CompareTo( b.InstanceId ),
 			};
+
+			return primary != 0 ? primary : a.InstanceId.CompareTo( b.InstanceId );
 		} );
 
 		for ( var i = 0; i < sorted.Count; i++ )

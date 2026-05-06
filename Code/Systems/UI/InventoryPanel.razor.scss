@@ -7,91 +7,462 @@ InventoryPanel {
 	top: 0;
 	left: 0;
 	pointer-events: none;
+	font-family: $font-default;
 
 	&.open {
 		pointer-events: auto;
-		background-color: rgba( 0, 0, 0, 0.35 );
+		background-color: rgba( 37, 40, 8, 0.94 );
 	}
 
-	// Flex-center container holds the inventory anchor. The drag-ghost is a sibling
-	// of `.center-wrap`, so its `position: absolute` + inline left/top can follow
-	// the cursor without interacting with flex flow.
-	.center-wrap {
+	.inventory-screen {
 		width: 100%;
 		height: 100%;
 		flex-direction: column;
+		color: $text-primary;
+		text-shadow: $text-shadow-default;
+	}
+
+	.top-nav {
+		height: 76px;
+		padding: 20px 38px 0 38px;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: flex-start;
+	}
+
+	.nav-left {
+		flex-direction: row;
+		align-items: center;
+		gap: 22px;
+	}
+
+	.nav-tab {
+		font-size: 21px;
+		text-transform: uppercase;
+		color: rgba( 255, 255, 255, 0.78 );
+
+		&.active {
+			color: $text-primary;
+		}
+
+		&.muted {
+			color: rgba( 255, 255, 255, 0.44 );
+		}
+	}
+
+	.nav-bumper {
+		padding: 2px 6px;
+		border: 1px solid rgba( 255, 255, 255, 0.32 );
+		border-radius: 3px;
+		color: rgba( 255, 255, 255, 0.46 );
+		font-size: 10px;
+		font-weight: bold;
+	}
+
+	.level-block {
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+		min-width: 260px;
+		justify-content: flex-end;
+	}
+
+	.level-label {
+		font-size: 13px;
+		text-transform: uppercase;
+		color: rgba( 255, 255, 255, 0.68 );
+	}
+
+	.level-number {
+		font-size: 34px;
+		font-weight: bold;
+		line-height: 36px;
+	}
+
+	.xp-track {
+		width: 160px;
+		height: 13px;
+		background-color: rgba( 0, 0, 0, 0.52 );
+		border: 1px solid rgba( 255, 255, 255, 0.15 );
+	}
+
+	.xp-fill {
+		height: 100%;
+		background-color: rgba( 230, 230, 225, 0.92 );
+	}
+
+	.xp-text {
+		position: absolute;
+		top: 46px;
+		right: 148px;
+		font-size: 11px;
+		color: rgba( 255, 255, 255, 0.68 );
+	}
+
+	.content {
+		flex: 1;
+		padding: 24px 34px 0 34px;
+		flex-direction: row;
+		gap: 14px;
+		align-items: center;
+	}
+
+	.left-rail {
+		width: 152px;
+		height: 100%;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 30px 0 44px 0;
+	}
+
+	.stat-list {
+		flex-direction: column;
+		gap: 11px;
+	}
+
+	.stat-row {
+		flex-direction: row;
+		align-items: center;
+		gap: 9px;
+	}
+
+	.stat-icon {
+		width: 42px;
+		height: 42px;
+		border-radius: 50%;
+		border: 3px solid rgba( 255, 255, 255, 0.55 );
+		align-items: center;
+		justify-content: center;
+		font-size: 13px;
+		font-weight: bold;
+		color: white;
+		background-color: rgba( 0, 0, 0, 0.22 );
+	}
+
+	.stat-row.health .stat-icon { border-color: #00d36c; color: #00d36c; font-size: 28px; }
+	.stat-row.stamina .stat-icon { border-color: #d9e339; color: #d9e339; }
+	.stat-row.armor .stat-icon { border-color: #5ab3e5; color: #5ab3e5; }
+	.stat-row.damage .stat-icon { border-color: #c90025; color: #c90025; }
+	.stat-row.speed .stat-icon { border-color: #c90025; color: #c90025; }
+
+	.stat-copy {
+		flex-direction: column;
+		gap: 1px;
+	}
+
+	.stat-label {
+		font-size: 14px;
+		color: rgba( 255, 255, 255, 0.76 );
+	}
+
+	.stat-value {
+		font-size: 14px;
+		font-weight: bold;
+		color: white;
+	}
+
+	.quick-slots {
+		width: 140px;
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 8px;
+		justify-content: center;
+	}
+
+	.quick-slot {
+		width: 60px;
+		height: 60px;
+		position: relative;
+		background-color: rgba( 0, 0, 0, 0.52 );
+		border: 2px solid rgba( 255, 255, 255, 0.5 );
+		box-shadow: inset 0 0 12px rgba( 255, 255, 255, 0.05 );
+	}
+
+	.quick-key {
+		position: absolute;
+		top: -2px;
+		left: -2px;
+		width: 20px;
+		height: 18px;
+		background-color: rgba( 230, 230, 225, 0.96 );
+		color: #202020;
+		font-size: 11px;
+		font-weight: bold;
+		align-items: center;
+		justify-content: center;
+		text-shadow: none;
+	}
+
+	.quick-icon,
+	.equipment-icon,
+	.icon {
+		width: 100%;
+		height: 100%;
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: center center;
+		pointer-events: none;
+	}
+
+	.quick-stack {
+		position: absolute;
+		right: 5px;
+		bottom: 3px;
+		font-size: 14px;
+		font-weight: bold;
+		color: $text-key;
+	}
+
+	.quick-title {
+		width: 128px;
+		padding-top: 2px;
+		border-top: 1px solid rgba( 255, 255, 255, 0.65 );
+		font-size: 10px;
+		text-transform: uppercase;
+		text-align: center;
+		color: rgba( 255, 255, 255, 0.7 );
+	}
+
+	.character-column {
+		width: 286px;
+		height: 100%;
 		justify-content: center;
 		align-items: center;
 	}
 
-	// Non-flex wrapper around the inventory box. Exists purely to be the
-	// `position: relative` anchor for the tooltip — flex parents in s&box CSS
-	// don't reliably take `position: absolute` children out of flow, so we put the
-	// styled flex inventory inside this plain non-flex anchor instead.
-	//
-	// Default: in-flex (centered by `.center-wrap`). Once the user grabs the title
-	// bar to move the panel, `.absolute` is added and inline `left/top` take over.
-	// The tooltip's `left: 100%` keeps it pinned to the inventory either way.
-	.inventory-anchor {
+	.character-stage {
+		width: 286px;
+		height: 478px;
 		position: relative;
+		align-items: center;
+		justify-content: center;
+	}
 
-		&.absolute {
-			position: absolute;
+	.player-shadow {
+		position: absolute;
+		left: 72px;
+		bottom: 8px;
+		width: 144px;
+		height: 24px;
+		border-radius: 50%;
+		background-color: rgba( 0, 0, 0, 0.38 );
+	}
+
+	.paperdoll {
+		position: absolute;
+		width: 178px;
+		height: 430px;
+		left: 54px;
+		top: 18px;
+	}
+
+	.paperdoll-head,
+	.paperdoll-neck,
+	.paperdoll-torso,
+	.paperdoll-arm,
+	.paperdoll-leg,
+	.paperdoll-weapon,
+	.paperdoll-shield {
+		position: absolute;
+		background-color: rgba( 210, 218, 226, 0.92 );
+		border: 1px solid rgba( 255, 255, 255, 0.38 );
+		box-shadow: inset 0 -18px 26px rgba( 0, 0, 0, 0.28 );
+	}
+
+	.paperdoll-head {
+		width: 48px;
+		height: 60px;
+		left: 65px;
+		top: 0;
+		border-radius: 24px 24px 18px 18px;
+	}
+
+	.paperdoll-neck {
+		width: 24px;
+		height: 22px;
+		left: 77px;
+		top: 55px;
+		border-radius: 6px;
+	}
+
+	.paperdoll-torso {
+		width: 90px;
+		height: 150px;
+		left: 44px;
+		top: 70px;
+		border-radius: 35px 35px 24px 24px;
+		background-color: rgba( 62, 69, 76, 0.98 );
+	}
+
+	.paperdoll-arm {
+		width: 31px;
+		height: 160px;
+		top: 82px;
+		border-radius: 15px;
+
+		&.left {
+			left: 18px;
+		}
+
+		&.right {
+			right: 18px;
 		}
 	}
 
-	.inventory {
-		flex-direction: column;
-		gap: 12px;
-		padding: 18px 22px 14px 22px;
-		background-color: $panel-bg;
-		border-radius: $panel-radius;
-		font-family: $font-default;
-		min-width: 460px;
+	.paperdoll-leg {
+		width: 36px;
+		height: 184px;
+		top: 214px;
+		border-radius: 16px 16px 20px 20px;
+
+		&.left {
+			left: 50px;
+		}
+
+		&.right {
+			right: 50px;
+		}
 	}
 
-	.header {
+	.paperdoll-weapon {
+		width: 12px;
+		height: 138px;
+		left: 30px;
+		top: 168px;
+		background-color: rgba( 185, 190, 194, 0.94 );
+		border-radius: 6px;
+	}
+
+	.paperdoll-shield {
+		width: 54px;
+		height: 116px;
+		right: -4px;
+		top: 116px;
+		border-radius: 30px 30px 22px 22px;
+		background-color: rgba( 88, 103, 111, 0.84 );
+	}
+
+	.loadout-column {
+		width: 148px;
+		height: 100%;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.equipment-slots {
+		width: 146px;
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.equipment-slot {
+		width: 68px;
+		height: 82px;
+		position: relative;
+		background-color: rgba( 0, 0, 0, 0.48 );
+		border: 2px solid rgba( 255, 255, 255, 0.44 );
+		align-items: center;
+		justify-content: center;
+		transition: $transition-fast;
+
+		&.filled {
+			border-color: rgba( 240, 194, 64, 0.86 );
+			background-color: rgba( 0, 0, 0, 0.68 );
+		}
+
+		&.hover {
+			border-color: rgba( 255, 255, 255, 0.96 );
+			background-color: rgba( 255, 255, 255, 0.12 );
+		}
+	}
+
+	.slot-glyph {
+		color: rgba( 255, 255, 255, 0.28 );
+		font-size: 22px;
+		font-weight: bold;
+	}
+
+	.equipment-label {
+		position: absolute;
+		bottom: 5px;
+		left: 0;
+		width: 68px;
+		text-align: center;
+		font-size: 8px;
+		text-transform: uppercase;
+		color: rgba( 255, 255, 255, 0.58 );
+	}
+
+	.inventory-card {
+		width: 500px;
+		height: 552px;
+		position: relative;
+		padding: 12px 16px 14px 16px;
+		flex-direction: column;
+		background-color: rgba( 0, 0, 0, 0.74 );
+		border: 2px solid rgba( 255, 255, 255, 0.46 );
+		box-shadow: 0 0 28px rgba( 0, 0, 0, 0.35 );
+	}
+
+	.inventory-meta {
+		position: absolute;
+		top: -40px;
+		right: 6px;
+		flex-direction: row;
+		gap: 18px;
+	}
+
+	.meta-pill {
 		flex-direction: row;
 		align-items: center;
-		justify-content: space-between;
-		gap: 14px;
-	}
-
-	.title {
-		color: $text-primary;
-		font-size: $text-large;
+		gap: 7px;
+		font-size: 17px;
 		font-weight: bold;
-		text-shadow: $text-shadow-default;
-		// The title doubles as the panel-drag handle.
-		cursor: move;
 	}
 
-	.sort-buttons {
+	.meta-icon {
+		color: white;
+		font-size: 14px;
+		font-weight: bold;
+	}
+
+	.category-tabs {
+		height: 34px;
 		flex-direction: row;
 		gap: 6px;
+		align-items: center;
 	}
 
-	.sort-button {
-		padding: 6px 14px;
-		background-color: rgba( 255, 255, 255, 0.08 );
-		border-radius: $panel-radius-small;
-		color: $text-primary;
-		font-size: $text-small;
+	.category-tab {
+		height: 26px;
+		padding: 5px 9px;
+		font-size: 11px;
 		font-weight: bold;
-		text-shadow: $text-shadow-default;
-		transition: $transition-fast;
-		cursor: pointer;
+		text-transform: uppercase;
+		color: rgba( 255, 255, 255, 0.4 );
+		background-color: rgba( 255, 255, 255, 0.06 );
 
-		// `.hover` is set from C# polling; native `:hover` is unreliable on plain divs.
-		&.hover {
-			background-color: rgba( 255, 255, 255, 0.18 );
-			color: $accent-warning;
+		&.active {
+			color: white;
+			background-color: rgba( 255, 255, 255, 0.14 );
 		}
+	}
+
+	.inventory-title {
+		position: absolute;
+		top: 34px;
+		right: 18px;
+		font-size: 16px;
+		text-transform: uppercase;
+		color: rgba( 255, 255, 255, 0.78 );
 	}
 
 	.grid {
+		margin-top: 18px;
 		flex-direction: column;
 		gap: 6px;
+		align-items: center;
 	}
 
 	.grid-row {
@@ -100,27 +471,15 @@ InventoryPanel {
 	}
 
 	.cell {
-		width: 64px;
-		height: 64px;
-		background-color: rgba( 0, 0, 0, 0.5 );
-		border-radius: $panel-radius-small;
+		width: 68px;
+		height: 68px;
+		background-color: rgba( 20, 20, 20, 0.82 );
 		position: relative;
 		transition: $transition-fast;
-		// box-shadow (rarity glow + optional selection layer) is set inline by C# —
-		// s&box CSS doesn't support `var(--name)` custom properties, so the full
-		// shadow string is composed in InventoryPanel.razor's CellStyle().
-	}
 
-	.icon {
-		width: 100%;
-		height: 100%;
-		background-size: contain;
-		background-repeat: no-repeat;
-		background-position: center center;
-		// Cell children must not intercept mouse events — otherwise mouseover/out
-		// fire spuriously when the cursor crosses from cell to icon, breaking
-		// tooltip hover tracking.
-		pointer-events: none;
+		&.filled {
+			background-color: rgba( 32, 32, 32, 0.92 );
+		}
 	}
 
 	.icon-fallback {
@@ -129,7 +488,7 @@ InventoryPanel {
 		justify-content: center;
 		align-items: center;
 		color: $text-primary;
-		font-size: $text-large;
+		font-size: 20px;
 		font-weight: bold;
 		text-shadow: $text-shadow-default;
 		pointer-events: none;
@@ -140,20 +499,101 @@ InventoryPanel {
 		bottom: 2px;
 		right: 4px;
 		color: $text-key;
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: bold;
 		text-shadow: $text-shadow-default;
 		pointer-events: none;
 	}
 
-	.footer {
-		justify-content: center;
+	.equipped-tag {
+		position: absolute;
+		left: -40px;
+		top: 21px;
+		padding: 3px 6px;
+		background-color: rgba( 78, 105, 38, 0.95 );
+		border: 1px solid rgba( 255, 255, 255, 0.3 );
+		color: white;
+		font-size: 10px;
+		font-weight: bold;
+		pointer-events: none;
 	}
 
-	.hint {
-		color: $text-secondary;
-		font-size: $text-eyebrow;
-		text-shadow: $text-shadow-default;
+	.sort-line {
+		margin-top: 14px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		color: rgba( 255, 255, 255, 0.48 );
+		font-size: 11px;
+		text-transform: uppercase;
+	}
+
+	.sort-buttons {
+		flex-direction: row;
+		gap: 7px;
+	}
+
+	.sort-button {
+		padding: 5px 11px;
+		background-color: rgba( 255, 255, 255, 0.09 );
+		color: rgba( 255, 255, 255, 0.68 );
+		font-size: 11px;
+		font-weight: bold;
+		text-transform: uppercase;
+		transition: $transition-fast;
+		cursor: pointer;
+
+		&.hover {
+			background-color: rgba( 255, 255, 255, 0.2 );
+			color: $accent-warning;
+		}
+	}
+
+	.drop-zone {
+		width: 62px;
+		height: 552px;
+		border: 2px solid rgba( 255, 255, 255, 0.42 );
+		background-color: rgba( 0, 0, 0, 0.35 );
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		color: rgba( 255, 255, 255, 0.35 );
+		font-size: 18px;
+		font-weight: bold;
+		text-transform: uppercase;
+		transition: $transition-fast;
+
+		&.hover {
+			border-color: rgba( 255, 255, 255, 0.92 );
+			background-color: rgba( 160, 35, 35, 0.55 );
+			color: white;
+		}
+	}
+
+	.drop-icon {
+		width: 34px;
+		height: 46px;
+		border-radius: 17px 17px 10px 10px;
+		border: 3px solid rgba( 255, 255, 255, 0.35 );
+		background-color: rgba( 255, 255, 255, 0.08 );
+	}
+
+	.bottom-hints {
+		height: 46px;
+		padding: 0 36px 12px 36px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 30px;
+		color: rgba( 255, 255, 255, 0.62 );
+		font-size: 13px;
+	}
+
+	b {
+		color: $text-primary;
+		font-weight: bold;
 	}
 
 	.drag-ghost {
@@ -163,42 +603,32 @@ InventoryPanel {
 		background-size: contain;
 		background-repeat: no-repeat;
 		background-position: center center;
-		background-color: rgba( 0, 0, 0, 0.5 );
-		border-radius: $panel-radius-small;
+		background-color: rgba( 0, 0, 0, 0.62 );
+		border: 2px solid rgba( 255, 255, 255, 0.7 );
 		justify-content: center;
 		align-items: center;
-		opacity: 0.85;
+		opacity: 0.88;
 		pointer-events: none;
 	}
 
-	// Outline that previews where the inventory panel will land while the user
-	// drags its title bar. Same role as `.drag-ghost` for items, just sized to
-	// the whole panel — committed on mouse-up.
-	.panel-ghost {
-		position: absolute;
-		background-color: rgba( 255, 255, 255, 0.06 );
-		border: 2px solid rgba( 255, 255, 255, 0.55 );
-		border-radius: $panel-radius;
-		pointer-events: none;
-	}
-
-	// Anchored to `.inventory-anchor` (its non-flex parent). `left: 100%` puts the
-	// tooltip immediately right of the inventory box; `top: 0` aligns with the box
-	// top. No C# coord math required — pure CSS keeps this resolution-independent.
 	.tooltip {
 		position: absolute;
-		left: 100%;
-		top: 0;
-		margin-left: 12px;
+		left: -172px;
+		top: 210px;
+		width: 238px;
 		flex-direction: column;
-		min-width: 200px;
-		padding: 10px 12px;
-		background-color: rgba( 0, 0, 0, 0.9 );
-		border: 1px solid rgba( 255, 255, 255, 0.15 );
-		border-radius: $panel-radius-small;
+		padding: 11px 13px;
+		background-color: rgba( 0, 0, 0, 0.88 );
+		border: 1px solid rgba( 255, 255, 255, 0.18 );
 		font-family: $font-default;
 		pointer-events: none;
 		gap: 4px;
+
+		&.rarity-common { border-color: rgba( 255, 255, 255, 0.5 ); }
+		&.rarity-uncommon { border-color: rgba( 117, 220, 124, 0.72 ); }
+		&.rarity-rare { border-color: rgba( 77, 148, 255, 0.72 ); }
+		&.rarity-epic { border-color: rgba( 176, 82, 222, 0.72 ); }
+		&.rarity-legendary { border-color: rgba( 255, 166, 0, 0.72 ); }
 	}
 
 	.tooltip-header {
@@ -208,22 +638,15 @@ InventoryPanel {
 
 	.tooltip-name {
 		color: $text-primary;
-		font-size: $text-large;
+		font-size: 16px;
 		font-weight: bold;
-		text-shadow: $text-shadow-default;
 	}
 
 	.tooltip-rarity {
-		font-size: $text-eyebrow;
+		font-size: 10px;
 		font-weight: bold;
-		text-shadow: $text-shadow-default;
 		text-transform: uppercase;
-
-		&.rarity-common    { color: #ffffff; }
-		&.rarity-uncommon  { color: #75dc7c; }
-		&.rarity-rare      { color: #4d94ff; }
-		&.rarity-epic      { color: #b052de; }
-		&.rarity-legendary { color: #ffa600; }
+		color: $accent-warning;
 	}
 
 	.tooltip-divider {
@@ -234,7 +657,7 @@ InventoryPanel {
 
 	.tooltip-rows {
 		flex-direction: column;
-		gap: 2px;
+		gap: 3px;
 	}
 
 	.tooltip-row {
@@ -244,15 +667,13 @@ InventoryPanel {
 	}
 
 	.tooltip-label {
-		color: $text-secondary;
-		font-size: $text-small;
-		text-shadow: $text-shadow-default;
+		color: rgba( 255, 255, 255, 0.68 );
+		font-size: 12px;
 	}
 
 	.tooltip-value {
 		color: $text-primary;
-		font-size: $text-small;
+		font-size: 12px;
 		font-weight: bold;
-		text-shadow: $text-shadow-default;
 	}
 }
