@@ -402,33 +402,30 @@
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
                 "component_type": "CitizenAnimationHelper"
               },
+              "Backpack": {
+                "_type": "component",
+                "component_id": "b2c5e1f0-1101-4f03-9e34-8a8c4f1e1a03",
+                "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
+                "component_type": "Backpack"
+              },
               "BodyRenderer": {
                 "_type": "component",
                 "component_id": "d2898695-f228-4930-89dc-353c84ea4454",
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
                 "component_type": "SkinnedModelRenderer"
               },
-              "Damage": 25,
               "Equipment": {
                 "_type": "component",
                 "component_id": "967c839c-7655-4c7f-adb1-96d6edfe7c5d",
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
                 "component_type": "Equipment"
               },
-              "Handedness": "Right",
-              "HoldType": "Pistol",
-              "MagazineSize": 7,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
-              "OnComponentUpdate": null,
-              "Range": 5000,
-              "ReloadDuration": 1.5,
-              "WeaponAngleOffset": "0,0,0",
-              "WeaponOffset": "0,0,0",
-              "WeaponScale": "1,1,1"
+              "OnComponentUpdate": null
             },
             {
               "__type": "Backpack",
@@ -436,7 +433,6 @@
               "__enabled": true,
               "Flags": 0,
               "Cols": 6,
-              "MoneyPickupPrefab": null,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
@@ -8682,7 +8678,7 @@
           "Scale": "1,1,1",
           "Tags": "",
           "Enabled": true,
-          "NetworkMode": 2,
+          "NetworkMode": 1,
           "NetworkFlags": 0,
           "NetworkOrphaned": 0,
           "NetworkTransmit": true,
@@ -8772,15 +8768,8 @@
               "__guid": "ec154d7f-4b2d-4997-93b6-a840f43a5cfb",
               "__enabled": true,
               "Flags": 0,
-              "Damage": 25,
-              "DisplayName": "Glock",
-              "GridHeight": 1,
-              "GridWidth": 1,
-              "Handedness": "Right",
-              "HoldType": "Pistol",
-              "Icon": "",
-              "MagazineSize": 15,
-              "MaxStack": 1,
+              "Definition": null,
+              "DefinitionPath": "items/glock.item",
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
@@ -8788,14 +8777,7 @@
               "OnComponentStart": null,
               "OnComponentUpdate": null,
               "PickupRange": 100,
-              "Range": 3000,
-              "Rarity": "Common",
-              "ReloadDuration": 1.5,
-              "Value": 200,
-              "WeaponAngleOffset": "-11.5679998,-8.44799995,0",
-              "WeaponOffset": "3.01600003,-0.864000022,2.12800002",
-              "WeaponScale": "0.680000007,0.680000007,0.680000007",
-              "Weight": 1
+              "StartingAmmo": -1
             }
           ],
           "Children": []

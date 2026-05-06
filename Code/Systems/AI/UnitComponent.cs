@@ -55,6 +55,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	private float _lastHealth;
 	private GameObject _lastAttacker;
+	private bool _bountyPaid;
 
 	public bool IsDead => Health <= 0f;
 
@@ -80,7 +81,13 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			_lastAttacker = info.Attacker;
 		}
 
+		var wasAlive = !IsDead;
 		Health = float.Clamp( Health - info.Damage, 0f, MaxHealth );
+
+		if ( wasAlive && IsDead )
+		{
+			TryPayBounty();
+		}
 	}
 
 	protected override void OnStart()
@@ -129,12 +136,55 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	private void TryPayBounty()
 	{
-		if ( Bounty <= 0 ) return;
-		if ( !_lastAttacker.IsValid() ) return;
+		if ( !Networking.IsHost ) return;
+		if ( _bountyPaid ) return;
+		if ( Bounty <= 0 )
+		{
+			Log.Info( $"{Name}: no bounty paid because Bounty is {Bounty}" );
+			return;
+		}
+		if ( !_lastAttacker.IsValid() )
+		{
+			Log.Warning( $"{Name}: no bounty paid because last attacker is invalid" );
+			return;
+		}
 
-		var killerUnit = _lastAttacker.Components.GetInDescendantsOrSelf<UnitComponent>();
-		if ( !killerUnit.IsValid() || killerUnit.Team != TeamType.Player ) return;
+		var killerBackpack = FindKillerBackpack();
+		if ( !killerBackpack.IsValid() )
+		{
+			Log.Warning( $"{Name}: no bounty paid because attacker {_lastAttacker.Name} has no Backpack" );
+			return;
+		}
 
-		EconomySystem.Current?.Add( Bounty );
+		var killerUnit = killerBackpack.GameObject.Components.GetInAncestorsOrSelf<UnitComponent>();
+		if ( !killerUnit.IsValid() ) killerUnit = killerBackpack.GameObject.Components.GetInDescendantsOrSelf<UnitComponent>();
+		if ( killerUnit.IsValid() && killerUnit.Team != TeamType.Player )
+		{
+			Log.Info( $"{Name}: no bounty paid because killer team is {killerUnit.Team}" );
+			return;
+		}
+
+		var oldWallet = killerBackpack.Wallet;
+		_bountyPaid = true;
+		killerBackpack.AddMoney( Bounty );
+		Log.Info( $"{Name}: paid ${Bounty} bounty to {killerBackpack.GameObject.Name}. Wallet {oldWallet} -> {killerBackpack.Wallet}" );
+	}
+
+	private Backpack FindKillerBackpack()
+	{
+		var backpack = _lastAttacker.Components.GetInDescendantsOrSelf<Backpack>();
+		if ( backpack.IsValid() ) return backpack;
+
+		backpack = _lastAttacker.Components.GetInAncestorsOrSelf<Backpack>();
+		if ( backpack.IsValid() ) return backpack;
+
+		var root = _lastAttacker.Root;
+		if ( root.IsValid() && root != _lastAttacker )
+		{
+			backpack = root.Components.GetInDescendantsOrSelf<Backpack>();
+			if ( backpack.IsValid() ) return backpack;
+		}
+
+		return null;
 	}
 }

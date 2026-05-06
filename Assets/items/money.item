@@ -1,0 +1,9 @@
+{
+  "DisplayName": "Money",
+  "Kind": "Currency",
+  "Icon": "",
+  "Rarity": "Common",
+  "Value": 1,
+  "Weight": 0,
+  "MaxStack": 2147483647
+}

@@ -149,6 +149,7 @@
         "__guid": "e18aee90-d3c4-4b35-8842-39dcc7c5a80e",
         "__enabled": true,
         "Flags": 0,
+        "Bounty": 100,
         "MaxHealth": 100,
         "ModelRenderer": {
           "_type": "component",

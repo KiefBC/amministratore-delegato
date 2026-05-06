@@ -80,12 +80,18 @@
 
 	private void FindLocalWeapon()
 	{
-		var equipment = Sandbox.LocalPlayer.Component<Equipment>( Scene );
-		_weaponName = equipment?.Equipped?.Name;
-
 		_weapon = Sandbox.LocalPlayer.Component<WeaponBehavior>( Scene );
-		if ( _weapon is null ) return;
+		if ( _weapon is null )
+		{
+			_weaponName = null;
+			_holstered = false;
+			_state = WeaponBehavior.WeaponState.Idle;
+			_currentAmmo = 0;
+			_magazineSize = 1;
+			return;
+		}
 
+		_weaponName = _weapon.DisplayName;
 		_holstered = _weapon.IsHolstered;
 		_state = _weapon.State;
 		_currentAmmo = _weapon.CurrentAmmo;

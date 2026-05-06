@@ -1,44 +1,25 @@
 using Sandbox;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
-/// Multi-slot bag storage for the player. Distinct from <see cref="Equipment"/>:
-/// Equipment owns the one item parented to <c>hold_R</c>; Backpack owns the grid
-/// of all items the player carries (the equipped item is *also* tracked here, so
-/// the bag UI reflects everything the player owns).
-///
-/// Items are <see cref="BaseItem"/> Components on world GameObjects. On pickup,
-/// the world GameObject is parented under this Backpack's GameObject with renderer
-/// and colliders disabled — the same Component instance survives the trip, so
-/// per-prefab metadata (Value, Weight, Rarity, weapon stats) stays attached.
-///
-/// Lives on the player Body GameObject alongside <see cref="Equipment"/> and
-/// <see cref="WeaponBehavior"/>.
+/// Host-authoritative per-player inventory and wallet. Persistent state is synced
+/// as item records; world/equipped GameObjects are views derived from definitions.
 /// </summary>
 public sealed class Backpack : Component
 {
 	[Property] public int Rows { get; set; } = 4;
 	[Property] public int Cols { get; set; } = 6;
 
-	/// <summary>
-	/// Optional prefab spawned when the player drops money out of the grid. Should
-	/// have a <see cref="MoneyPickup"/> Component plus visuals. If null, drops
-	/// fall back to a bare GameObject with a MoneyPickup Component (no visual).
-	/// </summary>
-	[Property] public GameObject MoneyPickupPrefab { get; set; }
+	[Sync( SyncFlags.FromHost )] public NetDictionary<int, InventoryItemState> Items { get; set; } = new();
+	[Sync( SyncFlags.FromHost )] public int EquippedInstanceId { get; set; }
+	[Sync( SyncFlags.FromHost )] public int Wallet { get; set; }
+	[Sync( SyncFlags.FromHost )] public int InventoryVersion { get; set; }
 
-	private BaseItem[,] _slots;
 	private (int row, int col)? _selected;
-	private int _lastMoneyAmount = -1;
+	private int _nextInstanceId = 1;
 
-	/// <summary>
-	/// Persistent money item that mirrors <see cref="EconomySystem.Money"/>. Created
-	/// when balance first goes positive, destroyed when balance hits zero. Never
-	/// auto-moves position — sort/move/drag operates on it like any other slot.
-	/// </summary>
-	private MoneyPickup _moneyItem;
-
-	public BaseItem[,] Slots => _slots;
+	public int SlotCount => Rows * Cols;
 	public (int row, int col)? Selected => _selected;
 
 	public enum SortMode
@@ -48,408 +29,457 @@ public sealed class Backpack : Component
 		Weight,
 	}
 
-	protected override void OnAwake()
-	{
-		_slots = new BaseItem[Rows, Cols];
-	}
-
 	protected override void OnStart()
 	{
-		// Sync the money slot if balance is already non-zero at scene start.
-		var initial = EconomySystem.Current?.Money ?? 0;
-		_lastMoneyAmount = initial;
-		if ( initial > 0 )
+		if ( Networking.IsHost )
 		{
-			SyncMoneySlot( initial );
+			EnsureNextInstanceId();
 		}
 	}
 
 	protected override void OnUpdate()
 	{
-		var current = EconomySystem.Current?.Money ?? 0;
-		if ( current == _lastMoneyAmount ) return;
-
-		_lastMoneyAmount = current;
-		SyncMoneySlot( current );
+		if ( Networking.IsHost )
+		{
+			CompleteReloadIfDue();
+		}
 	}
 
-	// -------------------------------------------------------------------
-	// Add / store / remove
-	// -------------------------------------------------------------------
-
-	/// <summary>
-	/// Add a fresh world item to the bag. Tries to stack into an existing matching
-	/// slot first; otherwise places into the first empty slot. Returns false if the
-	/// bag is full.
-	/// </summary>
-	public bool TryAdd( BaseItem item )
+	public InventoryItemState GetItemAt( int row, int col )
 	{
-		if ( !item.IsValid() ) return false;
+		return GetItemAt( ToSlot( row, col ) );
+	}
 
-		var stackPos = FindStackable( item );
-		if ( stackPos is { } sp )
+	public InventoryItemState GetItemAt( int slot )
+	{
+		foreach ( var item in Items.Values )
 		{
-			_slots[sp.r, sp.c].StackCount += item.StackCount;
-			item.GameObject.Destroy();
-			MarkDirty();
+			if ( item.IsValid && item.SlotIndex == slot ) return item;
+		}
+
+		return default;
+	}
+
+	public ItemDefinition GetDefinition( InventoryItemState item )
+	{
+		return item.IsValid ? ItemDefinition.Resolve( item.DefinitionPath ) : null;
+	}
+
+	public bool TryGetEquipped( out InventoryItemState item, out ItemDefinition definition )
+	{
+		item = default;
+		definition = null;
+
+		if ( EquippedInstanceId <= 0 ) return false;
+		if ( !Items.TryGetValue( EquippedInstanceId, out item ) || !item.IsValid ) return false;
+
+		definition = GetDefinition( item );
+		return definition is not null;
+	}
+
+	public bool TryAddDefinition( string definitionPath, int stackCount = 1, int ammo = -1, bool autoEquipFirstWeapon = true )
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( stackCount <= 0 ) return false;
+
+		var definition = ItemDefinition.Resolve( definitionPath );
+		if ( definition is null ) return false;
+
+		if ( definition.IsCurrency )
+		{
+			AddMoney( stackCount );
 			return true;
 		}
 
-		var emptyPos = FirstEmpty();
-		if ( emptyPos is null ) return false;
+		EnsureNextInstanceId();
 
-		PlaceInSlot( item, emptyPos.Value.r, emptyPos.Value.c, freshAcquire: true );
-		MarkDirty();
-		return true;
-	}
-
-	/// <summary>
-	/// Place an already-tracked bag item into its slot after returning from the hand
-	/// bone (e.g., the user equipped a different weapon). Preserves AcquiredTime so
-	/// "New" sort doesn't bubble re-equipped items to the front.
-	///
-	/// If the item already occupies a slot (which is normal — bag entries persist
-	/// across equip/unequip), this is a no-op except for re-parenting and renderer
-	/// state. If for some reason it isn't tracked, we add it to the first empty slot.
-	/// </summary>
-	public bool StoreFromHand( BaseItem item )
-	{
-		if ( !item.IsValid() ) return false;
-
-		ParentToBag( item );
-
-		// Already tracked — nothing else to do, the slot already references this item.
-		if ( FindSlot( item ) is not null )
+		if ( definition.MaxStack > 1 )
 		{
-			MarkDirty();
-			return true;
-		}
-
-		var emptyPos = FirstEmpty();
-		if ( emptyPos is null ) return false;
-
-		PlaceInSlot( item, emptyPos.Value.r, emptyPos.Value.c, freshAcquire: false );
-		MarkDirty();
-		return true;
-	}
-
-	/// <summary>
-	/// Used by <see cref="WeaponPickup.Interact"/> on the auto-equip-first-weapon path:
-	/// the item is now parented to the hand bone, but we still record a bag slot for
-	/// it so the inventory UI shows everything the player owns.
-	/// </summary>
-	public bool TrackEquipped( BaseItem item )
-	{
-		if ( !item.IsValid() ) return false;
-
-		var emptyPos = FirstEmpty();
-		if ( emptyPos is null ) return false;
-
-		// Don't re-parent — Equipment already attached the GO to the hand bone.
-		_slots[emptyPos.Value.r, emptyPos.Value.c] = item;
-		item.AcquiredTime = 0f;
-		MarkDirty();
-		return true;
-	}
-
-	/// <summary>
-	/// Clear a slot and destroy the item. UI / drop / consume call this; do not call
-	/// it for "the item moved to hand" — that's a parenting change, not a removal.
-	/// </summary>
-	public void Remove( int row, int col )
-	{
-		if ( !InBounds( row, col ) ) return;
-		var item = _slots[row, col];
-		if ( !item.IsValid() ) return;
-
-		_slots[row, col] = null;
-		if ( _moneyItem == item ) _moneyItem = null;
-		item.GameObject.Destroy();
-		MarkDirty();
-	}
-
-	// -------------------------------------------------------------------
-	// Move / drag-drop
-	// -------------------------------------------------------------------
-
-	/// <summary>
-	/// Swap two slots. If the destination is empty, this is a move; if it holds a
-	/// stack-compatible item, contents merge into one. Returns false if either slot
-	/// index is out of bounds or the source is empty.
-	/// </summary>
-	public bool MoveSlot( int fromRow, int fromCol, int toRow, int toCol )
-	{
-		if ( !InBounds( fromRow, fromCol ) ) return false;
-		if ( !InBounds( toRow, toCol ) ) return false;
-		if ( fromRow == toRow && fromCol == toCol ) return false;
-
-		var src = _slots[fromRow, fromCol];
-		if ( !src.IsValid() ) return false;
-
-		var dst = _slots[toRow, toCol];
-		if ( !dst.IsValid() )
-		{
-			_slots[toRow, toCol] = src;
-			_slots[fromRow, fromCol] = null;
-			MarkDirty();
-			return true;
-		}
-
-		if ( dst.CanStackWith( src ) )
-		{
-			dst.StackCount += src.StackCount;
-			_slots[fromRow, fromCol] = null;
-			src.GameObject.Destroy();
-			MarkDirty();
-			return true;
-		}
-
-		_slots[fromRow, fromCol] = dst;
-		_slots[toRow, toCol] = src;
-		MarkDirty();
-		return true;
-	}
-
-	/// <summary>
-	/// Drop a slot's item into the world at the player's feet. Money decrements the
-	/// balance and spawns a world MoneyPickup of that value; weapons re-enable their
-	/// renderer/colliders and become world-pickupable again.
-	/// </summary>
-	public void DropToWorld( int row, int col )
-	{
-		if ( !InBounds( row, col ) ) return;
-		var item = _slots[row, col];
-		if ( !item.IsValid() ) return;
-
-		var spawnPos = GameObject.Root.WorldPosition;
-
-		if ( item is MoneyPickup money )
-		{
-			var amount = money.StackCount;
-			SpawnWorldMoney( amount, spawnPos );
-			// The synced economy value changes after the spend; OnUpdate mirrors it
-			// into the visible money slot.
-			EconomySystem.Current?.TrySpend( amount );
-			return;
-		}
-
-		// Weapon / generic item drop: unparent to scene, re-enable visuals and colliders.
-		// If this item is the currently-held weapon, clear the equipment slot first
-		// — otherwise WeaponBehavior keeps firing a phantom weapon.
-		var equipment = Components.Get<Equipment>();
-		if ( equipment.IsValid() && equipment.Equipped == item.GameObject )
-		{
-			equipment.UnequipWithoutStoring();
-		}
-
-		_slots[row, col] = null;
-		item.GameObject.SetParent( null, true );
-		item.GameObject.WorldPosition = spawnPos;
-		item.GameObject.Enabled = true;
-
-		var renderer = item.GameObject.Components.Get<ModelRenderer>();
-		if ( renderer.IsValid() ) renderer.Enabled = true;
-
-		foreach ( var col2 in item.GameObject.Components.GetAll<Collider>() )
-		{
-			col2.Enabled = true;
-		}
-
-		MarkDirty();
-	}
-
-	// -------------------------------------------------------------------
-	// Sort
-	// -------------------------------------------------------------------
-
-	/// <summary>
-	/// Flatten non-empty slots, sort by mode, refill row-major from (0,0). Stable
-	/// secondary key is unused — sort orders are total enough for practical use.
-	/// </summary>
-	public void Sort( SortMode mode )
-	{
-		var items = new List<BaseItem>();
-		for ( int r = 0; r < Rows; r++ )
-		{
-			for ( int c = 0; c < Cols; c++ )
+			var remaining = stackCount;
+			foreach ( var existing in Items.Values.ToList() )
 			{
-				if ( _slots[r, c].IsValid() ) items.Add( _slots[r, c] );
+				if ( existing.DefinitionPath != definitionPath ) continue;
+				if ( existing.StackCount >= definition.MaxStack ) continue;
+
+				var add = int.Min( remaining, definition.MaxStack - existing.StackCount );
+				var updated = existing;
+				updated.StackCount += add;
+				Items[updated.InstanceId] = updated;
+				remaining -= add;
+				if ( remaining <= 0 )
+				{
+					Touch();
+					return true;
+				}
+			}
+
+			stackCount = remaining;
+		}
+
+		while ( stackCount > 0 )
+		{
+			var slot = FirstEmptySlot();
+			if ( slot < 0 ) return false;
+
+			var add = definition.MaxStack > 1 ? int.Min( stackCount, definition.MaxStack ) : 1;
+			var instanceId = _nextInstanceId++;
+			var state = new InventoryItemState
+			{
+				InstanceId = instanceId,
+				DefinitionPath = definitionPath,
+				StackCount = add,
+				SlotIndex = slot,
+				Ammo = definition.IsWeapon ? (ammo >= 0 ? ammo : definition.MagazineSize) : 0,
+				State = WeaponBehavior.WeaponState.Idle,
+				IsHolstered = false,
+				ReloadEndTime = 0f,
+				LastFireTime = 0f,
+			};
+
+			Items[instanceId] = state;
+			stackCount -= add;
+
+			if ( autoEquipFirstWeapon && EquippedInstanceId <= 0 && definition.IsWeapon )
+			{
+				EquippedInstanceId = instanceId;
 			}
 		}
 
-		items.Sort( ( a, b ) => mode switch
+		Touch();
+		return true;
+	}
+
+	public void AddMoney( int amount )
+	{
+		if ( amount <= 0 ) return;
+		if ( !Networking.IsHost ) return;
+
+		Wallet += amount;
+		Touch();
+	}
+
+	public bool TrySpend( int amount )
+	{
+		if ( amount <= 0 ) return false;
+		if ( !Networking.IsHost )
 		{
-			// "New" = newest first → smaller AcquiredTime (less time elapsed) first.
-			SortMode.New => ((float)a.AcquiredTime).CompareTo( (float)b.AcquiredTime ),
-			// "Worth" = highest total slot value first.
-			SortMode.Worth => (b.Value * b.StackCount).CompareTo( a.Value * a.StackCount ),
-			// "Weight" = lightest total slot weight first.
-			SortMode.Weight => (a.Weight * a.StackCount).CompareTo( b.Weight * b.StackCount ),
-			_ => 0,
+			GameNetworkRpc.RequestSpendMoney( GameObject.Root, amount );
+			return false;
+		}
+
+		if ( Wallet < amount ) return false;
+		Wallet -= amount;
+		Touch();
+		return true;
+	}
+
+	public bool TryUseSlot( int slot )
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( !TryGetItemAt( slot, out var item ) ) return false;
+
+		var definition = GetDefinition( item );
+		if ( definition is null ) return false;
+
+		if ( definition.IsWeapon )
+		{
+			EquippedInstanceId = item.InstanceId;
+			item.IsHolstered = false;
+			if ( item.Ammo <= 0 ) item.State = WeaponBehavior.WeaponState.Empty;
+			else item.State = WeaponBehavior.WeaponState.Idle;
+			Items[item.InstanceId] = item;
+			Touch();
+			return true;
+		}
+
+		return false;
+	}
+
+	public bool TryMoveSlot( int fromSlot, int toSlot )
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( !InBounds( fromSlot ) || !InBounds( toSlot ) ) return false;
+		if ( fromSlot == toSlot ) return false;
+		if ( !TryGetItemAt( fromSlot, out var src ) ) return false;
+
+		var dstExists = TryGetItemAt( toSlot, out var dst );
+		if ( !dstExists )
+		{
+			src.SlotIndex = toSlot;
+			Items[src.InstanceId] = src;
+			Touch();
+			return true;
+		}
+
+		var srcDef = GetDefinition( src );
+		if ( srcDef is not null && src.DefinitionPath == dst.DefinitionPath && srcDef.MaxStack > 1 )
+		{
+			var move = int.Min( src.StackCount, srcDef.MaxStack - dst.StackCount );
+			if ( move > 0 )
+			{
+				dst.StackCount += move;
+				src.StackCount -= move;
+				Items[dst.InstanceId] = dst;
+
+				if ( src.StackCount <= 0 ) RemoveItem( src.InstanceId );
+				else Items[src.InstanceId] = src;
+
+				Touch();
+				return true;
+			}
+		}
+
+		src.SlotIndex = toSlot;
+		dst.SlotIndex = fromSlot;
+		Items[src.InstanceId] = src;
+		Items[dst.InstanceId] = dst;
+		Touch();
+		return true;
+	}
+
+	public bool TryDropSlot( int slot )
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( !TryGetItemAt( slot, out var item ) ) return false;
+
+		var definition = GetDefinition( item );
+		if ( definition is null ) return false;
+
+		if ( item.InstanceId == EquippedInstanceId )
+		{
+			EquippedInstanceId = 0;
+		}
+
+		RemoveItem( item.InstanceId );
+		SpawnWorldPickup( item, definition, GameObject.Root.WorldPosition );
+		Touch();
+		return true;
+	}
+
+	public bool TrySort( SortMode mode )
+	{
+		if ( !Networking.IsHost ) return false;
+
+		var sorted = Items.Values.Where( x => x.IsValid ).ToList();
+		sorted.Sort( ( a, b ) =>
+		{
+			var ad = GetDefinition( a );
+			var bd = GetDefinition( b );
+			return mode switch
+			{
+				SortMode.Worth => ((bd?.Value ?? 0) * b.StackCount).CompareTo( (ad?.Value ?? 0) * a.StackCount ),
+				SortMode.Weight => ((ad?.Weight ?? 0) * a.StackCount).CompareTo( (bd?.Weight ?? 0) * b.StackCount ),
+				_ => a.InstanceId.CompareTo( b.InstanceId ),
+			};
 		} );
 
-		for ( int r = 0; r < Rows; r++ )
-			for ( int c = 0; c < Cols; c++ )
-				_slots[r, c] = null;
-
-		var idx = 0;
-		for ( int r = 0; r < Rows && idx < items.Count; r++ )
+		for ( var i = 0; i < sorted.Count; i++ )
 		{
-			for ( int c = 0; c < Cols && idx < items.Count; c++ )
-			{
-				_slots[r, c] = items[idx++];
-			}
+			var item = sorted[i];
+			item.SlotIndex = i;
+			Items[item.InstanceId] = item;
 		}
 
-		MarkDirty();
+		Touch();
+		return true;
 	}
 
-	// -------------------------------------------------------------------
-	// Selection
-	// -------------------------------------------------------------------
+	public bool TryToggleHolster()
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( !TryGetEquipped( out var item, out var definition ) ) return false;
+		if ( !definition.IsWeapon ) return false;
+
+		item.IsHolstered = !item.IsHolstered;
+		if ( item.IsHolstered && item.State == WeaponBehavior.WeaponState.Reloading )
+		{
+			item.State = item.Ammo <= 0 ? WeaponBehavior.WeaponState.Empty : WeaponBehavior.WeaponState.Idle;
+			item.ReloadEndTime = 0f;
+		}
+
+		Items[item.InstanceId] = item;
+		Touch();
+		return true;
+	}
+
+	public bool TryStartReload()
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( !TryGetEquipped( out var item, out var definition ) ) return false;
+		if ( !definition.IsWeapon ) return false;
+		if ( item.IsHolstered ) return false;
+		if ( item.State == WeaponBehavior.WeaponState.Reloading ) return false;
+		if ( item.Ammo >= definition.MagazineSize ) return false;
+
+		item.State = WeaponBehavior.WeaponState.Reloading;
+		item.ReloadEndTime = Time.Now + definition.ReloadDuration;
+		Items[item.InstanceId] = item;
+		Touch();
+		return true;
+	}
+
+	public bool TryFire( Vector3 origin, Rotation aim )
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( !TryGetEquipped( out var item, out var definition ) ) return false;
+		if ( !definition.IsWeapon ) return false;
+
+		CompleteReloadIfDue( ref item, definition );
+		if ( item.IsHolstered ) return false;
+		if ( item.State != WeaponBehavior.WeaponState.Idle ) return false;
+		if ( item.Ammo <= 0 )
+		{
+			item.State = WeaponBehavior.WeaponState.Empty;
+			Items[item.InstanceId] = item;
+			Touch();
+			return false;
+		}
+
+		var muzzleOrigin = ValidateFireOrigin( origin );
+		if ( Time.Now - item.LastFireTime < definition.FireInterval ) return false;
+
+		item.Ammo--;
+		item.LastFireTime = Time.Now;
+		item.State = item.Ammo <= 0 ? WeaponBehavior.WeaponState.Empty : WeaponBehavior.WeaponState.Idle;
+		Items[item.InstanceId] = item;
+		Touch();
+
+		var end = muzzleOrigin + aim.Forward * definition.Range;
+		var trace = Scene.Trace.Ray( muzzleOrigin, end )
+			.WithCollisionRules( "bullet" )
+			.IgnoreGameObjectHierarchy( GameObject.Root )
+			.Run();
+
+		var hitPosition = trace.Hit ? trace.HitPosition : end;
+		GameNetworkRpc.BroadcastShotDebug( GameObject.Root, hitPosition, trace.Hit );
+
+		if ( !trace.Hit ) return true;
+
+		var target = trace.GameObject?.Components.GetInAncestorsOrSelf<Component.IDamageable>();
+		if ( target is null ) return true;
+
+		var info = new DamageInfo
+		{
+			Damage = definition.Damage,
+			Position = trace.HitPosition,
+			Origin = muzzleOrigin,
+			Attacker = GameObject,
+			Weapon = GameObject,
+		};
+
+		CombatSystem.Current?.DealDamage( target, in info );
+		return true;
+	}
 
 	public void Select( int row, int col )
 	{
-		if ( !InBounds( row, col ) ) return;
+		if ( !InBounds( ToSlot( row, col ) ) ) return;
 		_selected = (row, col);
-		MarkDirty();
 	}
 
 	public void ClearSelection()
 	{
-		if ( _selected is null ) return;
 		_selected = null;
-		MarkDirty();
 	}
 
-	// -------------------------------------------------------------------
-	// Money slot — kept in sync with EconomySystem.Money
-	// -------------------------------------------------------------------
-
-	private void SyncMoneySlot( int newAmount )
+	private bool TryGetItemAt( int slot, out InventoryItemState item )
 	{
-		if ( newAmount > 0 )
+		item = GetItemAt( slot );
+		return item.IsValid;
+	}
+
+	private void CompleteReloadIfDue()
+	{
+		if ( !TryGetEquipped( out var item, out var definition ) ) return;
+		if ( CompleteReloadIfDue( ref item, definition ) )
 		{
-			if ( _moneyItem.IsValid() )
-			{
-				_moneyItem.StackCount = newAmount;
-				MarkDirty();
-				return;
-			}
+			Items[item.InstanceId] = item;
+			Touch();
+		}
+	}
 
-			var emptyPos = FirstEmpty();
-			if ( emptyPos is null ) return; // bag full — money still in EconomySystem, just not visible
+	private bool CompleteReloadIfDue( ref InventoryItemState item, ItemDefinition definition )
+	{
+		if ( item.State != WeaponBehavior.WeaponState.Reloading ) return false;
+		if ( Time.Now < item.ReloadEndTime ) return false;
 
-			var go = new GameObject();
-			go.Name = "Money";
-			go.SetParent( GameObject, false );
+		item.Ammo = definition.MagazineSize;
+		item.State = WeaponBehavior.WeaponState.Idle;
+		item.ReloadEndTime = 0f;
+		return true;
+	}
 
+	private Vector3 ValidateFireOrigin( Vector3 requestedOrigin )
+	{
+		var fallback = GameObject.Root.WorldPosition + Vector3.Up * 64f;
+		return requestedOrigin.DistanceSquared( fallback ) <= 128f * 128f ? requestedOrigin : fallback;
+	}
+
+	private void SpawnWorldPickup( InventoryItemState item, ItemDefinition definition, Vector3 position )
+	{
+		var go = new GameObject( definition.DisplayName );
+		go.WorldPosition = position + Vector3.Up * 12f;
+		go.NetworkMode = NetworkMode.Object;
+
+		var model = ItemDefinition.LoadModel( definition.WorldModel );
+		if ( model is not null )
+		{
+			var renderer = go.Components.Create<ModelRenderer>();
+			renderer.Model = model;
+		}
+
+		if ( definition.IsCurrency )
+		{
 			var money = go.Components.Create<MoneyPickup>();
-			money.StackCount = newAmount;
-			_moneyItem = money;
-
-			PlaceInSlot( money, emptyPos.Value.r, emptyPos.Value.c, freshAcquire: true );
-			MarkDirty();
+			money.DefinitionPath = item.DefinitionPath;
+			money.Amount = item.StackCount;
 		}
 		else
 		{
-			if ( !_moneyItem.IsValid() ) return;
-
-			var pos = FindSlot( _moneyItem );
-			if ( pos is { } p ) _slots[p.r, p.c] = null;
-			_moneyItem.GameObject.Destroy();
-			_moneyItem = null;
-			MarkDirty();
+			var pickup = go.Components.Create<WeaponPickup>();
+			pickup.DefinitionPath = item.DefinitionPath;
+			pickup.StartingAmmo = item.Ammo;
 		}
+
+		go.NetworkSpawn();
 	}
 
-	// -------------------------------------------------------------------
-	// Internal helpers
-	// -------------------------------------------------------------------
-
-	private void PlaceInSlot( BaseItem item, int row, int col, bool freshAcquire )
+	private void RemoveItem( int instanceId )
 	{
-		ParentToBag( item );
-		_slots[row, col] = item;
-		if ( freshAcquire ) item.AcquiredTime = 0f;
+		Items.Remove( instanceId );
+		if ( EquippedInstanceId == instanceId ) EquippedInstanceId = 0;
 	}
 
-	private void ParentToBag( BaseItem item )
+	private int FirstEmptySlot()
 	{
-		item.GameObject.SetParent( GameObject, false );
-		item.GameObject.LocalPosition = Vector3.Zero;
-		item.GameObject.LocalRotation = Rotation.Identity;
-		item.GameObject.Enabled = true;
-
-		var renderer = item.GameObject.Components.Get<ModelRenderer>();
-		if ( renderer.IsValid() ) renderer.Enabled = false;
-
-		foreach ( var col in item.GameObject.Components.GetAll<Collider>() )
+		for ( var i = 0; i < SlotCount; i++ )
 		{
-			col.Enabled = false;
+			if ( !TryGetItemAt( i, out _ ) ) return i;
+		}
+
+		return -1;
+	}
+
+	private void EnsureNextInstanceId()
+	{
+		foreach ( var id in Items.Keys )
+		{
+			_nextInstanceId = int.Max( _nextInstanceId, id + 1 );
 		}
 	}
 
-	private (int r, int c)? FirstEmpty()
+	private int ToSlot( int row, int col )
 	{
-		for ( int r = 0; r < Rows; r++ )
-		{
-			for ( int c = 0; c < Cols; c++ )
-			{
-				if ( !_slots[r, c].IsValid() ) return (r, c);
-			}
-		}
-		return null;
+		return row * Cols + col;
 	}
 
-	private (int r, int c)? FindStackable( BaseItem item )
+	private bool InBounds( int slot )
 	{
-		for ( int r = 0; r < Rows; r++ )
-		{
-			for ( int c = 0; c < Cols; c++ )
-			{
-				if ( _slots[r, c].IsValid() && _slots[r, c].CanStackWith( item ) ) return (r, c);
-			}
-		}
-		return null;
+		return slot >= 0 && slot < SlotCount;
 	}
 
-	private (int r, int c)? FindSlot( BaseItem item )
+	private void Touch()
 	{
-		for ( int r = 0; r < Rows; r++ )
-		{
-			for ( int c = 0; c < Cols; c++ )
-			{
-				if ( _slots[r, c] == item ) return (r, c);
-			}
-		}
-		return null;
-	}
-
-	private bool InBounds( int row, int col )
-		=> row >= 0 && row < Rows && col >= 0 && col < Cols;
-
-	private void SpawnWorldMoney( int amount, Vector3 position )
-	{
-		GameObject go;
-		if ( MoneyPickupPrefab.IsValid() )
-		{
-			go = MoneyPickupPrefab.Clone();
-			go.WorldPosition = position;
-		}
-		else
-		{
-			go = new GameObject();
-			go.Name = $"Money (${amount})";
-			go.WorldPosition = position;
-		}
-
-		var pickup = go.Components.Get<MoneyPickup>() ?? go.Components.Create<MoneyPickup>();
-		pickup.StackCount = amount;
-	}
-
-	private void MarkDirty()
-	{
-		// Inventory UI reads this component through BuildHash; no scene-wide event needed.
+		InventoryVersion++;
 	}
 }

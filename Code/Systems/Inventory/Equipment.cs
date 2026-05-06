@@ -1,130 +1,108 @@
 using Sandbox;
 
 /// <summary>
-/// Owns the player's currently equipped world item — what's parented to the hand
-/// bone, what behaviors are active, what stats apply. Decoupled from <see cref="WeaponBehavior"/>:
-/// equipment says "this thing is held", behavior components (WeaponBehavior for firearms,
-/// future MeleeBehavior, etc.) read from equipment and react when their kind is equipped.
-///
-/// Lives on the player Body GameObject (alongside <see cref="WeaponBehavior"/> and
-/// <see cref="Backpack"/>). Distinct from Backpack: Equipment is the one slot parented
-/// to <c>hold_R</c> with active behavior; Backpack is bag storage.
+/// Builds the local equipped-item view from synced inventory state. The object in
+/// the player's hand is cosmetic only; <see cref="Backpack"/> is the source of
+/// truth for which item is equipped and what its runtime state is.
 /// </summary>
 public sealed class Equipment : Component
 {
-	/// <summary>
-	/// Skinned model that exposes the hand bone we attach equipped items to.
-	/// Auto-discovered on this GameObject in OnStart if not wired.
-	/// </summary>
-	[Property]
-	public SkinnedModelRenderer BodyRenderer { get; set; }
+	[Property] public SkinnedModelRenderer BodyRenderer { get; set; }
+	[Property] public string HandBone { get; set; } = "hold_R";
 
-	/// <summary>
-	/// Bone name on <see cref="BodyRenderer"/> to which equipped items are parented.
-	/// </summary>
-	[Property]
-	public string HandBone { get; set; } = "hold_R";
+	private Backpack _backpack;
+	private GameObject _viewObject;
+	private int _shownInstanceId;
+	private string _shownDefinitionPath;
 
-	/// <summary>
-	/// Currently held GameObject (parented to the hand bone), or null.
-	/// </summary>
-	public GameObject Equipped { get; private set; }
+	public InventoryItemState EquippedState { get; private set; }
+	public ItemDefinition EquippedDefinition { get; private set; }
+	public string EquippedName => EquippedDefinition?.DisplayName;
 
 	protected override void OnStart()
 	{
 		BodyRenderer ??= Components.Get<SkinnedModelRenderer>();
+		_backpack = Components.Get<Backpack>();
+		UpdateView();
 	}
 
-	/// <summary>
-	/// Equip a world item (or a bag item being pulled out). Drops whatever is currently
-	/// equipped back to the Backpack, parents the new item to the hand bone, copies its
-	/// weapon stats onto the active <see cref="WeaponBehavior"/>, and disables its
-	/// colliders. The item's <see cref="WeaponPickup"/> Component is preserved so
-	/// metadata (Value, Weight, Rarity) stays attached for future drops/swaps.
-	/// </summary>
-	public void Equip( GameObject worldItem )
+	protected override void OnUpdate()
 	{
-		if ( !worldItem.IsValid() ) return;
-		if ( !BodyRenderer.IsValid() ) return;
+		BodyRenderer ??= Components.Get<SkinnedModelRenderer>();
+		if ( !_backpack.IsValid() ) _backpack = Components.Get<Backpack>();
 
-		var pickup = worldItem.Components.Get<WeaponPickup>();
-		if ( !pickup.IsValid() ) return;
+		UpdateView();
+	}
+
+	private void UpdateView()
+	{
+		EquippedState = default;
+		EquippedDefinition = null;
+
+		if ( !_backpack.IsValid() || !_backpack.TryGetEquipped( out var item, out var definition ) )
+		{
+			ClearView();
+			return;
+		}
+
+		EquippedState = item;
+		EquippedDefinition = definition;
+
+		if ( _viewObject.IsValid()
+			&& _shownInstanceId == item.InstanceId
+			&& _shownDefinitionPath == item.DefinitionPath )
+		{
+			ApplyDefinitionTransform( definition );
+			_viewObject.Enabled = !item.IsHolstered;
+			return;
+		}
+
+		ClearView();
+		CreateView( item, definition );
+	}
+
+	private void CreateView( InventoryItemState item, ItemDefinition definition )
+	{
+		if ( !BodyRenderer.IsValid() ) return;
 
 		var bone = BodyRenderer.GetBoneObject( HandBone );
 		if ( bone is null ) return;
 
-		// Send the previously-held item back to the bag before attaching the new one.
-		Drop();
+		var model = ItemDefinition.LoadModel( definition.ModelPath );
+		if ( model is null ) return;
 
-		worldItem.SetParent( bone, false );
-		worldItem.LocalPosition = pickup.WeaponOffset;
-		worldItem.LocalRotation = Rotation.From( pickup.WeaponAngleOffset );
-		worldItem.LocalScale = pickup.WeaponScale;
-		worldItem.Enabled = true;
+		_viewObject = new GameObject( $"Equipped View - {definition.DisplayName}" );
+		_viewObject.SetParent( bone, false );
+		_viewObject.NetworkMode = NetworkMode.Never;
 
-		var renderer = worldItem.Components.Get<ModelRenderer>();
-		if ( renderer.IsValid() ) renderer.Enabled = true;
+		var renderer = _viewObject.Components.Create<ModelRenderer>();
+		renderer.Model = model;
 
-		foreach ( var col in worldItem.Components.GetAll<Collider>() )
-		{
-			col.Enabled = false;
-		}
+		_shownInstanceId = item.InstanceId;
+		_shownDefinitionPath = item.DefinitionPath;
 
-		var behavior = Components.Get<WeaponBehavior>();
-		if ( behavior.IsValid() )
-		{
-			behavior.HoldType = pickup.HoldType;
-			behavior.Handedness = pickup.Handedness;
-			behavior.Damage = pickup.Damage;
-			behavior.Range = pickup.Range;
-			behavior.MagazineSize = pickup.MagazineSize;
-			behavior.ReloadDuration = pickup.ReloadDuration;
-			behavior.WeaponOffset = pickup.WeaponOffset;
-			behavior.WeaponAngleOffset = pickup.WeaponAngleOffset;
-			behavior.WeaponScale = pickup.WeaponScale;
-			behavior.OnEquipped();
-		}
-
-		Equipped = worldItem;
-
-		Log.Info( $"Equipped {worldItem.Name}" );
+		ApplyDefinitionTransform( definition );
+		_viewObject.Enabled = !item.IsHolstered;
 	}
 
-	/// <summary>
-	/// Clear the equipment slot without sending the item back to the bag. Used by
-	/// <see cref="Backpack.DropToWorld"/> when the held weapon itself is the slot
-	/// being dropped — the bag doesn't need to receive it (it's about to leave the
-	/// player entirely).
-	/// </summary>
-	public void UnequipWithoutStoring()
+	private void ApplyDefinitionTransform( ItemDefinition definition )
 	{
-		if ( !Equipped.IsValid() ) return;
-		Equipped = null;
+		if ( !_viewObject.IsValid() || definition is null ) return;
+
+		_viewObject.LocalPosition = definition.WeaponOffset;
+		_viewObject.LocalRotation = Rotation.From( definition.WeaponAngleOffset );
+		_viewObject.LocalScale = definition.WeaponScale;
 	}
 
-	/// <summary>
-	/// Unequip the currently held item and route it back to the Backpack as a stored
-	/// (renderer-disabled) bag item. Callers usually invoke <see cref="Equip"/>
-	/// instead, which calls Drop internally before attaching the new item.
-	/// </summary>
-	public void Drop()
+	private void ClearView()
 	{
-		if ( !Equipped.IsValid() )
+		if ( _viewObject.IsValid() )
 		{
-			Equipped = null;
-			return;
+			_viewObject.Destroy();
 		}
 
-		var dropped = Equipped;
-		Equipped = null;
-
-		var backpack = Components.Get<Backpack>();
-		var item = dropped.Components.Get<BaseItem>();
-		if ( backpack.IsValid() && item.IsValid() && backpack.StoreFromHand( item ) )
-		{
-			return;
-		}
-
-		dropped.Destroy();
+		_viewObject = null;
+		_shownInstanceId = 0;
+		_shownDefinitionPath = null;
 	}
 }

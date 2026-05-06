@@ -14,28 +14,28 @@ public sealed class CombatSystem : GameObjectSystem<CombatSystem>
 	}
 
 	/// <summary>
-	/// Apply damage to a target and notify local hit-reaction components. The host applies damage;
-	/// non-host callers forward the request through <see cref="GameNetworkRpc"/>.
+	/// Apply damage to a target and notify local hit-reaction components. Only the
+	/// host can apply damage; clients must request a validated gameplay action such
+	/// as firing the equipped weapon.
 	/// </summary>
 	public void DealDamage( Component.IDamageable target, in DamageInfo info )
 	{
 		if ( target is null ) return;
+		if ( !Networking.IsHost ) return;
 
 		var targetGo = (target as Component)?.GameObject;
-		if ( !Networking.IsHost )
-		{
-			GameNetworkRpc.RequestDealDamage( targetGo, info );
-			return;
-		}
-
+		var beforeUnit = target as UnitComponent;
+		var wasAlive = beforeUnit is null || !beforeUnit.IsDead;
 		target.OnDamage( in info );
 
-		GameNetworkRpc.BroadcastDamaged( targetGo, info );
+		var afterUnit = target as UnitComponent;
+		var wasKill = wasAlive && afterUnit is not null && afterUnit.IsDead;
+		GameNetworkRpc.BroadcastDamaged( targetGo, info, wasKill );
 	}
 
-	public void NotifyDamaged( GameObject targetGo, DamageInfo info )
+	public void NotifyDamaged( GameObject targetGo, DamageInfo info, bool wasKill )
 	{
 		var resolved = targetGo?.Components.GetInAncestorsOrSelf<Component.IDamageable>();
-		Scene.RunEvent<IDamagedListener>( l => l.OnDamaged( resolved, info ) );
+		Scene.RunEvent<IDamagedListener>( l => l.OnDamaged( resolved, info, wasKill ) );
 	}
 }

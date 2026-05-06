@@ -8,8 +8,18 @@ public static class LocalPlayer
 	{
 		if ( scene is null ) return null;
 
-		return scene.GetAllComponents<PlayerController>()
-			.FirstOrDefault( p => p.IsValid() && !p.IsProxy );
+		var controllers = scene.GetAllComponents<PlayerController>()
+			.Where( p => p.IsValid() && p.GameObject.IsValid() && p.GameObject.Active && !p.IsProxy )
+			.ToList();
+
+		var local = Connection.Local;
+		if ( local is not null )
+		{
+			var owned = controllers.FirstOrDefault( p => p.GameObject.Network.Owner == local || p.GameObject.Root.Network.Owner == local );
+			if ( owned.IsValid() ) return owned;
+		}
+
+		return controllers.FirstOrDefault();
 	}
 
 	public static GameObject GameObject( Scene scene )

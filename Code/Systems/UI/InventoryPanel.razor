@@ -1,6 +1,5 @@
 @using Sandbox;
 @using Sandbox.UI;
-@using System.Linq;
 @namespace Sandbox
 @inherits PanelComponent
 
@@ -27,29 +26,28 @@
 						{
 							var row = r;
 							var col = c;
-							// While dragging, the source cell renders as empty so the user
-							// sees the item leave its slot and follow the cursor.
 							var isDragSource = _dragging && _dragSource.HasValue
 								&& _dragSource.Value.row == row && _dragSource.Value.col == col;
-							var item = isDragSource ? null : _backpack.Slots[row, col];
+							var item = isDragSource ? default : _backpack.GetItemAt( row, col );
+							var definition = DefinitionFor( item );
 							var selected = !isDragSource
 								&& _backpack.Selected is var sel && sel.HasValue
 								&& sel.Value.row == row && sel.Value.col == col;
-							<div class="cell @(item.IsValid() ? "filled" : "empty") @(selected ? "selected" : "")"
-								 style="@CellStyle(item, selected)">
-								@if ( item.IsValid() )
+							<div class="cell @(item.IsValid ? "filled" : "empty") @(selected ? "selected" : "")"
+								 style="@CellStyle(definition, selected)">
+								@if ( item.IsValid && definition is not null )
 								{
-									@if ( !string.IsNullOrEmpty( item.Icon ) )
+									@if ( !string.IsNullOrEmpty( definition.Icon ) )
 									{
-										<div class="icon" style="background-image: url(@item.Icon);"></div>
+										<div class="icon" style="background-image: url(@definition.Icon);"></div>
 									}
 									else
 									{
-										<div class="icon-fallback">@FallbackLabel(item)</div>
+										<div class="icon-fallback">@FallbackLabel(definition)</div>
 									}
 									@if ( item.StackCount > 1 )
 									{
-										<div class="stack">@FormatStack(item)</div>
+										<div class="stack">@FormatStack(item, definition)</div>
 									}
 								}
 							</div>
@@ -65,19 +63,20 @@
 
 		@if ( !_dragging && !_draggingPanel && _hoveredSlot.HasValue )
 		{
-			var hoverItem = _backpack.Slots[_hoveredSlot.Value.row, _hoveredSlot.Value.col];
-			if ( hoverItem.IsValid() )
+			var hoverItem = _backpack.GetItemAt( _hoveredSlot.Value.row, _hoveredSlot.Value.col );
+			var hoverDefinition = DefinitionFor( hoverItem );
+			if ( hoverItem.IsValid && hoverDefinition is not null )
 			{
 				<div class="tooltip">
 					<div class="tooltip-header">
-						<span class="tooltip-name">@TooltipName(hoverItem)</span>
-						<span class="tooltip-rarity rarity-@hoverItem.Rarity.ToString().ToLowerInvariant()">@hoverItem.Rarity</span>
+						<span class="tooltip-name">@TooltipName(hoverDefinition)</span>
+						<span class="tooltip-rarity rarity-@hoverDefinition.Rarity.ToString().ToLowerInvariant()">@hoverDefinition.Rarity</span>
 					</div>
 					<div class="tooltip-divider"></div>
 					<div class="tooltip-rows">
-						@foreach ( var (label, value) in TooltipRows( hoverItem ) )
+						@foreach ( var (label, value) in TooltipRows( hoverItem, hoverDefinition ) )
 						{
-							@if ( label == "—" )
+							@if ( label == "-" )
 							{
 								<div class="tooltip-divider"></div>
 							}
@@ -98,14 +97,15 @@
 
 		@if ( _dragging && _dragSource.HasValue )
 		{
-			var ghostItem = _backpack.Slots[_dragSource.Value.row, _dragSource.Value.col];
-			if ( ghostItem.IsValid() )
+			var ghostItem = _backpack.GetItemAt( _dragSource.Value.row, _dragSource.Value.col );
+			var ghostDefinition = DefinitionFor( ghostItem );
+			if ( ghostItem.IsValid && ghostDefinition is not null )
 			{
 				<div class="drag-ghost"
-					 style="left: @(CursorCss.x - 32)px; top: @(CursorCss.y - 32)px; @GhostBackground(ghostItem)">
-					@if ( string.IsNullOrEmpty( ghostItem.Icon ) )
+					 style="left: @(CursorCss.x - 32)px; top: @(CursorCss.y - 32)px; @GhostBackground(ghostDefinition)">
+					@if ( string.IsNullOrEmpty( ghostDefinition.Icon ) )
 					{
-						<div class="icon-fallback">@FallbackLabel(ghostItem)</div>
+						<div class="icon-fallback">@FallbackLabel(ghostDefinition)</div>
 					}
 				</div>
 			}
@@ -141,27 +141,12 @@
 	private Sandbox.UI.Panel _headerPanel;
 	private Sandbox.UI.Panel _inventoryAnchorPanel;
 
-	// Panel-drag state. `_panelPosCss == null` means the anchor is still in flex
-	// flow (default centered); once the user grabs the title bar and drags, we
-	// capture its screen rect, switch the anchor to `position: absolute`, and
-	// drive its left/top from this field. The tooltip uses `left: 100%` from the
-	// anchor, so it naturally travels with the panel without extra wiring.
-	//
-	// During an active drag the inventory STAYS at its captured position and a
-	// dashed-outline ghost previews the cursor-following destination. On release
-	// the preview is committed to `_panelPosCss` so the panel snaps into place —
-	// same UX as item drag, just at panel granularity.
 	private Vector2? _panelPosCss;
 	private bool _draggingPanel;
 	private Vector2 _panelDragStartCursor;
 	private Vector2 _panelDragStartPos;
 	private Vector2 _panelDragPreview;
 
-	// `Mouse.Position` is raw screen pixels; inline `style="left: Xpx"` is interpreted
-	// in CSS pixels (the ScreenPanel runs at ConsistentHeight=1080). Convert via the
-	// physical screen height so the ghost lands directly under the cursor at any res.
-	// (We tried `Panel.MousePosition` first — at non-1080p its values placed the ghost
-	// far off the cursor, so we compute the conversion ourselves.)
 	private Vector2 CursorCss
 	{
 		get
@@ -220,14 +205,6 @@
 		_uiState = _player?.Components.Get<UIStateManager>();
 	}
 
-	/// <summary>
-	/// Update the ghost's preview position while the user is dragging the title
-	/// bar. The committed `_panelPosCss` does NOT change during the drag — the
-	/// inventory stays where the user grabbed it, and the ghost shows where it'll
-	/// land. On release `_panelPosCss` is set to this preview value.
-	/// Cursor delta is in screen pixels; convert to CSS pixels by the same
-	/// 1080-relative scale we use for the drag-ghost.
-	/// </summary>
 	private void TickPanelDrag()
 	{
 		if ( !_draggingPanel ) return;
@@ -238,12 +215,6 @@
 		_panelDragPreview = _panelDragStartPos + deltaCss;
 	}
 
-	/// <summary>
-	/// Razor mouse handlers (`@onmousedown`, `@onmouseup`, `@onclick`) don't reliably
-	/// fire on plain &lt;div&gt; elements in s&amp;box's parser, so all click/drag
-	/// behavior is driven by polling `Input.Pressed/Released` here against the
-	/// already-polled `_hoveredSlot` / `_hoveredSortButton`.
-	/// </summary>
 	private void PollMouseInput()
 	{
 		if ( !_isOpen || !_backpack.IsValid() || Panel is null ) return;
@@ -252,18 +223,16 @@
 		{
 			if ( _hoveredSortButton.HasValue )
 			{
-				_backpack.Sort( _hoveredSortButton.Value );
+				GameNetworkRpc.RequestSortInventory( _player, (int)_hoveredSortButton.Value );
 			}
 			else if ( _hoveredSlot.HasValue )
 			{
 				var (row, col) = _hoveredSlot.Value;
-				if ( _backpack.Slots[row, col].IsValid() )
+				if ( _backpack.GetItemAt( row, col ).IsValid )
 				{
 					_dragSource = (row, col);
 					_mouseDownPos = _mousePos;
 					_dragging = false;
-					// Clear any prior selection so a stale green glow doesn't linger
-					// on the source cell during the drag.
 					_backpack.ClearSelection();
 				}
 			}
@@ -275,8 +244,6 @@
 
 		if ( Input.Released( "Attack1" ) && _draggingPanel )
 		{
-			// Commit the previewed position — the inventory snaps from its captured
-			// origin to wherever the ghost ended up.
 			_panelPosCss = _panelDragPreview;
 			_draggingPanel = false;
 		}
@@ -290,18 +257,19 @@
 
 			if ( wasDragging )
 			{
+				var fromSlot = ToSlot( src.row, src.col );
 				if ( _hoveredSlot.HasValue && _hoveredSlot.Value != src )
 				{
-					_backpack.MoveSlot( src.row, src.col, _hoveredSlot.Value.row, _hoveredSlot.Value.col );
+					var toSlot = ToSlot( _hoveredSlot.Value.row, _hoveredSlot.Value.col );
+					GameNetworkRpc.RequestMoveInventorySlot( _player, fromSlot, toSlot );
 				}
 				else if ( !_hoveredSlot.HasValue )
 				{
-					_backpack.DropToWorld( src.row, src.col );
+					GameNetworkRpc.RequestDropInventorySlot( _player, fromSlot );
 				}
 			}
 			else
 			{
-				// Click without drag → toggle selection on the source cell.
 				if ( _backpack.Selected is var sel && sel.HasValue && sel.Value == src )
 					_backpack.ClearSelection();
 				else
@@ -312,18 +280,13 @@
 		if ( Input.Pressed( "Attack2" ) && _hoveredSlot.HasValue )
 		{
 			var (row, col) = _hoveredSlot.Value;
-			var item = _backpack.Slots[row, col];
-			if ( item.IsValid() ) item.OnUse( _player );
+			if ( _backpack.GetItemAt( row, col ).IsValid )
+			{
+				GameNetworkRpc.RequestUseInventorySlot( _player, ToSlot( row, col ) );
+			}
 		}
 	}
 
-	/// <summary>
-	/// `@ref` doesn't reliably bind on plain &lt;div&gt; elements in s&amp;box's razor
-	/// parser, so we resolve the hovered slot by walking the grid panel's children
-	/// each frame and hit-testing each cell against `Mouse.Position`. Cell index
-	/// ordering matches the razor render loop: rows top-to-bottom, cells left-to-
-	/// right within a row.
-	/// </summary>
 	private void PollHoveredSlot()
 	{
 		if ( !_isOpen || !_backpack.IsValid() || Panel is null )
@@ -359,12 +322,6 @@
 		_hoveredSlot = null;
 	}
 
-	/// <summary>
-	/// Title bar acts as the panel-drag handle. Hovering the header counts unless
-	/// the cursor is also over a sort button — sort takes precedence so users can
-	/// click New/Worth/Weight without accidentally starting a panel drag.
-	/// Must run AFTER `PollHoveredSortButton` so `_hoveredSortButton` is current.
-	/// </summary>
 	private void PollHoveredHeader()
 	{
 		_hoveredHeader = false;
@@ -379,14 +336,6 @@
 		}
 	}
 
-	/// <summary>
-	/// Captures the anchor's current screen position and stores it as the drag
-	/// origin. If the anchor was previously in flex flow (default centered), we
-	/// read its `Box.Rect` and convert to CSS pixels so the absolute-position
-	/// switch happens without a visual jump. Seeds the ghost-preview at the same
-	/// origin so it starts overlapping the inventory and only diverges as the
-	/// cursor moves.
-	/// </summary>
 	private void StartPanelDrag()
 	{
 		_draggingPanel = true;
@@ -416,10 +365,6 @@
 		return "";
 	}
 
-	/// <summary>
-	/// Inventory anchor's current dimensions in CSS pixels — used to size the
-	/// panel-drag ghost so it matches the actual panel footprint exactly.
-	/// </summary>
 	private Vector2 AnchorCssSize()
 	{
 		_inventoryAnchorPanel ??= FindByClass( Panel, "inventory-anchor" );
@@ -429,11 +374,6 @@
 		return new Vector2( rect.Width * scale, rect.Height * scale );
 	}
 
-	/// <summary>
-	/// Same polling pattern as cells: walk the sort-buttons panel's children and
-	/// match cursor position against each button's screen-space bounds. Order in the
-	/// razor template is New / Worth / Weight.
-	/// </summary>
 	private void PollHoveredSortButton()
 	{
 		if ( !_isOpen || Panel is null )
@@ -509,35 +449,18 @@
 		_sortButtonsPanel = null;
 		_headerPanel = null;
 		_inventoryAnchorPanel = null;
-		// _panelPosCss is intentionally retained — moved-panel position persists
-		// across close/reopen for the session.
 		_uiState?.ReleaseUIFocus( this );
 		_backpack?.ClearSelection();
 	}
 
-	private string CellStyle( BaseItem item, bool selected )
+	private string CellStyle( ItemDefinition definition, bool selected )
 	{
-		// s&box CSS doesn't support `inset` shadows OR CSS custom properties, so
-		// rarity = a colored border, selection = an outer green box-shadow. Both
-		// stack visually without conflicting in the same `box-shadow` declaration.
-		//
-		// IMPORTANT: always emit explicit `border:` and `box-shadow:` declarations.
-		// Returning "" or omitting a property when transitioning a cell from filled
-		// → empty leaves the previous inline declarations visually applied (s&box's
-		// CSS parser doesn't reset cleared inline properties to class defaults). The
-		// fallback "none" forces a clean reset.
-		//
-		// Note: the drag-source cell is rendered with `item == null` from the razor
-		// loop, so it falls through to the `border: none` branch below — no special
-		// `_dragging` early-return needed (and adding one would also wipe the borders
-		// of every *other* slot mid-drag, which the user explicitly does NOT want).
-
 		var sb = new System.Text.StringBuilder();
 
-		var rarityCfg = item.IsValid() ? _player?.Components.Get<RarityConfig>() : null;
+		var rarityCfg = definition is not null ? _player?.Components.Get<RarityConfig>() : null;
 		if ( rarityCfg is not null )
 		{
-			var c = rarityCfg.GetColor( item.Rarity );
+			var c = rarityCfg.GetColor( definition.Rarity );
 			sb.Append( $"border: 2px solid rgba({(int)(c.r * 255)},{(int)(c.g * 255)},{(int)(c.b * 255)},0.85);" );
 		}
 		else
@@ -552,85 +475,76 @@
 		return sb.ToString();
 	}
 
-	private string FallbackLabel( BaseItem item )
+	private string FallbackLabel( ItemDefinition definition )
 	{
-		if ( !item.IsValid() ) return "";
-		var name = string.IsNullOrEmpty( item.DisplayName ) ? item.GameObject.Name : item.DisplayName;
-		if ( string.IsNullOrEmpty( name ) ) return "?";
+		if ( definition is null ) return "";
+		var name = string.IsNullOrEmpty( definition.DisplayName ) ? "Item" : definition.DisplayName;
 		return name.Substring( 0, System.Math.Min( 3, name.Length ) ).ToUpperInvariant();
 	}
 
-	private string FormatStack( BaseItem item )
+	private string FormatStack( InventoryItemState item, ItemDefinition definition )
 	{
-		if ( item is MoneyPickup ) return $"${item.StackCount:N0}";
+		if ( definition is not null && definition.IsCurrency ) return $"${item.StackCount:N0}";
 		return $"x{item.StackCount}";
 	}
 
-	/// <summary>
-	/// Drag-ghost background. With a baked icon we render `background-image: url(...)`;
-	/// otherwise the ghost is empty and the fallback label inside it provides the
-	/// visual. Empty `url()` crashes the render tree, so guard the path.
-	/// </summary>
-	private string GhostBackground( BaseItem item )
+	private string GhostBackground( ItemDefinition definition )
 	{
-		return string.IsNullOrEmpty( item.Icon )
+		return definition is null || string.IsNullOrEmpty( definition.Icon )
 			? ""
-			: $"background-image: url({item.Icon});";
+			: $"background-image: url({definition.Icon});";
 	}
 
-	private string TooltipName( BaseItem item )
+	private string TooltipName( ItemDefinition definition )
 	{
-		if ( !string.IsNullOrEmpty( item.DisplayName ) ) return item.DisplayName;
-		return item.GameObject?.Name ?? "Item";
+		return string.IsNullOrEmpty( definition?.DisplayName ) ? "Item" : definition.DisplayName;
 	}
 
-	private System.Collections.Generic.IEnumerable<(string Label, string Value)> TooltipRows( BaseItem item )
+	private System.Collections.Generic.IEnumerable<(string Label, string Value)> TooltipRows( InventoryItemState item, ItemDefinition definition )
 	{
 		var rows = new System.Collections.Generic.List<(string, string)>();
 
-		if ( item is MoneyPickup money )
+		if ( definition.IsCurrency )
 		{
-			rows.Add( ("Total", $"${money.StackCount:N0}") );
+			rows.Add( ("Total", $"${item.StackCount:N0}") );
 			return rows;
 		}
 
-		rows.Add( ("Value", $"${item.Value * item.StackCount:N0}") );
-		rows.Add( ("Weight", $"{item.Weight * item.StackCount}") );
+		rows.Add( ("Value", $"${definition.Value * item.StackCount:N0}") );
+		rows.Add( ("Weight", $"{definition.Weight * item.StackCount}") );
 
 		if ( item.StackCount > 1 )
 		{
-			rows.Add( ("Stack", $"{item.StackCount} / {item.MaxStack}") );
+			rows.Add( ("Stack", $"{item.StackCount} / {definition.MaxStack}") );
 		}
 
-		if ( item is WeaponPickup weapon )
+		if ( definition.IsWeapon )
 		{
-			rows.Add( ("—", "") );
-			rows.Add( ("Damage", $"{weapon.Damage:0}") );
-			rows.Add( ("Range", $"{weapon.Range:0}") );
-			rows.Add( ("Magazine", $"{weapon.MagazineSize}") );
-			rows.Add( ("Reload", $"{weapon.ReloadDuration:0.0}s") );
-			rows.Add( ("Hold Type", $"{weapon.HoldType}") );
+			rows.Add( ("-", "") );
+			rows.Add( ("Damage", $"{definition.Damage:0}") );
+			rows.Add( ("Range", $"{definition.Range:0}") );
+			rows.Add( ("Magazine", $"{item.Ammo} / {definition.MagazineSize}") );
+			rows.Add( ("Reload", $"{definition.ReloadDuration:0.0}s") );
+			rows.Add( ("Hold Type", $"{definition.HoldType}") );
 		}
 
 		return rows;
 	}
 
+	private ItemDefinition DefinitionFor( InventoryItemState item )
+	{
+		return item.IsValid ? _backpack.GetDefinition( item ) : null;
+	}
+
+	private int ToSlot( int row, int col )
+	{
+		return row * (_backpack?.Cols ?? 1) + col;
+	}
+
 	protected override int BuildHash()
 	{
 		if ( _backpack is null ) return _isOpen ? 1 : 0;
-		var sel = _backpack.Selected;
-		var slotHash = 0;
-		for ( int r = 0; r < _backpack.Rows; r++ )
-		{
-			for ( int c = 0; c < _backpack.Cols; c++ )
-			{
-				var item = _backpack.Slots[r, c];
-				slotHash = System.HashCode.Combine( slotHash, item?.GetHashCode() ?? 0, item?.StackCount ?? 0 );
-			}
-		}
-		// Drag-ghost follows the cursor; panel-ghost follows the cursor while the
-		// title bar is held — both need per-mouse-move re-renders. Tooltip is
-		// anchored to the grid, so hover alone doesn't need it.
+
 		var pmp = CursorCss;
 		var movingMouseHash = (_dragging || _draggingPanel) ? ((int)pmp.x, (int)pmp.y) : (0, 0);
 		var panelPosHash = _panelPosCss.HasValue
@@ -640,16 +554,15 @@
 			? ((int)_panelDragPreview.x, (int)_panelDragPreview.y)
 			: (0, 0);
 
-		// `HashCode.Combine` caps at 8 args, so use the builder pattern to fold in
-		// every piece of state without throwing a compile error (or, worse, silently
-		// re-rendering every frame because the hash function failed).
 		var hc = new System.HashCode();
 		hc.Add( _isOpen );
+		hc.Add( _backpack.InventoryVersion );
+		hc.Add( _backpack.EquippedInstanceId );
+		hc.Add( _backpack.Wallet );
 		hc.Add( _dragging );
 		hc.Add( _draggingPanel );
 		hc.Add( _dragSource );
-		hc.Add( sel );
-		hc.Add( slotHash );
+		hc.Add( _backpack.Selected );
 		hc.Add( _hoveredSlot );
 		hc.Add( _hoveredSortButton );
 		hc.Add( _hoveredHeader );

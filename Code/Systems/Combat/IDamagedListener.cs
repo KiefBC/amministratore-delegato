@@ -5,5 +5,5 @@
 /// </summary>
 public interface IDamagedListener
 {
-	void OnDamaged( Component.IDamageable target, DamageInfo info );
+	void OnDamaged( Component.IDamageable target, DamageInfo info, bool wasKill );
 }

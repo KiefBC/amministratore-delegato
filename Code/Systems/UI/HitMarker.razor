@@ -30,7 +30,7 @@
 	private float _hitTimer;
 	private bool _wasKill;
 
-	public void OnDamaged( Component.IDamageable target, DamageInfo info )
+	public void OnDamaged( Component.IDamageable target, DamageInfo info, bool wasKill )
 	{
 		if ( !Sandbox.LocalPlayer.Owns( PlayerRoot ) )
 		{
@@ -41,9 +41,8 @@
 		if ( PlayerRoot is null ) return;
 		if ( info.Attacker != PlayerRoot ) return;
 
-		var kill = target is UnitComponent unit && unit.IsDead;
-		_wasKill = kill;
-		_hitTimer = kill ? KillDuration : HitDuration;
+		_wasKill = wasKill;
+		_hitTimer = wasKill ? KillDuration : HitDuration;
 	}
 
 	protected override void OnStart()

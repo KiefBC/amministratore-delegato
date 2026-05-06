@@ -21,6 +21,7 @@
 	private int _displayAmount;
 	private float _flashTimer;
 	private int _lastDelta;
+	private Backpack _backpack;
 
 	private int Amount => _displayAmount;
 	private string FlashClass => _flashTimer > 0f
@@ -29,12 +30,15 @@
 
 	protected override void OnStart()
 	{
-		_displayAmount = EconomySystem.Current?.Money ?? 0;
+		FindLocalBackpack();
+		_displayAmount = _backpack?.Wallet ?? 0;
 	}
 
 	protected override void OnUpdate()
 	{
-		var amount = EconomySystem.Current?.Money ?? 0;
+		FindLocalBackpack();
+
+		var amount = _backpack?.Wallet ?? 0;
 		if ( amount != _displayAmount )
 		{
 			_lastDelta = amount - _displayAmount;
@@ -46,6 +50,11 @@
 		{
 			_flashTimer -= Time.Delta;
 		}
+	}
+
+	private void FindLocalBackpack()
+	{
+		_backpack = Sandbox.LocalPlayer.Component<Backpack>( Scene );
 	}
 
 	protected override int BuildHash() => System.HashCode.Combine( _displayAmount, _flashTimer > 0f, System.Math.Sign( _lastDelta ) );

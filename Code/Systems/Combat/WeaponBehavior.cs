@@ -2,75 +2,19 @@ using Sandbox;
 using Sandbox.Citizen;
 
 /// <summary>
-/// Firearm behavior — aim, fire, holster, reload. Reads the currently equipped weapon
-/// from <see cref="Equipment"/> on the same GameObject; stats (Damage/Range/HoldType/
-/// MagazineSize/ReloadDuration/offsets) are copied in by <see cref="Equipment.Equip"/>
-/// from the world <see cref="WeaponPickup"/>.
-///
-/// Firing behavior is gated by a small state machine — see <see cref="WeaponState"/>.
+/// Local weapon input and animation for the owned player. Authoritative state
+/// changes live in <see cref="Backpack"/> on the host and are requested through
+/// <see cref="GameNetworkRpc"/>.
 /// </summary>
 public sealed class WeaponBehavior : Component
 {
 	[Property] public SkinnedModelRenderer BodyRenderer { get; set; }
 	[Property] public CitizenAnimationHelper AnimHelper { get; set; }
 	[Property] public Equipment Equipment { get; set; }
+	[Property] public Backpack Backpack { get; set; }
 
 	private UIStateManager _uiState;
 
-	[Property]
-	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
-		= CitizenAnimationHelper.HoldTypes.Pistol;
-
-	[Property]
-	public CitizenAnimationHelper.Hand Handedness { get; set; }
-		= CitizenAnimationHelper.Hand.Right;
-
-	/// <summary>
-	/// Damage dealt per shot.
-	/// </summary>
-	[Property]
-	[Range( 1f, 200f )]
-	[Step( 1f )]
-	public float Damage { get; set; } = 25f;
-
-	/// <summary>
-	/// Maximum trace distance for a shot.
-	/// </summary>
-	[Property]
-	[Range( 100f, 10000f )]
-	[Step( 100f )]
-	public float Range { get; set; } = 5000f;
-
-	/// <summary>
-	/// Rounds in a full magazine. Reload refills <see cref="CurrentAmmo"/> to this value.
-	/// </summary>
-	[Property]
-	[Range( 1, 100 )]
-	[Step( 1 )]
-	public int MagazineSize { get; set; } = 7;
-
-	/// <summary>
-	/// Seconds spent in <see cref="WeaponState.Reloading"/> before ammo refills.
-	/// </summary>
-	[Property]
-	[Range( 0.1f, 5f )]
-	[Step( 0.1f )]
-	public float ReloadDuration { get; set; } = 1.5f;
-
-	[Property] public Vector3 WeaponOffset { get; set; } = Vector3.Zero;
-	[Property] public Angles WeaponAngleOffset { get; set; } = Angles.Zero;
-	[Property] public Vector3 WeaponScale { get; set; } = Vector3.One;
-
-	/// <summary>
-	/// The firing state machine. Transitions:
-	/// <list type="bullet">
-	/// <item><c>Idle → Reloading</c> on reload input (if mag isn't full)</item>
-	/// <item><c>Idle → Empty</c> after firing the last round</item>
-	/// <item><c>Empty → Reloading</c> on reload input</item>
-	/// <item><c>Reloading → Idle</c> when the reload timer expires (mag refilled)</item>
-	/// </list>
-	/// Firing is only permitted in <c>Idle</c>.
-	/// </summary>
 	public enum WeaponState
 	{
 		Idle,
@@ -78,83 +22,85 @@ public sealed class WeaponBehavior : Component
 		Empty,
 	}
 
-	private GameObject Weapon => Equipment?.Equipped;
-	private bool _holstered;
-	private WeaponState _state = WeaponState.Idle;
-	private int _currentAmmo;
-	private float _reloadEndTime;
+	public ItemDefinition Definition { get; private set; }
+	public string DisplayName => Definition?.DisplayName;
+	public bool IsHolstered { get; private set; }
+	public WeaponState State { get; private set; } = WeaponState.Idle;
+	public int CurrentAmmo { get; private set; }
+	public int MagazineSize => Definition?.MagazineSize ?? 0;
 
-	/// <summary>
-	/// True when the weapon has been manually holstered by the player. Read-only — toggle
-	/// via the in-game holster input. HUD reads this component directly.
-	/// </summary>
-	public bool IsHolstered => _holstered;
-
-	/// <summary>Current state machine value.</summary>
-	public WeaponState State => _state;
-
-	/// <summary>Rounds currently in the magazine.</summary>
-	public int CurrentAmmo => _currentAmmo;
-
-	/// <summary>Fraction of reload completed in [0..1]. 0 outside <see cref="WeaponState.Reloading"/>.</summary>
 	public float ReloadProgress
 	{
 		get
 		{
-			if ( _state != WeaponState.Reloading || ReloadDuration <= 0f ) return 0f;
-			var remaining = _reloadEndTime - Time.Now;
-			return float.Clamp( 1f - (remaining / ReloadDuration), 0f, 1f );
+			if ( State != WeaponState.Reloading || Definition is null || Definition.ReloadDuration <= 0f ) return 0f;
+
+			var remaining = EquippedState.ReloadEndTime - Time.Now;
+			return float.Clamp( 1f - (remaining / Definition.ReloadDuration), 0f, 1f );
 		}
 	}
+
+	private InventoryItemState EquippedState { get; set; }
+	private bool HasWeapon => Definition is not null && Definition.IsWeapon;
+	private bool IsLocalOwner => Sandbox.LocalPlayer.Owns( GameObject.Root );
 
 	protected override void OnStart()
 	{
 		Equipment ??= Components.Get<Equipment>();
+		Backpack ??= Components.Get<Backpack>();
 		BodyRenderer ??= Components.Get<SkinnedModelRenderer>();
 		AnimHelper ??= Components.Get<CitizenAnimationHelper>();
 		_uiState = Components.GetInAncestorsOrSelf<UIStateManager>();
 	}
 
-	/// <summary>
-	/// Called by <see cref="Equipment.Equip"/> after weapon stats are copied. Resets
-	/// the state machine to <see cref="WeaponState.Idle"/> with a full magazine and
-	/// the HUD picks up the new state from this component.
-	/// </summary>
-	public void OnEquipped()
-	{
-		_currentAmmo = MagazineSize;
-		_reloadEndTime = 0f;
-		TransitionTo( WeaponState.Idle );
-	}
-
 	protected override void OnUpdate()
 	{
-		if ( IsProxy ) return;
-		if ( AnimHelper is null ) return;
+		RefreshState();
+		ApplyAnimationState();
 
-		ApplyWeaponOffset();
+		if ( !IsLocalOwner ) return;
+		if ( _uiState?.IsAnyUIOpen == true ) return;
 
-		// Suspend all weapon input (fire/aim/holster/reload) while a UI mode owns the
-		// cursor — otherwise inventory clicks would also fire the held weapon.
-		if ( _uiState?.IsAnyUIOpen == true )
+		PollInput();
+	}
+
+	private void RefreshState()
+	{
+		Equipment ??= Components.Get<Equipment>();
+		Backpack ??= Components.Get<Backpack>();
+
+		Definition = null;
+		EquippedState = default;
+		IsHolstered = false;
+		State = WeaponState.Idle;
+		CurrentAmmo = 0;
+
+		if ( !Backpack.IsValid() ) return;
+		if ( !Backpack.TryGetEquipped( out var item, out var definition ) ) return;
+		if ( definition is null || !definition.IsWeapon ) return;
+
+		Definition = definition;
+		EquippedState = item;
+		IsHolstered = item.IsHolstered;
+		State = item.State;
+		CurrentAmmo = item.Ammo;
+	}
+
+	private void ApplyAnimationState()
+	{
+		if ( !AnimHelper.IsValid() ) return;
+
+		if ( !HasWeapon || IsHolstered )
 		{
 			AnimHelper.HoldType = CitizenAnimationHelper.HoldTypes.None;
 			return;
 		}
 
-		if ( Input.Pressed( "Slot1" ) && Weapon.IsValid() )
+		var aiming = IsLocalOwner && Input.Down( "Attack2" ) && State != WeaponState.Reloading;
+		if ( aiming )
 		{
-			_holstered = !_holstered;
-			Weapon.Enabled = !_holstered;
-		}
-
-		var hasWeapon = Weapon.IsValid();
-		var aiming = Input.Down( "Attack2" ) && !_holstered && hasWeapon;
-
-		if ( aiming && _state != WeaponState.Reloading )
-		{
-			AnimHelper.HoldType = HoldType;
-			AnimHelper.Handedness = Handedness;
+			AnimHelper.HoldType = Definition.HoldType;
+			AnimHelper.Handedness = Definition.Handedness;
 			AnimHelper.IsWeaponLowered = false;
 		}
 		else
@@ -162,125 +108,44 @@ public sealed class WeaponBehavior : Component
 			AnimHelper.HoldType = CitizenAnimationHelper.HoldTypes.None;
 		}
 
-		// State machine tick — each state owns its own per-frame behavior and which
-		// inputs it cares about. New states should add a case here.
-		switch ( _state )
+		if ( State == WeaponState.Reloading )
 		{
-			case WeaponState.Idle:
-				if ( aiming && Input.Pressed( "Attack1" ) )
-				{
-					Fire();
-				}
-				else if ( Input.Pressed( "Reload" ) && hasWeapon && !_holstered && _currentAmmo < MagazineSize )
-				{
-					StartReload();
-				}
-				break;
-
-			case WeaponState.Reloading:
-				if ( Time.Now >= _reloadEndTime )
-				{
-					CompleteReload();
-				}
-				break;
-
-			case WeaponState.Empty:
-				if ( Input.Pressed( "Reload" ) && hasWeapon && !_holstered )
-				{
-					StartReload();
-				}
-				// Attack1 in Empty: future hook for a "click" sound / animation.
-				break;
+			AnimHelper.IsWeaponLowered = true;
 		}
 	}
 
-	private void TransitionTo( WeaponState newState )
+	private void PollInput()
 	{
-		if ( _state == newState )
+		if ( !HasWeapon ) return;
+
+		if ( Input.Pressed( "Slot1" ) )
 		{
-			return;
+			GameNetworkRpc.RequestToggleHolster( GameObject.Root );
 		}
 
-		_state = newState;
-	}
-
-	private void StartReload()
-	{
-		_reloadEndTime = Time.Now + ReloadDuration;
-		AnimHelper.IsWeaponLowered = true;
-		TransitionTo( WeaponState.Reloading );
-		Log.Info( $"Reloading ({ReloadDuration:0.0}s)" );
-	}
-
-	private void CompleteReload()
-	{
-		_currentAmmo = MagazineSize;
-		_reloadEndTime = 0f;
-		TransitionTo( WeaponState.Idle );
-		Log.Info( $"Reloaded — {_currentAmmo}/{MagazineSize}" );
-	}
-
-	private void ApplyWeaponOffset()
-	{
-		if ( !Weapon.IsValid() ) return;
-		Weapon.LocalPosition = WeaponOffset;
-		Weapon.LocalRotation = Rotation.From( WeaponAngleOffset );
-		Weapon.LocalScale = WeaponScale;
-	}
-
-	private void Fire()
-	{
-		var camera = Scene.Camera;
-		if ( !camera.IsValid() ) return;
-
-		_currentAmmo--;
-
-		var startPos = camera.WorldPosition;
-		var endPos = startPos + camera.WorldRotation.Forward * Range;
-
-		var trace = Scene.Trace.Ray( startPos, endPos )
-			.IgnoreGameObjectHierarchy( GameObject.Root )
-			.Run();
-
-		if ( trace.Hit )
+		if ( Input.Pressed( "Reload" ) && !IsHolstered )
 		{
-			Log.Info( $"Shot hit {trace.GameObject?.Name}" );
-			SpawnDebugMarker( trace.HitPosition, Color.Red );
+			GameNetworkRpc.RequestReloadWeapon( GameObject.Root );
+		}
 
-			var hit = trace.GameObject?.Components.GetInAncestorsOrSelf<Component.IDamageable>();
-			if ( hit is not null )
+		if ( Input.Down( "Attack2" ) && Input.Pressed( "Attack1" ) && !IsHolstered )
+		{
+			var camera = Scene.Camera;
+			if ( camera.IsValid() )
 			{
-				var info = new DamageInfo
-				{
-					Damage = Damage,
-					Position = trace.HitPosition,
-					Origin = startPos,
-					Attacker = GameObject.Root,
-					Weapon = Weapon,
-				};
-
-				CombatSystem.Current.DealDamage( hit, info );
+				GameNetworkRpc.RequestFireWeapon( GameObject.Root, camera.WorldPosition, camera.WorldRotation );
 			}
 		}
-		else
-		{
-			Log.Info( "Shot - missed" );
-			SpawnDebugMarker( endPos, Color.Yellow );
-		}
-
-		// If the magazine just emptied, transition into Empty.
-		if ( _currentAmmo <= 0 )
-		{
-			TransitionTo( WeaponState.Empty );
-		}
 	}
 
-	private void SpawnDebugMarker( Vector3 position, Color color )
+	public static void SpawnDebugMarker( Scene scene, Vector3 position, Color color )
 	{
-		var go = new GameObject();
-		go.Name = "ShotDebug";
+		if ( scene is null ) return;
+
+		var go = new GameObject( "ShotDebug" );
 		go.WorldPosition = position;
 		go.WorldScale = Vector3.One * 0.1f;
+		go.NetworkMode = NetworkMode.Never;
 
 		var renderer = go.Components.Create<ModelRenderer>();
 		renderer.Model = Model.Load( "models/dev/sphere.vmdl" );

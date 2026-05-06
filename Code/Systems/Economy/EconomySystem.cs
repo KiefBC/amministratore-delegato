@@ -1,17 +1,11 @@
 using Sandbox;
 
 /// <summary>
-/// Scene-scoped singleton for the player's money. Host-authoritative.
-/// Usage from anywhere: <c>EconomySystem.Current.Add( 100 );</c>
+/// Scene-scoped economy service. It does not own player money; each player's
+/// synced <see cref="Backpack.Wallet"/> is the authoritative balance.
 /// </summary>
 public sealed class EconomySystem : GameObjectSystem<EconomySystem>
 {
-	/// <summary>
-	/// Current balance. Synced from host. Mutate via <see cref="Add"/> / <see cref="TrySpend"/>.
-	/// </summary>
-	[Sync( SyncFlags.FromHost )]
-	public int Money { get; set; }
-
 	public EconomySystem( Scene scene ) : base( scene )
 	{
 		Listen( Stage.StartFixedUpdate, 0, OnTick, nameof( OnTick ) );
@@ -19,37 +13,36 @@ public sealed class EconomySystem : GameObjectSystem<EconomySystem>
 
 	private void OnTick()
 	{
-		// Future: walk owned businesses, sum their per-tick income, call Add( total ).
+		// Future: walk owned businesses, sum their per-owner income, call Add( player, total ).
 		// Empty today — the seam exists, the implementation does not.
 	}
 
 	/// <summary>
-	/// Add money. Only the host can mint income/rewards; clients receive the synced result.
-	/// Negative amounts are rejected; use <see cref="TrySpend"/> for spending.
+	/// Add money to one player's wallet. Only the host can mint income/rewards.
 	/// </summary>
-	public void Add( int amount )
+	public void Add( GameObject player, int amount )
 	{
 		if ( amount <= 0 ) return;
 		if ( !Networking.IsHost ) return;
 
-		Money += amount;
+		var backpack = player?.Components.GetInDescendantsOrSelf<Backpack>();
+		backpack?.AddMoney( amount );
 	}
 
 	/// <summary>
 	/// Try to spend. Host calls return the real result. Non-host calls are forwarded
 	/// asynchronously and return false until the synced balance updates.
 	/// </summary>
-	public bool TrySpend( int amount )
+	public bool TrySpend( GameObject player, int amount )
 	{
 		if ( amount <= 0 ) return false;
 		if ( !Networking.IsHost )
 		{
-			GameNetworkRpc.RequestSpendMoney( amount );
+			GameNetworkRpc.RequestSpendMoney( player, amount );
 			return false;
 		}
-		if ( Money < amount ) return false;
 
-		Money -= amount;
-		return true;
+		var backpack = player?.Components.GetInDescendantsOrSelf<Backpack>();
+		return backpack.IsValid() && backpack.TrySpend( amount );
 	}
 }

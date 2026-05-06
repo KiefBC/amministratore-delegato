@@ -1,128 +1,50 @@
 using Sandbox;
-using Sandbox.Citizen;
 
 /// <summary>
-/// World weapon pickup + bag-resident weapon record. As a world GameObject: the
-/// player presses E to add it to their <see cref="Backpack"/> (or auto-equip if
-/// hands are empty). Once in the bag, this Component carries forward the weapon's
-/// stats so they survive equip/unequip cycles — <see cref="Equipment.Equip"/>
-/// reads them when transferring to <see cref="WeaponBehavior"/>.
+/// Networked world pickup for a weapon. Inventory state is stored as synced item
+/// records on <see cref="Backpack"/>; this component only represents the physical
+/// world object while it exists in the scene.
 /// </summary>
-public sealed class WeaponPickup : BaseItem, IInteractable
+public sealed class WeaponPickup : Component, IInteractable
 {
-	/// <summary>
-	/// Hold type the player adopts when picking up this weapon.
-	/// </summary>
-	[Property]
-	public CitizenAnimationHelper.HoldTypes HoldType { get; set; }
-		= CitizenAnimationHelper.HoldTypes.Pistol;
+	[Property] public ItemDefinition Definition { get; set; }
+	[Property] public string DefinitionPath { get; set; } = ItemDefinition.GlockPath;
+	[Property] public int StartingAmmo { get; set; } = -1;
 
-	/// <summary>
-	/// One-handed (Right/Left) or two-handed (Both). Only affects Pistol/HoldItem holdtypes.
-	/// </summary>
-	[Property]
-	public CitizenAnimationHelper.Hand Handedness { get; set; }
-		= CitizenAnimationHelper.Hand.Right;
-
-	/// <summary>
-	/// How close the player must be (world units) for the prompt to appear and Use to equip.
-	/// </summary>
-	[Property]
-	[Range( 10f, 500f )]
-	[Step( 10f )]
+	[Property, Range( 10f, 500f ), Step( 10f )]
 	public float PickupRange { get; set; } = 100f;
-
-	/// <summary>
-	/// Damage per shot when this weapon is held.
-	/// </summary>
-	[Property]
-	[Range( 1f, 200f )]
-	[Step( 1f )]
-	public float Damage { get; set; } = 25f;
-
-	/// <summary>
-	/// Maximum trace range when this weapon is held.
-	/// </summary>
-	[Property]
-	[Range( 100f, 10000f )]
-	[Step( 100f )]
-	public float Range { get; set; } = 5000f;
-
-	/// <summary>
-	/// Rounds in a full magazine. Picked-up weapons start with a full mag.
-	/// </summary>
-	[Property]
-	[Range( 1, 100 )]
-	[Step( 1 )]
-	public int MagazineSize { get; set; } = 7;
-
-	/// <summary>
-	/// Seconds spent in the Reloading state before ammo refills.
-	/// </summary>
-	[Property]
-	[Range( 0.1f, 5f )]
-	[Step( 0.1f )]
-	public float ReloadDuration { get; set; } = 1.5f;
-
-	/// <summary>
-	/// Local-space position offset to apply when this weapon is held in the hand bone.
-	/// Tune in the editor for each weapon — pistol vs rifle vs bat all need different grips.
-	/// </summary>
-	[Property]
-	public Vector3 WeaponOffset { get; set; } = Vector3.Zero;
-
-	/// <summary>
-	/// Local-space rotation offset (pitch/yaw/roll, degrees) to apply when held.
-	/// </summary>
-	[Property]
-	public Angles WeaponAngleOffset { get; set; } = Angles.Zero;
-
-	/// <summary>
-	/// Local-space scale to apply when held (use 1,1,1 for no scaling).
-	/// </summary>
-	[Property]
-	public Vector3 WeaponScale { get; set; } = Vector3.One;
-
-	public WeaponPickup()
-	{
-		MaxStack = 1;
-	}
-
-	/// <summary>
-	/// Right-click in the inventory equips this weapon, swapping out whatever is
-	/// currently held (the previous weapon returns to the bag via Equipment.Drop →
-	/// Backpack.StoreFromHand).
-	/// </summary>
-	public override void OnUse( GameObject player )
-	{
-		if ( !player.IsValid() ) return;
-		var equipment = player.Components.GetInDescendantsOrSelf<Equipment>();
-		equipment?.Equip( GameObject );
-	}
 
 	Vector3 IInteractable.InteractPosition => WorldPosition;
 	float IInteractable.InteractRange => PickupRange;
-	string IInteractable.Prompt => "Press E to Pick Up";
-	bool IInteractable.CanInteract( GameObject player ) => true;
+	string IInteractable.Prompt => $"Press E to Pick Up {ResolvedDefinition?.DisplayName ?? "Weapon"}";
+
+	bool IInteractable.CanInteract( GameObject player )
+	{
+		var definition = ResolvedDefinition;
+		return player.IsValid() && definition is not null && definition.IsWeapon;
+	}
 
 	void IInteractable.Interact( GameObject player )
 	{
 		if ( !player.IsValid() ) return;
+		if ( !Networking.IsHost ) return;
 
-		var equipment = player.Components.GetInDescendantsOrSelf<Equipment>();
 		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
-		if ( !equipment.IsValid() || !backpack.IsValid() ) return;
+		if ( !backpack.IsValid() ) return;
 
-		// First weapon goes straight to the hand bone; the bag tracks it so the UI
-		// reflects everything the player owns.
-		if ( !equipment.Equipped.IsValid() )
+		var definitionPath = ResolvedDefinitionPath;
+		if ( string.IsNullOrWhiteSpace( definitionPath ) ) return;
+		if ( !backpack.TryAddDefinition( definitionPath, 1, StartingAmmo, autoEquipFirstWeapon: true ) )
 		{
-			equipment.Equip( GameObject );
-			backpack.TrackEquipped( this );
 			return;
 		}
 
-		// Subsequent pickups land in the bag for the player to swap to later.
-		backpack.TryAdd( this );
+		GameObject.Destroy();
 	}
+
+	private string ResolvedDefinitionPath => !string.IsNullOrWhiteSpace( DefinitionPath )
+		? DefinitionPath
+		: ItemDefinition.PathFor( Definition );
+
+	private ItemDefinition ResolvedDefinition => ItemDefinition.Resolve( ResolvedDefinitionPath );
 }
