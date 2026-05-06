@@ -3107,7 +3107,7 @@
           "__version": 2,
           "Flags": 0,
           "Name": "Directional Light",
-          "Position": "-80.0253906,-55.0454941,149.076416",
+          "Position": "-59.6310005,-34.6511002,114.703842",
           "Rotation": "-0.359604836,0.868162811,0.130885482,0.315985501",
           "Scale": "1,1,1",
           "Tags": "light_directional,light",
@@ -6947,7 +6947,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Position",
-                "Value": "-20.4892349,-1.84621239,-2.7179718E-05"
+                "Value": "-28.3742905,-3.39320993,-3.57627869E-05"
               },
               {
                 "Target": {
@@ -6955,7 +6955,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Rotation",
-                "Value": "-2.98023224E-07,-2.98023224E-07,0.137468636,0.990505457"
+                "Value": "-4.76837158E-07,-3.57627869E-07,0.16637373,0.98606205"
               },
               {
                 "Target": {
@@ -6971,7 +6971,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Position",
-                "Value": "-14.476532,-26.600256,24.458271"
+                "Value": "-17.6445274,-38.5477448,31.9781075"
               },
               {
                 "Target": {
@@ -6979,7 +6979,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Rotation",
-                "Value": "-0.632842422,0.235854805,-0.178929284,-0.715450406"
+                "Value": "0.621941686,-0.134111941,-0.649169922,0.416873544"
               },
               {
                 "Target": {
@@ -6995,7 +6995,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Position",
-                "Value": "11.6925058,-4.99486923E-05,-0.000105142593"
+                "Value": "11.692502,-5.17368317E-05,-0.000103712082"
               },
               {
                 "Target": {
@@ -7003,7 +7003,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Rotation",
-                "Value": "-1.96695328E-06,5.66244125E-07,0.0301842541,-0.999544561"
+                "Value": "-2.00420618E-06,5.36441803E-07,0.0301842988,-0.999544561"
               },
               {
                 "Target": {
@@ -7019,7 +7019,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Position",
-                "Value": "11.4816637,3.11732292E-05,-6.68764114E-05"
+                "Value": "11.4816647,3.09944153E-05,-6.69956207E-05"
               },
               {
                 "Target": {
@@ -7027,7 +7027,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Rotation",
-                "Value": "0.704695642,-0.0222176239,-0.0532007068,-0.707163692"
+                "Value": "0.704695761,-0.0222176909,-0.0532006994,-0.707163751"
               },
               {
                 "Target": {
@@ -7043,7 +7043,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Position",
-                "Value": "-15.7518864,-26.0111828,-25.5001068"
+                "Value": "-19.1527348,-37.2540207,-34.26614"
               },
               {
                 "Target": {
@@ -7051,7 +7051,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Rotation",
-                "Value": "0.56863606,-0.241402283,-0.278613776,-0.735358953"
+                "Value": "-0.645377755,0.165161282,-0.541485131,0.512838662"
               },
               {
                 "Target": {
@@ -7067,7 +7067,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Position",
-                "Value": "11.6925297,-3.19480896E-05,1.1920929E-06"
+                "Value": "11.6925287,-3.02791595E-05,7.15255737E-07"
               },
               {
                 "Target": {
@@ -7075,7 +7075,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Rotation",
-                "Value": "-2.39908695E-06,6.70552254E-08,-0.0301856995,0.999544501"
+                "Value": "-2.33948231E-06,1.1920929E-07,-0.0301856995,0.999544501"
               },
               {
                 "Target": {
@@ -7091,7 +7091,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Position",
-                "Value": "11.4816628,6.15119934E-05,-7.57575035E-05"
+                "Value": "11.4816637,6.19888306E-05,-7.43865967E-05"
               },
               {
                 "Target": {
@@ -7099,7 +7099,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Rotation",
-                "Value": "0.707604885,-0.0219993591,0.0532981306,0.704251647"
+                "Value": "0.707604945,-0.0219993815,0.0532981157,0.704251647"
               },
               {
                 "Target": {
@@ -7115,7 +7115,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Position",
-                "Value": "-38.1785698,28.850666,6.53266907E-05"
+                "Value": "-41.4685898,46.2657013,6.12735748E-05"
               },
               {
                 "Target": {
@@ -7123,7 +7123,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Rotation",
-                "Value": "-0.927890658,0.372852743,1.49011612E-07,-3.03983688E-06"
+                "Value": "-0.838546038,0.544830918,2.08616257E-07,-3.24845314E-06"
               },
               {
                 "Target": {
@@ -7139,7 +7139,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Position",
-                "Value": "3.59376907,2.67028809E-05,-6.04987144E-05"
+                "Value": "3.5937705,2.52127647E-05,-6.04689121E-05"
               },
               {
                 "Target": {
@@ -7147,7 +7147,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Rotation",
-                "Value": "2.38418579E-07,-6.2584877E-07,0.201891318,0.979408145"
+                "Value": "2.38418579E-07,-6.10947609E-07,0.201891333,0.979408264"
               },
               {
                 "Target": {
@@ -7259,7 +7259,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Position",
-                "Value": "17.8480988,0.000116348267,-4.19616699E-05"
+                "Value": "17.8480988,0.000118255615,-4.00543213E-05"
               },
               {
                 "Target": {
@@ -7267,7 +7267,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Rotation",
-                "Value": "-8.94069672E-08,-2.83122063E-07,0.0171017945,0.999853849"
+                "Value": "-5.96046448E-08,-3.12924385E-07,0.0171017796,0.999853849"
               },
               {
                 "Target": {
@@ -7283,7 +7283,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Position",
-                "Value": "16.5251961,1.28746033E-05,-3.48091125E-05"
+                "Value": "16.525198,1.3589859E-05,-3.33786011E-05"
               },
               {
                 "Target": {
@@ -7291,7 +7291,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Rotation",
-                "Value": "-0.0224069953,-0.0104060769,-0.510633171,0.859443188"
+                "Value": "-0.0224069953,-0.0104060471,-0.51063323,0.859443188"
               }
             ],
             "MovedObjects": []
@@ -8779,7 +8779,7 @@
               "Handedness": "Right",
               "HoldType": "Pistol",
               "Icon": "",
-              "MagazineSize": 7,
+              "MagazineSize": 15,
               "MaxStack": 1,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
@@ -8788,7 +8788,7 @@
               "OnComponentStart": null,
               "OnComponentUpdate": null,
               "PickupRange": 100,
-              "Range": 5000,
+              "Range": 3000,
               "Rarity": "Common",
               "ReloadDuration": 1.5,
               "Value": 200,
@@ -9100,25 +9100,6 @@
               "TooltipIcon": "airline_seat_recline_normal",
               "TooltipTitle": "Sit",
               "YawRange": "-119.759964,120.048027"
-            },
-            {
-              "__type": "SittableInteractable",
-              "__guid": "7485b4e0-11a3-41be-a5ea-8711db3a7239",
-              "__enabled": true,
-              "Flags": 0,
-              "Chair": {
-                "_type": "component",
-                "component_id": "4be9785b-c8ac-4461-a321-6ab16a03dbc2",
-                "go": "43521d4e-7ca2-4538-9860-66777fa540c8",
-                "component_type": "BaseChair"
-              },
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null,
-              "SitRange": 100
             }
           ],
           "Children": [
@@ -9333,25 +9314,6 @@
               "OverrideMassCenter": false,
               "RigidbodyFlags": 0,
               "StartAsleep": false
-            },
-            {
-              "__type": "SittableInteractable",
-              "__guid": "dd987b4e-fa69-42ac-b930-13f41acc3224",
-              "__enabled": true,
-              "Flags": 0,
-              "Chair": {
-                "_type": "component",
-                "component_id": "89687b00-071a-4923-94aa-45aa96c76465",
-                "go": "93929331-d6e8-466b-b4ab-3e12183b1b53",
-                "component_type": "BaseChair"
-              },
-              "OnComponentDestroy": null,
-              "OnComponentDisabled": null,
-              "OnComponentEnabled": null,
-              "OnComponentFixedUpdate": null,
-              "OnComponentStart": null,
-              "OnComponentUpdate": null,
-              "SitRange": 100
             }
           ],
           "Children": [
@@ -9431,10 +9393,10 @@
       "Components": [],
       "Children": [
         {
-          "__guid": "5dc827d3-731f-45de-96fa-6d41c1d1fb2b",
+          "__guid": "a6cc6f5d-7dd7-4655-a244-2970b79bcd11",
           "__version": 2,
           "Flags": 0,
-          "Name": "Bounty Payer",
+          "Name": "Network Manager",
           "Position": "0,0,0",
           "Rotation": "0,0,0,1",
           "Scale": "1,1,1",
@@ -9447,16 +9409,22 @@
           "OwnerTransfer": 1,
           "Components": [
             {
-              "__type": "DeathBountyPayer",
-              "__guid": "9eefff31-10be-4cc8-96e4-1e159da6e8ef",
+              "__type": "GameNetworkManager",
+              "__guid": "2f370e97-4f9d-42bf-8912-0666384fbf54",
               "__enabled": true,
               "Flags": 0,
+              "LobbyName": "Amministratore Delegato",
+              "MaxPlayers": 64,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
-              "OnComponentUpdate": null
+              "OnComponentUpdate": null,
+              "PlayerPrefab": null,
+              "PlayerTemplateName": "Player Controller",
+              "SpawnPoints": [],
+              "StartLobbyOnLoad": true
             }
           ],
           "Children": []
@@ -9487,14 +9455,14 @@
       "Sandbox.MovieMaker.MovieRecorderSystem": {
         "DisableClientRecording": false
       },
-      "Sandbox.SelectionSetsSystem": {
-        "Data": {
-          "SelectionSets": []
-        }
-      },
       "Sandbox.Clutter.ClutterGridSystem": {
         "Storage": {
           "$blob": "c7e0731d-eb2b-4b7c-be24-5301459ae2d2"
+        }
+      },
+      "Sandbox.SelectionSetsSystem": {
+        "Data": {
+          "SelectionSets": []
         }
       }
     }

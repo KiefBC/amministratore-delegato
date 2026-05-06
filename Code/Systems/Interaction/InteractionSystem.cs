@@ -32,7 +32,7 @@ public sealed class InteractionSystem : GameObjectSystem<InteractionSystem>
 	{
 		CurrentTarget = null;
 
-		if ( !LocalPlayer.IsValid() )
+		if ( !Sandbox.LocalPlayer.Owns( LocalPlayer ) )
 		{
 			LocalPlayer = FindLocalPlayer();
 			if ( !LocalPlayer.IsValid() ) return;
@@ -64,19 +64,43 @@ public sealed class InteractionSystem : GameObjectSystem<InteractionSystem>
 
 		if ( best is not null && Input.Pressed( "Use" ) )
 		{
-			best.Interact( LocalPlayer );
+			Interact( best, LocalPlayer );
+		}
+	}
+
+	private void Interact( IInteractable interactable, GameObject player )
+	{
+		if ( interactable is not Component component ) return;
+
+		if ( !Networking.IsHost )
+		{
+			GameNetworkRpc.RequestInteract( component.GameObject, player );
+			return;
+		}
+
+		TryInteractOnHost( component.GameObject, player );
+	}
+
+	public void TryInteractOnHost( GameObject targetGo, GameObject player )
+	{
+		if ( !targetGo.IsValid() || !player.IsValid() ) return;
+
+		foreach ( var interactable in targetGo.Components.GetAll<IInteractable>() )
+		{
+			if ( interactable is not Component component || !component.IsValid() ) continue;
+			if ( !interactable.CanInteract( player ) ) continue;
+
+			var range = interactable.InteractRange;
+			if ( interactable.InteractPosition.DistanceSquared( player.WorldPosition ) > range * range ) continue;
+
+			interactable.Interact( player );
+			return;
 		}
 	}
 
 	private GameObject FindLocalPlayer()
 	{
-		foreach ( var pc in Scene.GetAllComponents<PlayerController>() )
-		{
-			if ( !pc.IsValid() ) continue;
-			if ( pc.IsProxy ) continue;
-			return pc.GameObject;
-		}
-		return null;
+		return Sandbox.LocalPlayer.GameObject( Scene );
 	}
 
 	/// <summary>

@@ -3,7 +3,6 @@
 @using System.Linq;
 @namespace Sandbox
 @inherits PanelComponent
-@implements IDamagedListener
 
 <root>
 	@if ( Player is not null )
@@ -39,38 +38,39 @@
 		_ => "fill-danger"
 	};
 
-	public void OnDamaged( Component.IDamageable target, DamageInfo info )
-	{
-		if ( Player is null ) return;
-		if ( target is not UnitComponent unit || unit != Player ) return;
-
-		_displayHealth = Player.Health;
-		if ( info.Damage > 0f ) _flashTimer = FlashDuration;
-	}
-
 	protected override void OnStart()
 	{
-		Player ??= Scene.GetAllComponents<UnitComponent>()
-			.FirstOrDefault( u => u.Team == TeamType.Player );
-
-		if ( Player is not null )
-		{
-			_displayHealth = Player.Health;
-			_maxHealth = Player.MaxHealth;
-		}
+		FindLocalPlayer();
 	}
 
 	protected override void OnUpdate()
 	{
+		if ( Player is null || !Sandbox.LocalPlayer.Owns( Player.GameObject ) )
+		{
+			Player = null;
+			FindLocalPlayer();
+		}
+
 		if ( _flashTimer > 0f )
 		{
 			_flashTimer -= Time.Delta;
 		}
 
-		// Catch any health change that didn't come through OnDamaged (e.g. respawn, debug button).
 		if ( Player is not null && Player.Health != _displayHealth )
 		{
+			if ( Player.Health < _displayHealth ) _flashTimer = FlashDuration;
 			_displayHealth = Player.Health;
+		}
+	}
+
+	private void FindLocalPlayer()
+	{
+		Player ??= Sandbox.LocalPlayer.Component<UnitComponent>( Scene );
+
+		if ( Player is not null )
+		{
+			_displayHealth = Player.Health;
+			_maxHealth = Player.MaxHealth;
 		}
 	}
 

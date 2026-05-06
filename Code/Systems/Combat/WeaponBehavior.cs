@@ -86,12 +86,11 @@ public sealed class WeaponBehavior : Component
 
 	/// <summary>
 	/// True when the weapon has been manually holstered by the player. Read-only — toggle
-	/// via the in-game holster input. Subscribe to <see cref="IHolsterChangedListener"/>
-	/// to react to changes.
+	/// via the in-game holster input. HUD reads this component directly.
 	/// </summary>
 	public bool IsHolstered => _holstered;
 
-	/// <summary>Current state machine value. Subscribe to <see cref="IWeaponStateChangedListener"/>.</summary>
+	/// <summary>Current state machine value.</summary>
 	public WeaponState State => _state;
 
 	/// <summary>Rounds currently in the magazine.</summary>
@@ -119,7 +118,7 @@ public sealed class WeaponBehavior : Component
 	/// <summary>
 	/// Called by <see cref="Equipment.Equip"/> after weapon stats are copied. Resets
 	/// the state machine to <see cref="WeaponState.Idle"/> with a full magazine and
-	/// broadcasts so the HUD can refresh.
+	/// the HUD picks up the new state from this component.
 	/// </summary>
 	public void OnEquipped()
 	{
@@ -130,6 +129,7 @@ public sealed class WeaponBehavior : Component
 
 	protected override void OnUpdate()
 	{
+		if ( IsProxy ) return;
 		if ( AnimHelper is null ) return;
 
 		ApplyWeaponOffset();
@@ -146,7 +146,6 @@ public sealed class WeaponBehavior : Component
 		{
 			_holstered = !_holstered;
 			Weapon.Enabled = !_holstered;
-			Scene.RunEvent<IHolsterChangedListener>( l => l.OnHolsterChanged( this, _holstered ) );
 		}
 
 		var hasWeapon = Weapon.IsValid();
@@ -199,13 +198,10 @@ public sealed class WeaponBehavior : Component
 	{
 		if ( _state == newState )
 		{
-			// Re-broadcast even on no-op so listeners get ammo updates from Fire().
-			Scene.RunEvent<IWeaponStateChangedListener>( l => l.OnWeaponStateChanged( this ) );
 			return;
 		}
 
 		_state = newState;
-		Scene.RunEvent<IWeaponStateChangedListener>( l => l.OnWeaponStateChanged( this ) );
 	}
 
 	private void StartReload()
@@ -272,15 +268,10 @@ public sealed class WeaponBehavior : Component
 			SpawnDebugMarker( endPos, Color.Yellow );
 		}
 
-		// Always transition (even on hit/miss) so the HUD reflects the new ammo count.
-		// If the magazine just emptied, transition into Empty; otherwise re-broadcast Idle.
+		// If the magazine just emptied, transition into Empty.
 		if ( _currentAmmo <= 0 )
 		{
 			TransitionTo( WeaponState.Empty );
-		}
-		else
-		{
-			TransitionTo( WeaponState.Idle );
 		}
 	}
 

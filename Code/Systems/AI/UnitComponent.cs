@@ -24,7 +24,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	/// <summary>
 	/// Money paid to the player who lands the killing blow on this unit. 0 = no payout.
-	/// Wired via <see cref="IUnitDiedListener"/> + <see cref="DeathBountyPayer"/>.
+	/// Paid by the host from <see cref="Die"/>.
 	/// </summary>
 	[Property]
 	[Range( 0, 1000 )]
@@ -50,10 +50,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	/// Current health. Host-authoritative — clients receive updates via Sync.
 	/// Mutate only through <see cref="OnDamage"/>.
 	/// </summary>
-	// Networking pre-baked for future PvP. Disabled in solo dev because [Sync] makes
-	// the engine attempt Steam P2P sessions, which spams "Session Failed" timeouts.
-	// Re-enable when wiring multiplayer.
-	//[Sync( SyncFlags.FromHost )]
+	[Sync( SyncFlags.FromHost )]
 	public float Health { get; set; }
 
 	private float _lastHealth;
@@ -127,6 +124,17 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			Patrol.Enabled = false;
 		}
 
-		Scene.RunEvent<IUnitDiedListener>( l => l.OnUnitDied( this, _lastAttacker ) );
+		TryPayBounty();
+	}
+
+	private void TryPayBounty()
+	{
+		if ( Bounty <= 0 ) return;
+		if ( !_lastAttacker.IsValid() ) return;
+
+		var killerUnit = _lastAttacker.Components.GetInDescendantsOrSelf<UnitComponent>();
+		if ( !killerUnit.IsValid() || killerUnit.Team != TeamType.Player ) return;
+
+		EconomySystem.Current?.Add( Bounty );
 	}
 }

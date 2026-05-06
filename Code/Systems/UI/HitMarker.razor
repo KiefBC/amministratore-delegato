@@ -32,6 +32,12 @@
 
 	public void OnDamaged( Component.IDamageable target, DamageInfo info )
 	{
+		if ( !Sandbox.LocalPlayer.Owns( PlayerRoot ) )
+		{
+			PlayerRoot = null;
+		}
+
+		PlayerRoot ??= Sandbox.LocalPlayer.GameObject( Scene );
 		if ( PlayerRoot is null ) return;
 		if ( info.Attacker != PlayerRoot ) return;
 
@@ -42,12 +48,7 @@
 
 	protected override void OnStart()
 	{
-		if ( PlayerRoot is null )
-		{
-			var playerUnit = Scene.GetAllComponents<UnitComponent>()
-				.FirstOrDefault( u => u.Team == TeamType.Player );
-			PlayerRoot = playerUnit?.GameObject?.Root;
-		}
+		PlayerRoot ??= Sandbox.LocalPlayer.GameObject( Scene );
 	}
 
 	protected override void OnUpdate()

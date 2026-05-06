@@ -3,9 +3,6 @@
 @using System.Linq;
 @namespace Sandbox
 @inherits PanelComponent
-@implements IEquipmentChangedListener
-@implements IHolsterChangedListener
-@implements IWeaponStateChangedListener
 
 <root>
 	@if ( !string.IsNullOrEmpty( _weaponName ) )
@@ -64,52 +61,35 @@
 
 	private string AmmoClass => _state == WeaponBehavior.WeaponState.Empty ? "ammo-empty" : "";
 
-	public void OnEquipmentChanged( Equipment equipment, GameObject equipped )
-	{
-		_weaponName = equipped?.Name;
-		if ( equipped is not null ) _holstered = false;
-	}
-
-	public void OnHolsterChanged( WeaponBehavior weapon, bool holstered )
-	{
-		_holstered = holstered;
-	}
-
-	public void OnWeaponStateChanged( WeaponBehavior weapon )
-	{
-		_weapon = weapon;
-		_state = weapon.State;
-		_currentAmmo = weapon.CurrentAmmo;
-		_magazineSize = weapon.MagazineSize;
-		_reloadProgress = weapon.ReloadProgress;
-	}
-
 	protected override void OnStart()
 	{
-		var equipment = Scene.GetAllComponents<Equipment>().FirstOrDefault();
-		if ( equipment?.Equipped.IsValid() == true )
-		{
-			_weaponName = equipment.Equipped.Name;
-		}
-
-		_weapon = Scene.GetAllComponents<WeaponBehavior>().FirstOrDefault();
-		if ( _weapon is not null )
-		{
-			_holstered = _weapon.IsHolstered;
-			_state = _weapon.State;
-			_currentAmmo = _weapon.CurrentAmmo;
-			_magazineSize = _weapon.MagazineSize;
-		}
+		FindLocalWeapon();
 	}
 
 	protected override void OnUpdate()
 	{
+		FindLocalWeapon();
+
 		// Reload progress is continuous — sample it each frame so the bar animates
-		// smoothly. The state-change broadcast only fires on transitions, not per-tick.
+		// smoothly.
 		if ( _state == WeaponBehavior.WeaponState.Reloading && _weapon is not null )
 		{
 			_reloadProgress = _weapon.ReloadProgress;
 		}
+	}
+
+	private void FindLocalWeapon()
+	{
+		var equipment = Sandbox.LocalPlayer.Component<Equipment>( Scene );
+		_weaponName = equipment?.Equipped?.Name;
+
+		_weapon = Sandbox.LocalPlayer.Component<WeaponBehavior>( Scene );
+		if ( _weapon is null ) return;
+
+		_holstered = _weapon.IsHolstered;
+		_state = _weapon.State;
+		_currentAmmo = _weapon.CurrentAmmo;
+		_magazineSize = _weapon.MagazineSize;
 	}
 
 	protected override int BuildHash() => System.HashCode.Combine(

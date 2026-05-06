@@ -2,8 +2,8 @@ using Sandbox;
 
 /// <summary>
 /// Scene-scoped damage dispatcher. Routes <see cref="DamageInfo"/> to a target's
-/// <see cref="Component.IDamageable"/> on the host, then broadcasts an
-/// <see cref="IDamagedListener"/> event scene-wide so HUD/sound/VFX can react.
+/// <see cref="Component.IDamageable"/> on the host, then asks the networking
+/// bridge to broadcast a local hit reaction event on every client.
 ///
 /// Usage from anywhere: <c>CombatSystem.Current.DealDamage( target, info );</c>
 /// </summary>
@@ -14,26 +14,26 @@ public sealed class CombatSystem : GameObjectSystem<CombatSystem>
 	}
 
 	/// <summary>
-	/// Apply damage to a target and notify listeners. Today this runs only when
-	/// <see cref="Networking.IsHost"/> — solo dev = always host. When networking
-	/// turns on, add an Rpc.Host forwarder for non-host callers.
+	/// Apply damage to a target and notify local hit-reaction components. The host applies damage;
+	/// non-host callers forward the request through <see cref="GameNetworkRpc"/>.
 	/// </summary>
 	public void DealDamage( Component.IDamageable target, in DamageInfo info )
 	{
 		if ( target is null ) return;
-		if ( !Networking.IsHost ) return;
+
+		var targetGo = (target as Component)?.GameObject;
+		if ( !Networking.IsHost )
+		{
+			GameNetworkRpc.RequestDealDamage( targetGo, info );
+			return;
+		}
 
 		target.OnDamage( in info );
 
-		var targetGo = ( target as Component )?.GameObject;
-		BroadcastDamaged( targetGo, info );
+		GameNetworkRpc.BroadcastDamaged( targetGo, info );
 	}
 
-	// Networking pre-baked for future PvP. Disabled in solo dev because [Rpc]-marked
-	// methods on networked systems make the engine attempt Steam P2P sessions, which
-	// spams "Session Failed" timeouts in the console. Re-enable when wiring multiplayer.
-	//[Rpc.Broadcast]
-	private void BroadcastDamaged( GameObject targetGo, DamageInfo info )
+	public void NotifyDamaged( GameObject targetGo, DamageInfo info )
 	{
 		var resolved = targetGo?.Components.GetInAncestorsOrSelf<Component.IDamageable>();
 		Scene.RunEvent<IDamagedListener>( l => l.OnDamaged( resolved, info ) );

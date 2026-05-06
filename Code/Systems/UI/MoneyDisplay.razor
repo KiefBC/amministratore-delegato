@@ -2,7 +2,6 @@
 @using Sandbox.UI;
 @namespace Sandbox
 @inherits PanelComponent
-@implements IMoneyChangedListener
 
 <root>
 	<div class="money @FlashClass">
@@ -28,13 +27,6 @@
 		? (_lastDelta > 0 ? "flash-positive" : "flash-negative")
 		: "";
 
-	public void OnMoneyChanged( int newAmount, int delta )
-	{
-		_displayAmount = newAmount;
-		_lastDelta = delta;
-		_flashTimer = FlashDuration;
-	}
-
 	protected override void OnStart()
 	{
 		_displayAmount = EconomySystem.Current?.Money ?? 0;
@@ -42,6 +34,14 @@
 
 	protected override void OnUpdate()
 	{
+		var amount = EconomySystem.Current?.Money ?? 0;
+		if ( amount != _displayAmount )
+		{
+			_lastDelta = amount - _displayAmount;
+			_displayAmount = amount;
+			_flashTimer = FlashDuration;
+		}
+
 		if ( _flashTimer > 0f )
 		{
 			_flashTimer -= Time.Delta;

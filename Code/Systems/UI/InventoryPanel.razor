@@ -3,7 +3,6 @@
 @using System.Linq;
 @namespace Sandbox
 @inherits PanelComponent
-@implements IInventoryChangedListener
 
 <root class="@(IsOpen ? "open" : "")">
 	@if ( IsOpen && _backpack.IsValid() )
@@ -176,21 +175,18 @@
 
 	public bool IsOpen => _isOpen;
 
-	public void OnInventoryChanged( Backpack backpack )
-	{
-		// Listener trigger — BuildHash picks up the new state on the next layout.
-	}
-
 	protected override void OnStart()
 	{
-		_player = Scene.GetAllComponents<PlayerController>()
-			.FirstOrDefault( p => !p.IsProxy )?.GameObject;
-		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
-		_uiState = _player?.Components.Get<UIStateManager>();
+		FindLocalPlayer();
 	}
 
 	protected override void OnUpdate()
 	{
+		if ( !Sandbox.LocalPlayer.Owns( _player ) )
+		{
+			FindLocalPlayer();
+		}
+
 		_mousePos = Mouse.Position;
 
 		if ( Input.Pressed( "Inventory" ) )
@@ -215,6 +211,13 @@
 		PollHoveredHeader();
 		TickPanelDrag();
 		PollMouseInput();
+	}
+
+	private void FindLocalPlayer()
+	{
+		_player = Sandbox.LocalPlayer.GameObject( Scene );
+		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
+		_uiState = _player?.Components.Get<UIStateManager>();
 	}
 
 	/// <summary>

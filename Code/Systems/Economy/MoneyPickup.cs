@@ -4,8 +4,8 @@ using Sandbox;
 /// Physical cash. As a world pickup: walking up + Use deposits the StackCount into
 /// <see cref="EconomySystem"/>. As a bag slot: a Backpack-managed mirror of the
 /// canonical balance — its StackCount tracks <c>EconomySystem.Money</c> via
-/// <see cref="IMoneyChangedListener"/>. Each unit is worth $1, so the slot's
-/// total worth equals StackCount.
+/// <see cref="Backpack"/> polling the synced economy value. Each unit is worth
+/// $1, so the slot's total worth equals StackCount.
 /// </summary>
 public sealed class MoneyPickup : BaseItem, IInteractable
 {

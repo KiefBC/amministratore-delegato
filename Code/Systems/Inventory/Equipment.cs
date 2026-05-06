@@ -88,7 +88,6 @@ public sealed class Equipment : Component
 		Equipped = worldItem;
 
 		Log.Info( $"Equipped {worldItem.Name}" );
-		Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, Equipped ) );
 	}
 
 	/// <summary>
@@ -101,7 +100,6 @@ public sealed class Equipment : Component
 	{
 		if ( !Equipped.IsValid() ) return;
 		Equipped = null;
-		Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, null ) );
 	}
 
 	/// <summary>
@@ -124,11 +122,9 @@ public sealed class Equipment : Component
 		var item = dropped.Components.Get<BaseItem>();
 		if ( backpack.IsValid() && item.IsValid() && backpack.StoreFromHand( item ) )
 		{
-			Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, null ) );
 			return;
 		}
 
 		dropped.Destroy();
-		Scene.RunEvent<IEquipmentChangedListener>( l => l.OnEquipmentChanged( this, null ) );
 	}
 }

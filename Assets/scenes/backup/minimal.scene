@@ -8640,20 +8640,6 @@
           "OverrideMassCenter": false,
           "RigidbodyFlags": 0,
           "StartAsleep": false
-        },
-        {
-          "__type": "SittableInteractable",
-          "__guid": "dd987b4e-fa69-42ac-b930-13f41acc3224",
-          "__enabled": true,
-          "Flags": 0,
-          "Chair": null,
-          "OnComponentDestroy": null,
-          "OnComponentDisabled": null,
-          "OnComponentEnabled": null,
-          "OnComponentFixedUpdate": null,
-          "OnComponentStart": null,
-          "OnComponentUpdate": null,
-          "SitRange": 100
         }
       ],
       "Children": [

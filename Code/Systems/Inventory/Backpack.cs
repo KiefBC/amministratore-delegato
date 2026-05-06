@@ -15,7 +15,7 @@ using System.Collections.Generic;
 /// Lives on the player Body GameObject alongside <see cref="Equipment"/> and
 /// <see cref="WeaponBehavior"/>.
 /// </summary>
-public sealed class Backpack : Component, IMoneyChangedListener
+public sealed class Backpack : Component
 {
 	[Property] public int Rows { get; set; } = 4;
 	[Property] public int Cols { get; set; } = 6;
@@ -29,6 +29,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 
 	private BaseItem[,] _slots;
 	private (int row, int col)? _selected;
+	private int _lastMoneyAmount = -1;
 
 	/// <summary>
 	/// Persistent money item that mirrors <see cref="EconomySystem.Money"/>. Created
@@ -56,10 +57,20 @@ public sealed class Backpack : Component, IMoneyChangedListener
 	{
 		// Sync the money slot if balance is already non-zero at scene start.
 		var initial = EconomySystem.Current?.Money ?? 0;
+		_lastMoneyAmount = initial;
 		if ( initial > 0 )
 		{
 			SyncMoneySlot( initial );
 		}
+	}
+
+	protected override void OnUpdate()
+	{
+		var current = EconomySystem.Current?.Money ?? 0;
+		if ( current == _lastMoneyAmount ) return;
+
+		_lastMoneyAmount = current;
+		SyncMoneySlot( current );
 	}
 
 	// -------------------------------------------------------------------
@@ -80,7 +91,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		{
 			_slots[sp.r, sp.c].StackCount += item.StackCount;
 			item.GameObject.Destroy();
-			Broadcast();
+			MarkDirty();
 			return true;
 		}
 
@@ -88,7 +99,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		if ( emptyPos is null ) return false;
 
 		PlaceInSlot( item, emptyPos.Value.r, emptyPos.Value.c, freshAcquire: true );
-		Broadcast();
+		MarkDirty();
 		return true;
 	}
 
@@ -110,7 +121,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		// Already tracked — nothing else to do, the slot already references this item.
 		if ( FindSlot( item ) is not null )
 		{
-			Broadcast();
+			MarkDirty();
 			return true;
 		}
 
@@ -118,7 +129,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		if ( emptyPos is null ) return false;
 
 		PlaceInSlot( item, emptyPos.Value.r, emptyPos.Value.c, freshAcquire: false );
-		Broadcast();
+		MarkDirty();
 		return true;
 	}
 
@@ -137,7 +148,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		// Don't re-parent — Equipment already attached the GO to the hand bone.
 		_slots[emptyPos.Value.r, emptyPos.Value.c] = item;
 		item.AcquiredTime = 0f;
-		Broadcast();
+		MarkDirty();
 		return true;
 	}
 
@@ -154,7 +165,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		_slots[row, col] = null;
 		if ( _moneyItem == item ) _moneyItem = null;
 		item.GameObject.Destroy();
-		Broadcast();
+		MarkDirty();
 	}
 
 	// -------------------------------------------------------------------
@@ -180,7 +191,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		{
 			_slots[toRow, toCol] = src;
 			_slots[fromRow, fromCol] = null;
-			Broadcast();
+			MarkDirty();
 			return true;
 		}
 
@@ -189,13 +200,13 @@ public sealed class Backpack : Component, IMoneyChangedListener
 			dst.StackCount += src.StackCount;
 			_slots[fromRow, fromCol] = null;
 			src.GameObject.Destroy();
-			Broadcast();
+			MarkDirty();
 			return true;
 		}
 
 		_slots[fromRow, fromCol] = dst;
 		_slots[toRow, toCol] = src;
-		Broadcast();
+		MarkDirty();
 		return true;
 	}
 
@@ -216,8 +227,8 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		{
 			var amount = money.StackCount;
 			SpawnWorldMoney( amount, spawnPos );
-			// EconomySystem.TrySpend triggers IMoneyChangedListener; our handler
-			// removes the money slot.
+			// The synced economy value changes after the spend; OnUpdate mirrors it
+			// into the visible money slot.
 			EconomySystem.Current?.TrySpend( amount );
 			return;
 		}
@@ -244,7 +255,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 			col2.Enabled = true;
 		}
 
-		Broadcast();
+		MarkDirty();
 	}
 
 	// -------------------------------------------------------------------
@@ -290,7 +301,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 			}
 		}
 
-		Broadcast();
+		MarkDirty();
 	}
 
 	// -------------------------------------------------------------------
@@ -301,24 +312,19 @@ public sealed class Backpack : Component, IMoneyChangedListener
 	{
 		if ( !InBounds( row, col ) ) return;
 		_selected = (row, col);
-		Broadcast();
+		MarkDirty();
 	}
 
 	public void ClearSelection()
 	{
 		if ( _selected is null ) return;
 		_selected = null;
-		Broadcast();
+		MarkDirty();
 	}
 
 	// -------------------------------------------------------------------
 	// Money slot — kept in sync with EconomySystem.Money
 	// -------------------------------------------------------------------
-
-	public void OnMoneyChanged( int newAmount, int delta )
-	{
-		SyncMoneySlot( newAmount );
-	}
 
 	private void SyncMoneySlot( int newAmount )
 	{
@@ -327,7 +333,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 			if ( _moneyItem.IsValid() )
 			{
 				_moneyItem.StackCount = newAmount;
-				Broadcast();
+				MarkDirty();
 				return;
 			}
 
@@ -343,7 +349,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 			_moneyItem = money;
 
 			PlaceInSlot( money, emptyPos.Value.r, emptyPos.Value.c, freshAcquire: true );
-			Broadcast();
+			MarkDirty();
 		}
 		else
 		{
@@ -353,7 +359,7 @@ public sealed class Backpack : Component, IMoneyChangedListener
 			if ( pos is { } p ) _slots[p.r, p.c] = null;
 			_moneyItem.GameObject.Destroy();
 			_moneyItem = null;
-			Broadcast();
+			MarkDirty();
 		}
 	}
 
@@ -442,8 +448,8 @@ public sealed class Backpack : Component, IMoneyChangedListener
 		pickup.StackCount = amount;
 	}
 
-	private void Broadcast()
+	private void MarkDirty()
 	{
-		Scene.RunEvent<IInventoryChangedListener>( l => l.OnInventoryChanged( this ) );
+		// Inventory UI reads this component through BuildHash; no scene-wide event needed.
 	}
 }
