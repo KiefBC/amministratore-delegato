@@ -7,8 +7,19 @@ using Sandbox;
 public static class GameNetworkRpc
 {
 	[Rpc.Broadcast]
-	public static void BroadcastDamaged( GameObject targetGo, DamageInfo info, bool wasKill )
+	public static void BroadcastDamaged( GameObject targetGo, GameObject attacker, GameObject weapon, float damage, Vector3 position, Vector3 origin, bool wasKill )
 	{
+		if ( !CallerIsHost() ) return;
+
+		var info = new DamageInfo
+		{
+			Attacker = attacker,
+			Weapon = weapon,
+			Damage = damage,
+			Position = position,
+			Origin = origin,
+		};
+
 		CombatSystem.Current?.NotifyDamaged( targetGo, info, wasKill );
 	}
 
@@ -62,6 +73,14 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
+	public static void RequestSetRunning( GameObject player, bool running )
+	{
+		if ( !CallerOwns( player ) ) return;
+
+		UnitFor( player )?.SetRunStaminaDrain( running );
+	}
+
+	[Rpc.Host]
 	public static void RequestToggleHolster( GameObject player )
 	{
 		if ( !CallerOwns( player ) ) return;
@@ -78,6 +97,14 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
+	public static void RequestSetWeaponAiming( GameObject player, bool aiming )
+	{
+		if ( !CallerOwns( player ) ) return;
+
+		BackpackFor( player )?.TrySetWeaponAiming( aiming );
+	}
+
+	[Rpc.Host]
 	public static void RequestFireWeapon( GameObject player, Vector3 origin, Rotation aim )
 	{
 		if ( !CallerOwns( player ) ) return;
@@ -88,6 +115,7 @@ public static class GameNetworkRpc
 	[Rpc.Broadcast]
 	public static void BroadcastShotDebug( GameObject player, Vector3 position, bool hit )
 	{
+		if ( !CallerIsHost() ) return;
 		if ( !player.IsValid() ) return;
 
 		WeaponBehavior.SpawnDebugMarker( player.Scene, position, hit ? Color.Red : Color.Yellow );
@@ -98,18 +126,31 @@ public static class GameNetworkRpc
 		return player?.Components.GetInDescendantsOrSelf<Backpack>();
 	}
 
+	private static UnitComponent UnitFor( GameObject player )
+	{
+		return player?.Components.GetInDescendantsOrSelf<UnitComponent>();
+	}
+
 	private static bool CallerOwns( GameObject gameObject )
 	{
 		if ( !gameObject.IsValid() ) return false;
-		if ( Networking.IsHost && Sandbox.LocalPlayer.Owns( gameObject ) ) return true;
+		if ( Rpc.Caller is null ) return Networking.IsHost && Sandbox.LocalPlayer.Owns( gameObject );
 
 		var owner = gameObject.Network.Owner;
 		if ( owner is not null ) return owner == Rpc.Caller;
 
 		var root = gameObject.Root;
-		if ( !root.IsValid() || root == gameObject ) return false;
+		if ( root.IsValid() && root != gameObject )
+		{
+			owner = root.Network.Owner;
+			if ( owner is not null ) return owner == Rpc.Caller;
+		}
 
-		owner = root.Network.Owner;
-		return owner is not null && owner == Rpc.Caller;
+		return Rpc.Caller.IsHost && Networking.IsHost && Sandbox.LocalPlayer.Owns( gameObject );
+	}
+
+	private static bool CallerIsHost()
+	{
+		return Rpc.Caller is null ? Networking.IsHost : Rpc.Caller.IsHost;
 	}
 }

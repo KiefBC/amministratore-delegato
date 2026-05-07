@@ -11,7 +11,7 @@ HealthBar {
 		left: $corner-margin;
 		bottom: $corner-margin;
 		flex-direction: column;
-		gap: 4px;
+		gap: 8px;
 		padding: $panel-padding;
 		background-color: $panel-bg;
 		border-radius: $panel-radius;
@@ -24,12 +24,29 @@ HealthBar {
 		}
 	}
 
+	.stat-row {
+		flex-direction: column;
+		gap: 3px;
+	}
+
+	.stat-label {
+		color: $text-secondary;
+		font-size: $text-eyebrow;
+		font-weight: bold;
+		text-transform: uppercase;
+		text-shadow: $text-shadow-default;
+	}
+
 	.bar-bg {
 		width: 100%;
 		height: $bar-height;
 		background-color: $bar-bg;
 		border-radius: $bar-radius;
 		overflow: hidden;
+	}
+
+	.stamina-bg {
+		height: 10px;
 	}
 
 	.bar-fill {
@@ -39,6 +56,7 @@ HealthBar {
 		&.fill-good { background-color: $accent-success; }
 		&.fill-warn { background-color: $accent-warning; }
 		&.fill-danger { background-color: $accent-danger; }
+		&.stamina-fill { background-color: #4aa8ff; }
 	}
 
 	.numbers {

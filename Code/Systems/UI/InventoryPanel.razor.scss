@@ -422,19 +422,6 @@ InventoryPanel {
 		pointer-events: none;
 	}
 
-	.equipped-tag {
-		position: absolute;
-		left: -40px;
-		top: 21px;
-		padding: 3px 6px;
-		background-color: rgba( 78, 105, 38, 0.95 );
-		border: 1px solid rgba( 255, 255, 255, 0.3 );
-		color: white;
-		font-size: 10px;
-		font-weight: bold;
-		pointer-events: none;
-	}
-
 	.sort-line {
 		margin-top: 14px;
 		flex-direction: row;
@@ -529,10 +516,8 @@ InventoryPanel {
 	}
 
 	.tooltip {
-		position: absolute;
-		left: -172px;
-		top: 210px;
 		width: 238px;
+		align-self: center;
 		flex-direction: column;
 		padding: 11px 13px;
 		background-color: rgba( 0, 0, 0, 0.88 );

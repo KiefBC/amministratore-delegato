@@ -23,8 +23,40 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	public float MaxHealth { get; set; } = 100f;
 
 	/// <summary>
+	/// Maximum stamina. Stamina is host-authoritative and regenerates over time.
+	/// </summary>
+	[Property]
+	[Range( 0f, 300f )]
+	[Step( 10f )]
+	public float MaxStamina { get; set; } = 100f;
+
+	/// <summary>
+	/// Stamina regenerated per second by the host.
+	/// </summary>
+	[Property]
+	[Range( 0f, 100f )]
+	[Step( 1f )]
+	public float StaminaRegenRate { get; set; } = 10f;
+
+	/// <summary>
+	/// Stamina drained per second while the owner holds the run input.
+	/// </summary>
+	[Property]
+	[Range( 0f, 20f )]
+	[Step( 0.1f )]
+	public float RunStaminaDrainRate { get; set; } = 1f;
+
+	/// <summary>
+	/// Maximum armor pool. Armor absorbs incoming positive damage before health.
+	/// </summary>
+	[Property]
+	[Range( 0f, 300f )]
+	[Step( 10f )]
+	public float MaxArmor { get; set; } = 0f;
+
+	/// <summary>
 	/// Money paid to the player who lands the killing blow on this unit. 0 = no payout.
-	/// Paid by the host from <see cref="Die"/>.
+	/// Paid by the host when this unit dies.
 	/// </summary>
 	[Property]
 	[Range( 0, 1000 )]
@@ -53,11 +85,26 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	[Sync( SyncFlags.FromHost )]
 	public float Health { get; set; }
 
+	/// <summary>
+	/// Current stamina. Host-authoritative; clients receive updates via Sync.
+	/// </summary>
+	[Sync( SyncFlags.FromHost )]
+	public float Stamina { get; set; }
+
+	/// <summary>
+	/// Current armor pool. Host-authoritative; positive damage drains this before health.
+	/// </summary>
+	[Sync( SyncFlags.FromHost )]
+	public float Armor { get; set; }
+
+	[Sync( SyncFlags.FromHost )]
+	public bool IsDead { get; set; }
+
 	private float _lastHealth;
 	private GameObject _lastAttacker;
+	private bool _wantsRunStaminaDrain;
 	private bool _bountyPaid;
-
-	public bool IsDead => Health <= 0f;
+	private bool _deathApplied;
 
 	[Button( "Hurt 10", "success" )]
 	public void HurtDebug() => OnDamage( new DamageInfo { Damage = MaxHealth } );
@@ -74,18 +121,21 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		if ( !Networking.IsHost ) return;
 		if ( IsDead ) return;
 
+		var incoming = info.Damage;
+
 		// Track the last hostile hitter so Die() can credit the kill. Heals (negative
 		// damage) shouldn't overwrite — otherwise a friendly heal could rob the killer.
-		if ( info.Damage > 0f )
+		if ( incoming > 0f )
 		{
 			_lastAttacker = info.Attacker;
+			incoming = AbsorbDamageWithArmor( incoming );
 		}
 
-		var wasAlive = !IsDead;
-		Health = float.Clamp( Health - info.Damage, 0f, MaxHealth );
+		Health = float.Clamp( Health - incoming, 0f, MaxHealth );
 
-		if ( wasAlive && IsDead )
+		if ( Health <= 0f )
 		{
+			IsDead = true;
 			TryPayBounty();
 		}
 	}
@@ -95,26 +145,94 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		if ( Networking.IsHost )
 		{
 			Health = MaxHealth;
+			Stamina = MaxStamina;
+			Armor = MaxArmor;
+			IsDead = false;
 		}
 		_lastHealth = Health;
+		_deathApplied = false;
 	}
 
 	protected override void OnUpdate()
 	{
+		if ( Networking.IsHost && !IsDead )
+		{
+			if ( _wantsRunStaminaDrain ) DrainRunStamina();
+			else RegenerateStamina();
+		}
+
+		if ( IsDead && !_deathApplied )
+		{
+			ApplyDeathState();
+		}
+
 		if ( Health == _lastHealth ) return;
 
 		var difference = Health - _lastHealth;
 		Log.Info( $"{Name} health changed by {difference:F0}, new health is {Health:F0}" );
 		_lastHealth = Health;
-
-		if ( Health <= 0f )
-		{
-			Die();
-		}
 	}
 
-	private void Die()
+	public bool TrySpendStamina( float amount )
 	{
+		if ( !Networking.IsHost ) return false;
+		if ( amount <= 0f ) return true;
+		if ( Stamina < amount ) return false;
+
+		Stamina = float.Clamp( Stamina - amount, 0f, MaxStamina );
+		return true;
+	}
+
+	public void RestoreStamina( float amount )
+	{
+		if ( !Networking.IsHost ) return;
+		if ( amount <= 0f ) return;
+
+		Stamina = float.Clamp( Stamina + amount, 0f, MaxStamina );
+	}
+
+	public void SetArmor( float amount )
+	{
+		if ( !Networking.IsHost ) return;
+
+		Armor = float.Clamp( amount, 0f, MaxArmor );
+	}
+
+	public void SetRunStaminaDrain( bool running )
+	{
+		if ( !Networking.IsHost ) return;
+
+		_wantsRunStaminaDrain = running;
+	}
+
+	private float AbsorbDamageWithArmor( float damage )
+	{
+		if ( damage <= 0f || Armor <= 0f ) return damage;
+
+		var absorbed = float.Min( Armor, damage );
+		Armor = float.Clamp( Armor - absorbed, 0f, MaxArmor );
+		return damage - absorbed;
+	}
+
+	private void RegenerateStamina()
+	{
+		if ( StaminaRegenRate <= 0f ) return;
+		if ( Stamina >= MaxStamina ) return;
+
+		Stamina = float.Clamp( Stamina + StaminaRegenRate * Time.Delta, 0f, MaxStamina );
+	}
+
+	private void DrainRunStamina()
+	{
+		if ( RunStaminaDrainRate <= 0f ) return;
+		if ( Stamina <= 0f ) return;
+
+		Stamina = float.Clamp( Stamina - RunStaminaDrainRate * Time.Delta, 0f, MaxStamina );
+	}
+
+	private void ApplyDeathState()
+	{
+		_deathApplied = true;
 		Log.Info( $"{Name} died" );
 
 		if ( Physics.IsValid() )

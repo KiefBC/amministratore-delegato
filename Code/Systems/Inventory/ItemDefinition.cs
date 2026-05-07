@@ -21,23 +21,17 @@ public partial class ItemDefinition : GameResource
 	[ResourceType( "vmdl" )]
 	public string WorldModel { get; set; } = "";
 
-	[ResourceType( "vmdl" )]
-	public string EquippedModel { get; set; } = "";
+	[HideIf( nameof( IsNotWeaponKind ), true )]
+	public WeaponStats Weapon { get; set; }
 
-	public CitizenAnimationHelper.HoldTypes HoldType { get; set; } = CitizenAnimationHelper.HoldTypes.Pistol;
-	public CitizenAnimationHelper.Hand Handedness { get; set; } = CitizenAnimationHelper.Hand.Right;
-	public float Damage { get; set; } = 25f;
-	public float Range { get; set; } = 3000f;
-	public int MagazineSize { get; set; } = 15;
-	public float ReloadDuration { get; set; } = 1.5f;
-	public float FireInterval { get; set; } = 0.2f;
-	public Vector3 WeaponOffset { get; set; } = Vector3.Zero;
-	public Angles WeaponAngleOffset { get; set; } = Angles.Zero;
-	public Vector3 WeaponScale { get; set; } = Vector3.One;
-
-	public bool IsWeapon => Kind == ItemKind.Weapon;
+	[Hide]
+	public bool IsWeapon => Kind == ItemKind.Weapon && Weapon is not null;
+	[Hide]
 	public bool IsCurrency => Kind == ItemKind.Currency;
-	public string ModelPath => string.IsNullOrWhiteSpace( EquippedModel ) ? WorldModel : EquippedModel;
+	[Hide]
+	public string ModelPath => !string.IsNullOrWhiteSpace( Weapon?.EquippedModel ) ? Weapon.EquippedModel : WorldModel;
+	[Hide]
+	public bool IsNotWeaponKind => Kind != ItemKind.Weapon;
 
 	public static string PathFor( ItemDefinition definition )
 	{
@@ -89,17 +83,22 @@ public partial class ItemDefinition : GameResource
 				Weight = 1,
 				MaxStack = 1,
 				WorldModel = "models workshop/glock g20/glockg20.vmdl",
-				EquippedModel = "models workshop/glock g20/glockg20.vmdl",
-				HoldType = CitizenAnimationHelper.HoldTypes.Pistol,
-				Handedness = CitizenAnimationHelper.Hand.Right,
-				Damage = 25f,
-				Range = 3000f,
-				MagazineSize = 15,
-				ReloadDuration = 1.5f,
-				FireInterval = 0.2f,
-				WeaponOffset = new Vector3( 3.01600003f, -0.864000022f, 2.12800002f ),
-				WeaponAngleOffset = new Angles( -11.5679998f, -8.44799995f, 0f ),
-				WeaponScale = Vector3.One * 0.680000007f,
+				Weapon = new WeaponStats
+				{
+					EquippedModel = "models workshop/glock g20/glockg20.vmdl",
+					HandBone = "hold_R",
+					HoldType = CitizenAnimationHelper.HoldTypes.Pistol,
+					Handedness = CitizenAnimationHelper.Hand.Right,
+					Damage = 25f,
+					Range = 3000f,
+					ClipSize = 15,
+					ReloadDuration = 1.5f,
+					FireRate = 5f,
+					TraceSize = 6f,
+					Offset = new Vector3( 3.01600003f, -0.864000022f, 2.12800002f ),
+					AngleOffset = new Angles( -11.5679998f, -8.44799995f, 0f ),
+					Scale = Vector3.One * 0.680000007f,
+				},
 			},
 			MoneyPath => new ItemDefinition
 			{
@@ -112,4 +111,36 @@ public partial class ItemDefinition : GameResource
 			_ => null,
 		};
 	}
+}
+
+public sealed class WeaponStats
+{
+	[ResourceType( "vmdl" )]
+	public string EquippedModel { get; set; } = "";
+
+	/// <summary>Bone to parent this weapon model to before applying Offset, AngleOffset, and Scale.</summary>
+	public string HandBone { get; set; } = "hold_R";
+	public CitizenAnimationHelper.HoldTypes HoldType { get; set; } = CitizenAnimationHelper.HoldTypes.Pistol;
+	public CitizenAnimationHelper.Hand Handedness { get; set; } = CitizenAnimationHelper.Hand.Right;
+	[Range( 1f, 500f ), Step( 1f )]
+	public float Damage { get; set; } = 25f;
+	[Range( 100f, 10000f ), Step( 100f )]
+	public float Range { get; set; } = 3000f;
+	[Range( 1, 200 ), Step( 1 )]
+	public int ClipSize { get; set; } = 15;
+	[Range( 0.1f, 10f ), Step( 0.1f )]
+	public float ReloadDuration { get; set; } = 1.5f;
+	[Range( 0.1f, 20f ), Step( 0.1f )]
+	public float FireRate { get; set; } = 5f;
+	[Range( 0f, 32f ), Step( 0.5f )]
+	public float TraceSize { get; set; } = 6f;
+	/// <summary>Local position offset from HandBone for fine tuning weapon grip.</summary>
+	public Vector3 Offset { get; set; } = Vector3.Zero;
+	/// <summary>Local rotation offset from HandBone for fine tuning weapon grip.</summary>
+	public Angles AngleOffset { get; set; } = Angles.Zero;
+	/// <summary>Local scale applied after the weapon is parented to HandBone.</summary>
+	public Vector3 Scale { get; set; } = Vector3.One;
+
+	[Hide]
+	public float FireInterval => FireRate <= 0f ? float.MaxValue : 1f / FireRate;
 }

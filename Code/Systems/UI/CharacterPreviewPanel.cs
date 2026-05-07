@@ -10,7 +10,7 @@ public sealed class CharacterPreviewPanel : ScenePanel
 {
 	private const float PreviewScale = 1.8f;
 	private const float RotationSensitivity = 0.35f;
-	private const float InitialYaw = 158f;
+	private const float InitialYaw = -68f;
 
 	private readonly Scene _previewScene;
 	private readonly CameraComponent _camera;
@@ -26,12 +26,12 @@ public sealed class CharacterPreviewPanel : ScenePanel
 	private bool _isRotating;
 	private Vector2 _lastMousePosition;
 
+	public static bool IsRotatingAnyPreview { get; private set; }
 	public GameObject SourcePlayer { get; set; }
 
 	public CharacterPreviewPanel()
 	{
 		AddClass( "character-preview-panel" );
-		AcceptsFocus = true;
 
 		_previewScene = new Scene
 		{
@@ -56,6 +56,7 @@ public sealed class CharacterPreviewPanel : ScenePanel
 		var renderer = FindBodyRenderer();
 		if ( !renderer.IsValid() || renderer.Model is null )
 		{
+			SetRotating( false );
 			_modelObject.Enabled = false;
 			ClearClothing();
 			return;
@@ -72,6 +73,7 @@ public sealed class CharacterPreviewPanel : ScenePanel
 
 	public override void Delete( bool immediate = false )
 	{
+		SetRotating( false );
 		ClearClothing();
 		_previewScene?.Destroy();
 		base.Delete( immediate );
@@ -234,16 +236,13 @@ public sealed class CharacterPreviewPanel : ScenePanel
 
 		if ( Input.Pressed( "Attack1" ) && IsInside( mousePosition ) )
 		{
-			_isRotating = true;
 			_lastMousePosition = mousePosition;
-			SetMouseCapture( true );
-			Focus();
+			SetRotating( true );
 		}
 
 		if ( _isRotating && (Input.Released( "Attack1" ) || !Input.Down( "Attack1" )) )
 		{
-			_isRotating = false;
-			SetMouseCapture( false );
+			SetRotating( false );
 		}
 
 		if ( !_isRotating ) return;
@@ -251,5 +250,14 @@ public sealed class CharacterPreviewPanel : ScenePanel
 		var delta = mousePosition - _lastMousePosition;
 		_yaw += delta.x * RotationSensitivity;
 		_lastMousePosition = mousePosition;
+	}
+
+	private void SetRotating( bool rotating )
+	{
+		if ( _isRotating == rotating ) return;
+
+		_isRotating = rotating;
+		IsRotatingAnyPreview = rotating;
+		SetMouseCapture( rotating );
 	}
 }

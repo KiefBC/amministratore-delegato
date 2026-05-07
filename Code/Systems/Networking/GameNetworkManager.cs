@@ -20,6 +20,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 
 	private readonly Dictionary<string, GameObject> _players = new();
 	private GameObject _template;
+	private int _spawnIndex;
 
 	protected override void OnStart()
 	{
@@ -61,10 +62,12 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 			return;
 		}
 
-		var spawn = PickSpawnTransform();
+		var spawn = PickSpawnTransform( out var spawnOffset );
 		var player = source.Clone( spawn );
+		player.WorldPosition += spawnOffset;
 		player.Name = $"Player - {connection.DisplayName}";
 		player.Enabled = true;
+		PreparePlayerForNetwork( player );
 
 		var spawned = player.NetworkSpawn( connection );
 		if ( !spawned )
@@ -98,15 +101,18 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 			.FirstOrDefault( go => go.IsValid() && go.Name == PlayerTemplateName );
 	}
 
-	private Transform PickSpawnTransform()
+	private Transform PickSpawnTransform( out Vector3 offset )
 	{
-		foreach ( var point in SpawnPoints )
+		offset = Vector3.Zero;
+
+		var validSpawnPoints = SpawnPoints.Where( x => x.IsValid() ).ToList();
+		if ( validSpawnPoints.Count > 0 )
 		{
-			if ( point.IsValid() )
-			{
-				return point.WorldTransform;
-			}
+			var point = validSpawnPoints[_spawnIndex++ % validSpawnPoints.Count];
+			return point.WorldTransform;
 		}
+
+		offset = FallbackSpawnOffset( _spawnIndex++ );
 
 		if ( _template.IsValid() )
 		{
@@ -114,6 +120,40 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		}
 
 		return WorldTransform;
+	}
+
+	private static Vector3 FallbackSpawnOffset( int index )
+	{
+		if ( index <= 0 ) return Vector3.Zero;
+
+		var angle = (index - 1) * ((System.MathF.PI * 2f) / 8f);
+		var radius = 96f * (1 + ((index - 1) / 8));
+		return new Vector3( System.MathF.Cos( angle ) * radius, System.MathF.Sin( angle ) * radius, 0f );
+	}
+
+	private static void PreparePlayerForNetwork( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+
+		ConfigureNetworkObject( player );
+
+		foreach ( var backpack in player.Components.GetAll<Backpack>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			ConfigureNetworkObject( backpack.GameObject );
+		}
+
+		foreach ( var unit in player.Components.GetAll<UnitComponent>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			ConfigureNetworkObject( unit.GameObject );
+		}
+	}
+
+	private static void ConfigureNetworkObject( GameObject gameObject )
+	{
+		if ( !gameObject.IsValid() ) return;
+
+		gameObject.NetworkMode = NetworkMode.Object;
+		gameObject.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
 	}
 
 	private static string ConnectionKey( Connection connection )

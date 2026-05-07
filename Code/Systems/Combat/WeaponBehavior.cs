@@ -14,6 +14,7 @@ public sealed class WeaponBehavior : Component
 	[Property] public Backpack Backpack { get; set; }
 
 	private UIStateManager _uiState;
+	private bool _lastRequestedAiming;
 
 	public enum WeaponState
 	{
@@ -25,22 +26,25 @@ public sealed class WeaponBehavior : Component
 	public ItemDefinition Definition { get; private set; }
 	public string DisplayName => Definition?.DisplayName;
 	public bool IsHolstered { get; private set; }
+	public bool IsAiming { get; private set; }
 	public WeaponState State { get; private set; } = WeaponState.Idle;
 	public int CurrentAmmo { get; private set; }
-	public int MagazineSize => Definition?.MagazineSize ?? 0;
+	public int MagazineSize => Weapon?.ClipSize ?? 0;
 
 	public float ReloadProgress
 	{
 		get
 		{
-			if ( State != WeaponState.Reloading || Definition is null || Definition.ReloadDuration <= 0f ) return 0f;
+			var weapon = Weapon;
+			if ( State != WeaponState.Reloading || weapon is null || weapon.ReloadDuration <= 0f ) return 0f;
 
 			var remaining = EquippedState.ReloadEndTime - Time.Now;
-			return float.Clamp( 1f - (remaining / Definition.ReloadDuration), 0f, 1f );
+			return float.Clamp( 1f - (remaining / weapon.ReloadDuration), 0f, 1f );
 		}
 	}
 
 	private InventoryItemState EquippedState { get; set; }
+	private WeaponStats Weapon => Definition?.Weapon;
 	private bool HasWeapon => Definition is not null && Definition.IsWeapon;
 	private bool IsLocalOwner => Sandbox.LocalPlayer.Owns( GameObject.Root );
 
@@ -59,7 +63,11 @@ public sealed class WeaponBehavior : Component
 		ApplyAnimationState();
 
 		if ( !IsLocalOwner ) return;
-		if ( _uiState?.IsAnyUIOpen == true ) return;
+		if ( _uiState?.IsAnyUIOpen == true )
+		{
+			RequestAimingIfChanged( false );
+			return;
+		}
 
 		PollInput();
 	}
@@ -72,6 +80,7 @@ public sealed class WeaponBehavior : Component
 		Definition = null;
 		EquippedState = default;
 		IsHolstered = false;
+		IsAiming = false;
 		State = WeaponState.Idle;
 		CurrentAmmo = 0;
 
@@ -82,6 +91,7 @@ public sealed class WeaponBehavior : Component
 		Definition = definition;
 		EquippedState = item;
 		IsHolstered = item.IsHolstered;
+		IsAiming = Backpack.IsWeaponAiming;
 		State = item.State;
 		CurrentAmmo = item.Ammo;
 	}
@@ -89,18 +99,19 @@ public sealed class WeaponBehavior : Component
 	private void ApplyAnimationState()
 	{
 		if ( !AnimHelper.IsValid() ) return;
+		var weapon = Weapon;
 
-		if ( !HasWeapon || IsHolstered )
+		if ( weapon is null || IsHolstered )
 		{
 			AnimHelper.HoldType = CitizenAnimationHelper.HoldTypes.None;
 			return;
 		}
 
-		var aiming = IsLocalOwner && Input.Down( "Attack2" ) && State != WeaponState.Reloading;
+		var aiming = (IsLocalOwner ? Input.Down( "Attack2" ) : IsAiming) && State != WeaponState.Reloading;
 		if ( aiming )
 		{
-			AnimHelper.HoldType = Definition.HoldType;
-			AnimHelper.Handedness = Definition.Handedness;
+			AnimHelper.HoldType = weapon.HoldType;
+			AnimHelper.Handedness = weapon.Handedness;
 			AnimHelper.IsWeaponLowered = false;
 		}
 		else
@@ -116,7 +127,13 @@ public sealed class WeaponBehavior : Component
 
 	private void PollInput()
 	{
-		if ( !HasWeapon ) return;
+		if ( !HasWeapon )
+		{
+			RequestAimingIfChanged( false );
+			return;
+		}
+
+		RequestAimingIfChanged( Input.Down( "Attack2" ) && !IsHolstered && State != WeaponState.Reloading );
 
 		if ( Input.Pressed( "Slot1" ) )
 		{
@@ -136,6 +153,14 @@ public sealed class WeaponBehavior : Component
 				GameNetworkRpc.RequestFireWeapon( GameObject.Root, camera.WorldPosition, camera.WorldRotation );
 			}
 		}
+	}
+
+	private void RequestAimingIfChanged( bool aiming )
+	{
+		if ( _lastRequestedAiming == aiming ) return;
+
+		_lastRequestedAiming = aiming;
+		GameNetworkRpc.RequestSetWeaponAiming( GameObject.Root, aiming );
 	}
 
 	public static void SpawnDebugMarker( Scene scene, Vector3 position, Color color )

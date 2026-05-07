@@ -8,6 +8,7 @@ using Sandbox;
 public sealed class Equipment : Component
 {
 	[Property] public SkinnedModelRenderer BodyRenderer { get; set; }
+	/// <summary>Fallback bone used only when a weapon item does not define Weapon.HandBone.</summary>
 	[Property] public string HandBone { get; set; } = "hold_R";
 
 	private Backpack _backpack;
@@ -65,7 +66,7 @@ public sealed class Equipment : Component
 	{
 		if ( !BodyRenderer.IsValid() ) return;
 
-		var bone = BodyRenderer.GetBoneObject( HandBone );
+		var bone = BodyRenderer.GetBoneObject( GetHandBone( definition ) );
 		if ( bone is null ) return;
 
 		var model = ItemDefinition.LoadModel( definition.ModelPath );
@@ -88,10 +89,18 @@ public sealed class Equipment : Component
 	private void ApplyDefinitionTransform( ItemDefinition definition )
 	{
 		if ( !_viewObject.IsValid() || definition is null ) return;
+		var weapon = definition.Weapon;
+		if ( weapon is null ) return;
 
-		_viewObject.LocalPosition = definition.WeaponOffset;
-		_viewObject.LocalRotation = Rotation.From( definition.WeaponAngleOffset );
-		_viewObject.LocalScale = definition.WeaponScale;
+		_viewObject.LocalPosition = weapon.Offset;
+		_viewObject.LocalRotation = Rotation.From( weapon.AngleOffset );
+		_viewObject.LocalScale = weapon.Scale;
+	}
+
+	private string GetHandBone( ItemDefinition definition )
+	{
+		var handBone = definition?.Weapon?.HandBone;
+		return !string.IsNullOrWhiteSpace( handBone ) ? handBone : HandBone;
 	}
 
 	private void ClearView()

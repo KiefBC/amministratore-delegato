@@ -8,6 +8,21 @@ using System.Linq;
 /// </summary>
 public sealed class Backpack : Component
 {
+	private const float MaxFireOriginDistance = 128f;
+	public const int EquipmentSlotCount = 8;
+
+	public enum EquipmentSlot
+	{
+		Head,
+		Chest,
+		Neck,
+		Legs,
+		Hands,
+		Feet,
+		Weapon,
+		Offhand,
+	}
+
 	[Property] public int Rows { get; set; } = 4;
 	[Property] public int Cols { get; set; } = 6;
 
@@ -15,11 +30,13 @@ public sealed class Backpack : Component
 	[Sync( SyncFlags.FromHost )] public int EquippedInstanceId { get; set; }
 	[Sync( SyncFlags.FromHost )] public int Wallet { get; set; }
 	[Sync( SyncFlags.FromHost )] public int InventoryVersion { get; set; }
+	[Sync( SyncFlags.FromHost )] public bool IsWeaponAiming { get; set; }
 
 	private (int row, int col)? _selected;
 	private int _nextInstanceId = 1;
 
 	public int SlotCount => Rows * Cols;
+	public int TotalSlotCount => SlotCount + EquipmentSlotCount;
 	public (int row, int col)? Selected => _selected;
 
 	public enum SortMode
@@ -36,6 +53,7 @@ public sealed class Backpack : Component
 		if ( Networking.IsHost )
 		{
 			EnsureNextInstanceId();
+			ApplyEquipmentSlotState( EquippedInstanceId );
 		}
 	}
 
@@ -60,6 +78,21 @@ public sealed class Backpack : Component
 		}
 
 		return default;
+	}
+
+	public int EquipmentSlotIndex( EquipmentSlot slot )
+	{
+		return SlotCount + (int)slot;
+	}
+
+	public bool IsGridSlot( int slot )
+	{
+		return slot >= 0 && slot < SlotCount;
+	}
+
+	public bool IsEquipmentSlot( int slot )
+	{
+		return slot >= SlotCount && slot < TotalSlotCount;
 	}
 
 	public ItemDefinition GetDefinition( InventoryItemState item )
@@ -120,7 +153,11 @@ public sealed class Backpack : Component
 
 		while ( stackCount > 0 )
 		{
-			var slot = FirstEmptySlot();
+			var shouldEquipNewWeapon = autoEquipFirstWeapon
+				&& EquippedInstanceId <= 0
+				&& definition.IsWeapon
+				&& !TryGetItemAt( EquipmentSlotIndex( EquipmentSlot.Weapon ), out _ );
+			var slot = shouldEquipNewWeapon ? EquipmentSlotIndex( EquipmentSlot.Weapon ) : FirstEmptySlot();
 			if ( slot < 0 ) return false;
 
 			var add = definition.MaxStack > 1 ? int.Min( stackCount, definition.MaxStack ) : 1;
@@ -131,7 +168,7 @@ public sealed class Backpack : Component
 				DefinitionPath = definitionPath,
 				StackCount = add,
 				SlotIndex = slot,
-				Ammo = definition.IsWeapon ? (ammo >= 0 ? ammo : definition.MagazineSize) : 0,
+				Ammo = definition.IsWeapon ? (ammo >= 0 ? ammo : definition.Weapon.ClipSize) : 0,
 				State = WeaponBehavior.WeaponState.Idle,
 				IsHolstered = false,
 				ReloadEndTime = 0f,
@@ -141,7 +178,7 @@ public sealed class Backpack : Component
 			Items[instanceId] = state;
 			stackCount -= add;
 
-			if ( autoEquipFirstWeapon && EquippedInstanceId <= 0 && definition.IsWeapon )
+			if ( shouldEquipNewWeapon )
 			{
 				EquippedInstanceId = instanceId;
 			}
@@ -185,11 +222,15 @@ public sealed class Backpack : Component
 
 		if ( definition.IsWeapon )
 		{
-			EquippedInstanceId = item.InstanceId;
-			item.IsHolstered = false;
-			if ( item.Ammo <= 0 ) item.State = WeaponBehavior.WeaponState.Empty;
-			else item.State = WeaponBehavior.WeaponState.Idle;
+			var previousEquipped = EquippedInstanceId;
+			var weaponSlot = EquipmentSlotIndex( EquipmentSlot.Weapon );
+			if ( item.SlotIndex != weaponSlot && !TryMoveSlotState( item.SlotIndex, weaponSlot ) ) return false;
+			if ( !Items.TryGetValue( item.InstanceId, out item ) ) return false;
+
+			IsWeaponAiming = false;
+			PrepareEquippedWeapon( ref item );
 			Items[item.InstanceId] = item;
+			ApplyEquipmentSlotState( previousEquipped );
 			Touch();
 			return true;
 		}
@@ -200,16 +241,29 @@ public sealed class Backpack : Component
 	public bool TryMoveSlot( int fromSlot, int toSlot )
 	{
 		if ( !Networking.IsHost ) return false;
+
+		var previousEquipped = EquippedInstanceId;
+		if ( !TryMoveSlotState( fromSlot, toSlot ) ) return false;
+
+		ApplyEquipmentSlotState( previousEquipped );
+		Touch();
+		return true;
+	}
+
+	private bool TryMoveSlotState( int fromSlot, int toSlot )
+	{
 		if ( !InBounds( fromSlot ) || !InBounds( toSlot ) ) return false;
 		if ( fromSlot == toSlot ) return false;
 		if ( !TryGetItemAt( fromSlot, out var src ) ) return false;
+		if ( !CanPlaceItemInSlot( src, toSlot ) ) return false;
 
 		var dstExists = TryGetItemAt( toSlot, out var dst );
+		if ( dstExists && !CanPlaceItemInSlot( dst, fromSlot ) ) return false;
+
 		if ( !dstExists )
 		{
 			src.SlotIndex = toSlot;
 			Items[src.InstanceId] = src;
-			Touch();
 			return true;
 		}
 
@@ -226,7 +280,6 @@ public sealed class Backpack : Component
 				if ( src.StackCount <= 0 ) RemoveItem( src.InstanceId );
 				else Items[src.InstanceId] = src;
 
-				Touch();
 				return true;
 			}
 		}
@@ -235,7 +288,6 @@ public sealed class Backpack : Component
 		dst.SlotIndex = fromSlot;
 		Items[src.InstanceId] = src;
 		Items[dst.InstanceId] = dst;
-		Touch();
 		return true;
 	}
 
@@ -247,12 +299,10 @@ public sealed class Backpack : Component
 		var definition = GetDefinition( item );
 		if ( definition is null ) return false;
 
-		if ( item.InstanceId == EquippedInstanceId )
-		{
-			EquippedInstanceId = 0;
-		}
+		var previousEquipped = EquippedInstanceId;
 
 		RemoveItem( item.InstanceId );
+		ApplyEquipmentSlotState( previousEquipped );
 		SpawnWorldPickup( item, definition, GameObject.Root.WorldPosition );
 		Touch();
 		return true;
@@ -262,7 +312,7 @@ public sealed class Backpack : Component
 	{
 		if ( !Networking.IsHost ) return false;
 
-		var sorted = Items.Values.Where( x => x.IsValid ).ToList();
+		var sorted = Items.Values.Where( x => x.IsValid && IsGridSlot( x.SlotIndex ) ).ToList();
 		sorted.Sort( ( a, b ) =>
 		{
 			var ad = GetDefinition( a );
@@ -297,6 +347,7 @@ public sealed class Backpack : Component
 		if ( !definition.IsWeapon ) return false;
 
 		item.IsHolstered = !item.IsHolstered;
+		if ( item.IsHolstered ) IsWeaponAiming = false;
 		if ( item.IsHolstered && item.State == WeaponBehavior.WeaponState.Reloading )
 		{
 			item.State = item.Ammo <= 0 ? WeaponBehavior.WeaponState.Empty : WeaponBehavior.WeaponState.Idle;
@@ -313,13 +364,34 @@ public sealed class Backpack : Component
 		if ( !Networking.IsHost ) return false;
 		if ( !TryGetEquipped( out var item, out var definition ) ) return false;
 		if ( !definition.IsWeapon ) return false;
+		var weapon = definition.Weapon;
 		if ( item.IsHolstered ) return false;
 		if ( item.State == WeaponBehavior.WeaponState.Reloading ) return false;
-		if ( item.Ammo >= definition.MagazineSize ) return false;
+		if ( item.Ammo >= weapon.ClipSize ) return false;
 
+		IsWeaponAiming = false;
 		item.State = WeaponBehavior.WeaponState.Reloading;
-		item.ReloadEndTime = Time.Now + definition.ReloadDuration;
+		item.ReloadEndTime = Time.Now + weapon.ReloadDuration;
 		Items[item.InstanceId] = item;
+		Touch();
+		return true;
+	}
+
+	public bool TrySetWeaponAiming( bool aiming )
+	{
+		if ( !Networking.IsHost ) return false;
+
+		if ( aiming )
+		{
+			if ( !TryGetEquipped( out var item, out var definition ) ) return false;
+			if ( !definition.IsWeapon ) return false;
+			if ( item.IsHolstered ) return false;
+			if ( item.State == WeaponBehavior.WeaponState.Reloading ) return false;
+		}
+
+		if ( IsWeaponAiming == aiming ) return true;
+
+		IsWeaponAiming = aiming;
 		Touch();
 		return true;
 	}
@@ -329,6 +401,7 @@ public sealed class Backpack : Component
 		if ( !Networking.IsHost ) return false;
 		if ( !TryGetEquipped( out var item, out var definition ) ) return false;
 		if ( !definition.IsWeapon ) return false;
+		var weapon = definition.Weapon;
 
 		CompleteReloadIfDue( ref item, definition );
 		if ( item.IsHolstered ) return false;
@@ -342,7 +415,8 @@ public sealed class Backpack : Component
 		}
 
 		var muzzleOrigin = ValidateFireOrigin( origin );
-		if ( Time.Now - item.LastFireTime < definition.FireInterval ) return false;
+		var fireAim = ValidateFireAim( aim );
+		if ( Time.Now - item.LastFireTime < weapon.FireInterval ) return false;
 
 		item.Ammo--;
 		item.LastFireTime = Time.Now;
@@ -350,9 +424,11 @@ public sealed class Backpack : Component
 		Items[item.InstanceId] = item;
 		Touch();
 
-		var end = muzzleOrigin + aim.Forward * definition.Range;
+		var end = muzzleOrigin + fireAim.Forward * weapon.Range;
 		var trace = Scene.Trace.Ray( muzzleOrigin, end )
+			.Size( Vector3.One * weapon.TraceSize )
 			.WithCollisionRules( "bullet" )
+			.UseHitboxes( true )
 			.IgnoreGameObjectHierarchy( GameObject.Root )
 			.Run();
 
@@ -361,16 +437,16 @@ public sealed class Backpack : Component
 
 		if ( !trace.Hit ) return true;
 
-		var target = trace.GameObject?.Components.GetInAncestorsOrSelf<Component.IDamageable>();
+		var target = ResolveDamageableTarget( trace.GameObject );
 		if ( target is null ) return true;
 
 		var info = new DamageInfo
 		{
-			Damage = definition.Damage,
+			Damage = weapon.Damage,
 			Position = trace.HitPosition,
 			Origin = muzzleOrigin,
-			Attacker = GameObject,
-			Weapon = GameObject,
+			Attacker = GameObject.Root,
+			Weapon = GameObject.Root,
 		};
 
 		CombatSystem.Current?.DealDamage( target, in info );
@@ -394,6 +470,54 @@ public sealed class Backpack : Component
 		return item.IsValid;
 	}
 
+	private bool CanPlaceItemInSlot( InventoryItemState item, int slot )
+	{
+		if ( !item.IsValid || !InBounds( slot ) ) return false;
+		if ( !IsEquipmentSlot( slot ) ) return true;
+
+		var definition = GetDefinition( item );
+		if ( definition is null ) return false;
+
+		return EquipmentSlotForIndex( slot ) switch
+		{
+			EquipmentSlot.Weapon => definition.IsWeapon,
+			_ => false,
+		};
+	}
+
+	private EquipmentSlot? EquipmentSlotForIndex( int slot )
+	{
+		if ( !IsEquipmentSlot( slot ) ) return null;
+		return (EquipmentSlot)(slot - SlotCount);
+	}
+
+	private void ApplyEquipmentSlotState( int previousEquippedInstanceId )
+	{
+		var weaponSlot = EquipmentSlotIndex( EquipmentSlot.Weapon );
+		if ( !TryGetItemAt( weaponSlot, out var item ) || GetDefinition( item )?.IsWeapon != true )
+		{
+			EquippedInstanceId = 0;
+			IsWeaponAiming = false;
+			return;
+		}
+
+		EquippedInstanceId = item.InstanceId;
+		if ( previousEquippedInstanceId == item.InstanceId ) return;
+
+		IsWeaponAiming = false;
+		PrepareEquippedWeapon( ref item );
+		Items[item.InstanceId] = item;
+	}
+
+	private void PrepareEquippedWeapon( ref InventoryItemState item )
+	{
+		item.IsHolstered = false;
+		item.ReloadEndTime = 0f;
+		item.State = item.Ammo <= 0
+			? WeaponBehavior.WeaponState.Empty
+			: WeaponBehavior.WeaponState.Idle;
+	}
+
 	private void CompleteReloadIfDue()
 	{
 		if ( !TryGetEquipped( out var item, out var definition ) ) return;
@@ -406,10 +530,12 @@ public sealed class Backpack : Component
 
 	private bool CompleteReloadIfDue( ref InventoryItemState item, ItemDefinition definition )
 	{
+		var weapon = definition?.Weapon;
+		if ( weapon is null ) return false;
 		if ( item.State != WeaponBehavior.WeaponState.Reloading ) return false;
 		if ( Time.Now < item.ReloadEndTime ) return false;
 
-		item.Ammo = definition.MagazineSize;
+		item.Ammo = weapon.ClipSize;
 		item.State = WeaponBehavior.WeaponState.Idle;
 		item.ReloadEndTime = 0f;
 		return true;
@@ -417,8 +543,31 @@ public sealed class Backpack : Component
 
 	private Vector3 ValidateFireOrigin( Vector3 requestedOrigin )
 	{
-		var fallback = GameObject.Root.WorldPosition + Vector3.Up * 64f;
-		return requestedOrigin.DistanceSquared( fallback ) <= 128f * 128f ? requestedOrigin : fallback;
+		var controller = GameObject.Root.Components.GetInDescendantsOrSelf<PlayerController>();
+		var fallback = controller.IsValid()
+			? controller.EyePosition
+			: GameObject.Root.WorldPosition + Vector3.Up * 64f;
+
+		return requestedOrigin.DistanceSquared( fallback ) <= MaxFireOriginDistance * MaxFireOriginDistance ? requestedOrigin : fallback;
+	}
+
+	private Rotation ValidateFireAim( Rotation requestedAim )
+	{
+		var controller = GameObject.Root.Components.GetInDescendantsOrSelf<PlayerController>();
+		return controller.IsValid() ? Rotation.From( controller.EyeAngles ) : requestedAim;
+	}
+
+	private Component.IDamageable ResolveDamageableTarget( GameObject hitObject )
+	{
+		if ( !hitObject.IsValid() ) return null;
+
+		var target = hitObject.Components.GetInAncestorsOrSelf<Component.IDamageable>();
+		if ( target is not null ) return target;
+
+		var controller = hitObject.Components.GetInAncestorsOrSelf<PlayerController>();
+		return controller.IsValid()
+			? controller.GameObject.Components.GetInDescendantsOrSelf<Component.IDamageable>()
+			: null;
 	}
 
 	private void SpawnWorldPickup( InventoryItemState item, ItemDefinition definition, Vector3 position )
@@ -426,6 +575,7 @@ public sealed class Backpack : Component
 		var go = new GameObject( definition.DisplayName );
 		go.WorldPosition = position + Vector3.Up * 12f;
 		go.NetworkMode = NetworkMode.Object;
+		go.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
 
 		var model = ItemDefinition.LoadModel( definition.WorldModel );
 		if ( model is not null )
@@ -481,7 +631,7 @@ public sealed class Backpack : Component
 
 	private bool InBounds( int slot )
 	{
-		return slot >= 0 && slot < SlotCount;
+		return slot >= 0 && slot < TotalSlotCount;
 	}
 
 	private void Touch()

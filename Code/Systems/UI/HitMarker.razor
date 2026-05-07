@@ -39,7 +39,7 @@
 
 		PlayerRoot ??= Sandbox.LocalPlayer.GameObject( Scene );
 		if ( PlayerRoot is null ) return;
-		if ( info.Attacker != PlayerRoot ) return;
+		if ( !SameRoot( info.Attacker, PlayerRoot ) ) return;
 
 		_wasKill = wasKill;
 		_hitTimer = wasKill ? KillDuration : HitDuration;
@@ -56,6 +56,15 @@
 		{
 			_hitTimer -= Time.Delta;
 		}
+	}
+
+	private static bool SameRoot( GameObject a, GameObject b )
+	{
+		if ( !a.IsValid() || !b.IsValid() ) return false;
+
+		var aRoot = a.Root;
+		var bRoot = b.Root;
+		return (aRoot.IsValid() ? aRoot : a) == (bRoot.IsValid() ? bRoot : b);
 	}
 
 	protected override int BuildHash() => System.HashCode.Combine( _hitTimer > 0f, _wasKill );

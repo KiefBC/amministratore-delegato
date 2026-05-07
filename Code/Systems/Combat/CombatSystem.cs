@@ -30,7 +30,7 @@ public sealed class CombatSystem : GameObjectSystem<CombatSystem>
 
 		var afterUnit = target as UnitComponent;
 		var wasKill = wasAlive && afterUnit is not null && afterUnit.IsDead;
-		GameNetworkRpc.BroadcastDamaged( targetGo, info, wasKill );
+		GameNetworkRpc.BroadcastDamaged( targetGo, info.Attacker, info.Weapon, info.Damage, info.Position, info.Origin, wasKill );
 	}
 
 	public void NotifyDamaged( GameObject targetGo, DamageInfo info, bool wasKill )
