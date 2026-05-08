@@ -1,5 +1,4 @@
 using Sandbox;
-using System.Collections.Generic;
 
 /// <summary>
 /// RPC entry points for gameplay systems. Keep network transport here so scene
@@ -361,7 +360,7 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var owned = finance.StockShares.TryGetValue( offer.Symbol, out var held ) ? held : 0;
+		var owned = finance.StockShares.GetValueOrDefault(offer.Symbol, 0);
 		Log.Info( $"[StockTerminal] Sell RPC received; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}; owned={owned:N0}." );
 		if ( owned < shares )
 		{
@@ -460,7 +459,7 @@ public static class GameNetworkRpc
 	public static void BroadcastOpenComputerTerminal( GameObject player )
 	{
 		if ( !CallerIsHost() ) return;
-		if ( !Sandbox.LocalPlayer.Owns( player ) ) return;
+		if ( !LocalPlayer.Owns( player ) ) return;
 
 		ComputerTerminalSystem.OpenForScene( player.Scene );
 	}
@@ -469,7 +468,7 @@ public static class GameNetworkRpc
 	public static void BroadcastOpenPhoneBook( GameObject player )
 	{
 		if ( !CallerIsHost() ) return;
-		if ( !Sandbox.LocalPlayer.Owns( player ) ) return;
+		if ( !LocalPlayer.Owns( player ) ) return;
 
 		PhoneBookSystem.OpenForScene( player.Scene );
 	}
@@ -478,7 +477,7 @@ public static class GameNetworkRpc
 	public static void BroadcastComputerTerminalMessage( GameObject player, int kind, string title, string message, float shownDuration )
 	{
 		if ( !CallerIsHost() ) return;
-		if ( !Sandbox.LocalPlayer.Owns( player ) ) return;
+		if ( !LocalPlayer.Owns( player ) ) return;
 
 		ComputerTerminalSystem.ShowMessageForScene( player.Scene, kind, title, message, shownDuration );
 	}
@@ -487,7 +486,7 @@ public static class GameNetworkRpc
 	public static void BroadcastPlayerNotification( GameObject player, int kind, string title, string message, float shownDuration )
 	{
 		if ( !CallerIsHost() ) return;
-		if ( !Sandbox.LocalPlayer.Owns( player ) ) return;
+		if ( !LocalPlayer.Owns( player ) ) return;
 
 		NotificationSystem.Current?.NotifyFromNetwork( kind, title, message, shownDuration );
 	}
@@ -592,7 +591,7 @@ public static class GameNetworkRpc
 	private static bool CallerOwns( GameObject gameObject )
 	{
 		if ( !gameObject.IsValid() ) return false;
-		if ( Rpc.Caller is null ) return Networking.IsHost && Sandbox.LocalPlayer.Owns( gameObject );
+		if ( Rpc.Caller is null ) return Networking.IsHost && LocalPlayer.Owns( gameObject );
 
 		var owner = gameObject.Network.Owner;
 		if ( owner is not null ) return owner == Rpc.Caller;
@@ -604,7 +603,7 @@ public static class GameNetworkRpc
 			if ( owner is not null ) return owner == Rpc.Caller;
 		}
 
-		return Rpc.Caller.IsHost && Networking.IsHost && Sandbox.LocalPlayer.Owns( gameObject );
+		return Rpc.Caller.IsHost && Networking.IsHost && LocalPlayer.Owns( gameObject );
 	}
 
 	private static bool CallerIsHost()
