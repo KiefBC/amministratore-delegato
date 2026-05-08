@@ -12,6 +12,8 @@ public sealed class WeaponPickup : Component, IInteractable
 	[Property] public ItemDefinition Definition { get; set; }
 	[Property] public string DefinitionPath { get; set; } = ItemDefinition.GlockPath;
 	[Property] public int StartingAmmo { get; set; } = -1;
+	private bool _networkReady;
+	private bool _networkWarningLogged;
 
 	[Property, Range( 10f, 500f ), Step( 10f )]
 	public float PickupRange { get; set; } = 100f;
@@ -23,6 +25,13 @@ public sealed class WeaponPickup : Component, IInteractable
 	protected override void OnStart()
 	{
 		EnsureNetworkObject();
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( _networkReady ) return;
+
+		_networkReady = WorldPickupNetworking.TrySpawnOrRefresh( GameObject, ResolvedDefinition?.DisplayName ?? "weapon pickup", ref _networkWarningLogged );
 	}
 
 	bool IInteractable.CanInteract( GameObject player )
@@ -63,7 +72,6 @@ public sealed class WeaponPickup : Component, IInteractable
 
 	private void EnsureNetworkObject()
 	{
-		GameObject.NetworkMode = NetworkMode.Object;
-		GameObject.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
+		WorldPickupNetworking.Configure( GameObject );
 	}
 }

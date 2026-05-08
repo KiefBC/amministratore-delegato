@@ -159,6 +159,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	private float _staminaRegenModifierEndTime;
 	private GameObject _networkedCorpse;
 	private bool _networkedCorpseWarningLogged;
+	private bool _hasPersistentVitals;
 
 	[Hide] public float EffectiveMaxHealth => ResolvePlayerStats()?.EffectiveMaxHealth ?? MaxHealth;
 	[Hide] public float EffectiveMaxStamina => ResolvePlayerStats()?.EffectiveMaxStamina ?? MaxStamina;
@@ -274,6 +275,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		}
 
 		Health = float.Clamp( Health - incoming, 0f, EffectiveMaxHealth );
+		MarkVitalsDirty( "vitals changed" );
 
 		if ( Health <= 0f )
 		{
@@ -288,14 +290,21 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 		if ( Sandbox.Networking.IsHost )
 		{
-			Health = EffectiveMaxHealth;
-			Stamina = EffectiveMaxStamina;
-			Armor = MaxArmor;
-			Hydration = EffectiveMaxHydration;
-			Nutrition = EffectiveMaxNutrition;
-			UpdateNeedsState();
-			IsDead = false;
-			DeathTime = 0f;
+			if ( _hasPersistentVitals )
+			{
+				ClampPersistentVitals();
+			}
+			else
+			{
+				Health = EffectiveMaxHealth;
+				Stamina = EffectiveMaxStamina;
+				Armor = MaxArmor;
+				Hydration = EffectiveMaxHydration;
+				Nutrition = EffectiveMaxNutrition;
+				UpdateNeedsState();
+				IsDead = false;
+				DeathTime = 0f;
+			}
 		}
 
 		_lastAppliedMaxHealth = EffectiveMaxHealth;
@@ -337,6 +346,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 		Stamina = float.Clamp( Stamina - amount, 0f, EffectiveMaxStamina );
 		if ( Stamina <= 0f ) _sprintLocked = true;
+		MarkVitalsDirty( "stamina spent" );
 		return true;
 	}
 
@@ -346,6 +356,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		if ( amount <= 0f ) return;
 
 		Stamina = float.Clamp( Stamina + amount, 0f, EffectiveMaxStamina );
+		MarkVitalsDirty( "stamina restored" );
 	}
 
 	public void SetArmor( float amount )
@@ -353,6 +364,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		if ( !Sandbox.Networking.IsHost ) return;
 
 		Armor = float.Clamp( amount, 0f, MaxArmor );
+		MarkVitalsDirty( "armor changed" );
 	}
 
 	public void RestoreHydration( float amount )
@@ -362,6 +374,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 		Hydration = float.Clamp( Hydration + amount, 0f, EffectiveMaxHydration );
 		UpdateNeedsState();
+		MarkVitalsDirty( "hydration restored" );
 	}
 
 	public void RestoreNutrition( float amount )
@@ -371,6 +384,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 		Nutrition = float.Clamp( Nutrition + amount, 0f, EffectiveMaxNutrition );
 		UpdateNeedsState();
+		MarkVitalsDirty( "nutrition restored" );
 	}
 
 	public bool TryApplyConsumable( ItemDefinition definition )
@@ -391,7 +405,66 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		UpdateNeedsState();
 
 		ApplyTimedConsumableModifiers( consumable );
+		MarkVitalsDirty( "consumable used" );
 		return true;
+	}
+
+	public PlayerVitalsSaveData CreateSaveData()
+	{
+		var wasDead = IsDead;
+		return new PlayerVitalsSaveData
+		{
+			Health = wasDead ? EffectiveMaxHealth : Health,
+			Stamina = wasDead ? EffectiveMaxStamina : Stamina,
+			Armor = Armor,
+			Hydration = Hydration,
+			Nutrition = Nutrition,
+			WasDead = wasDead,
+		};
+	}
+
+	public void RestoreSaveData( PlayerVitalsSaveData data )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( data is null ) return;
+
+		_hasPersistentVitals = true;
+		IsDead = false;
+		DeathTime = 0f;
+		Health = data.WasDead ? EffectiveMaxHealth : data.Health;
+		Stamina = data.WasDead ? EffectiveMaxStamina : data.Stamina;
+		Armor = data.Armor;
+		Hydration = data.Hydration;
+		Nutrition = data.Nutrition;
+
+		ClampPersistentVitals();
+		ResetDeathPresentationState();
+		_lastHealth = Health;
+		_pendingHealthRegen = 0f;
+	}
+
+	private void ClampPersistentVitals()
+	{
+		var maxHealth = EffectiveMaxHealth;
+		var maxStamina = EffectiveMaxStamina;
+
+		Health = maxHealth > 0f ? float.Clamp( Health, 1f, maxHealth ) : 0f;
+		Stamina = maxStamina > 0f ? float.Clamp( Stamina, 0f, maxStamina ) : 0f;
+		Armor = float.Clamp( Armor, 0f, MaxArmor );
+		Hydration = float.Clamp( Hydration, 0f, EffectiveMaxHydration );
+		Nutrition = float.Clamp( Nutrition, 0f, EffectiveMaxNutrition );
+		IsDead = false;
+		DeathTime = 0f;
+		UpdateNeedsState();
+
+		_lastAppliedMaxHealth = maxHealth;
+		_lastAppliedMaxStamina = maxStamina;
+		_lastAppliedStaminaLevel = ResolvePlayerStats()?.StaminaLevel ?? 1;
+	}
+
+	private void MarkVitalsDirty( string reason )
+	{
+		PlayerPersistenceSystem.Current?.MarkDirty( GameObject.Root, reason );
 	}
 
 	private void RegenerateHealth()

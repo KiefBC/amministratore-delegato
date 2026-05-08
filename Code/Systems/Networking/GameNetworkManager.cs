@@ -75,7 +75,8 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		PreparePlayerForNetwork( player );
 		AssignPlayerRole( player, connection );
 		CopyPlayerTitleSettings( source, player );
-		InitializeStartingWallet( player );
+		var restoredSave = PlayerPersistenceSystem.Current?.TryLoadPlayer( connection, player ) == true;
+		if ( !restoredSave ) InitializeStartingWallet( player );
 
 		var spawned = player.NetworkSpawn( connection );
 		if ( !spawned )
@@ -88,12 +89,15 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		}
 
 		_players[key] = player;
+		PlayerPersistenceSystem.Current?.TrackPlayer( connection, player );
+		if ( !restoredSave ) PlayerPersistenceSystem.Current?.RequestSaveSoon( player, "new player initialized" );
 		var assignedRole = AssignedRoleName( player );
-		Log.Info( $"[Network] Spawned player for {connection.DisplayName} as {assignedRole}." );
+		Log.Info( $"[Network] Spawned player for {connection.DisplayName} as {assignedRole}; restoredSave={restoredSave}." );
 		GameLogSystem.Current?.Info( "network", "Player spawned", player, connection, GameLogSystem.Fields(
 			("displayName", connection.DisplayName),
 			("role", assignedRole),
-			("startingWallet", StartingWallet) ) );
+			("startingWallet", restoredSave ? 0 : StartingWallet),
+			("restoredSave", restoredSave) ) );
 	}
 
 	public void OnDisconnected( Connection connection )
@@ -103,6 +107,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 
 		var key = ConnectionKey( connection );
 		if ( !_players.Remove( key, out var player ) ) return;
+		PlayerPersistenceSystem.Current?.SaveAndUntrackPlayer( connection );
 
 		if ( player.IsValid() )
 		{

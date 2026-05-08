@@ -68,6 +68,57 @@ public sealed class Backpack : Component
 		}
 	}
 
+	public PlayerInventorySaveData CreateSaveData()
+	{
+		if ( Sandbox.Networking.IsHost ) CompleteReloadIfDue();
+
+		var data = new PlayerInventorySaveData
+		{
+			EquippedInstanceId = EquippedInstanceId,
+		};
+
+		foreach ( var item in Items.Values.Where( x => x.IsValid ).OrderBy( x => x.InstanceId ) )
+		{
+			data.Items.Add( ToPersistentItemState( item ) );
+		}
+
+		return data;
+	}
+
+	public void RestoreSaveData( PlayerInventorySaveData data )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( data is null ) return;
+
+		ClearItems();
+		EquippedInstanceId = 0;
+		IsWeaponAiming = false;
+		_nextInstanceId = 1;
+
+		var usedSlots = new HashSet<int>();
+		var usedIds = new HashSet<int>();
+		foreach ( var savedItem in data.Items?.OrderBy( x => x.InstanceId ) ?? Enumerable.Empty<InventoryItemState>() )
+		{
+			var item = ToPersistentItemState( savedItem );
+			if ( !item.IsValid ) continue;
+			if ( !usedIds.Add( item.InstanceId ) ) continue;
+
+			var definition = GetDefinition( item );
+			if ( definition is null ) continue;
+
+			item.StackCount = System.Math.Clamp( item.StackCount, 1, int.Max( 1, definition.MaxStack ) );
+			item.SlotIndex = RestoredSlotFor( item, usedSlots );
+			if ( item.SlotIndex < 0 ) continue;
+
+			usedSlots.Add( item.SlotIndex );
+			Items[item.InstanceId] = item;
+		}
+
+		EnsureNextInstanceId();
+		ApplyEquipmentSlotState( data.EquippedInstanceId );
+		Touch();
+	}
+
 	public InventoryItemState GetItemAt( int row, int col )
 	{
 		return GetItemAt( ToSlot( row, col ) );
@@ -482,7 +533,7 @@ public sealed class Backpack : Component
 		if ( IsWeaponAiming == aiming ) return true;
 
 		IsWeaponAiming = aiming;
-		Touch();
+		Touch( persist: false );
 		return true;
 	}
 
@@ -559,6 +610,45 @@ public sealed class Backpack : Component
 	private PlayerStatsComponent PlayerStats()
 	{
 		return GameObject.Root.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+	}
+
+	private InventoryItemState ToPersistentItemState( InventoryItemState item )
+	{
+		if ( !item.IsValid ) return default;
+
+		var definition = GetDefinition( item );
+		if ( definition is null ) return default;
+
+		item.StackCount = System.Math.Clamp( item.StackCount, 1, int.Max( 1, definition.MaxStack ) );
+		item.ReloadEndTime = 0f;
+		item.LastFireTime = 0f;
+
+		if ( definition.IsWeapon )
+		{
+			var clipSize = int.Max( 0, definition.Weapon?.ClipSize ?? item.Ammo );
+			item.Ammo = System.Math.Clamp( item.Ammo, 0, clipSize );
+			if ( item.State == WeaponBehavior.WeaponState.Reloading )
+			{
+				item.State = item.Ammo <= 0 ? WeaponBehavior.WeaponState.Empty : WeaponBehavior.WeaponState.Idle;
+			}
+
+			return item;
+		}
+
+		item.Ammo = 0;
+		item.State = WeaponBehavior.WeaponState.Idle;
+		item.IsHolstered = false;
+		return item;
+	}
+
+	private int RestoredSlotFor( InventoryItemState item, HashSet<int> usedSlots )
+	{
+		if ( InBounds( item.SlotIndex ) && !usedSlots.Contains( item.SlotIndex ) && CanPlaceItemInSlot( item, item.SlotIndex ) )
+		{
+			return item.SlotIndex;
+		}
+
+		return FirstEmptySlot();
 	}
 
 	private Vector3 ApplyRangedSpread( Rotation aim, PlayerStatsComponent stats )
@@ -752,6 +842,14 @@ public sealed class Backpack : Component
 		if ( EquippedInstanceId == instanceId ) EquippedInstanceId = 0;
 	}
 
+	private void ClearItems()
+	{
+		foreach ( var id in Items.Keys.ToList() )
+		{
+			Items.Remove( id );
+		}
+	}
+
 	private int CalculateMoneyBalance()
 	{
 		long total = 0;
@@ -831,8 +929,9 @@ public sealed class Backpack : Component
 		return slot >= 0 && slot < TotalSlotCount;
 	}
 
-	private void Touch()
+	private void Touch( bool persist = true )
 	{
 		InventoryVersion++;
+		if ( persist ) PlayerPersistenceSystem.Current?.MarkDirty( GameObject.Root, "inventory changed" );
 	}
 }

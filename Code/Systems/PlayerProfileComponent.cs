@@ -27,7 +27,24 @@ public sealed class PlayerProfileComponent : Component
 		if ( AffiliationId == normalized ) return false;
 
 		AffiliationId = normalized;
+		PlayerPersistenceSystem.Current?.MarkDirty( GameObject.Root, "profile changed" );
 		return true;
+	}
+
+	public PlayerProfileSaveData CreateSaveData()
+	{
+		return new PlayerProfileSaveData
+		{
+			AffiliationId = NormalizeAffiliationId( AffiliationId ),
+		};
+	}
+
+	public void RestoreSaveData( PlayerProfileSaveData data )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( data is null ) return;
+
+		AffiliationId = NormalizeAffiliationId( data.AffiliationId );
 	}
 
 	public static string DisplayNameForAffiliation( string affiliationId )

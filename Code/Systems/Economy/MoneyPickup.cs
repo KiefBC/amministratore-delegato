@@ -11,6 +11,8 @@ public sealed class MoneyPickup : Component, IInteractable
 	[Property] public ItemDefinition Definition { get; set; }
 	[Property] public string DefinitionPath { get; set; } = ItemDefinition.MoneyPath;
 	[Property] public int Amount { get; set; } = 1;
+	private bool _networkReady;
+	private bool _networkWarningLogged;
 
 	[Property, Range( 10f, 500f ), Step( 10f )]
 	public float PickupRange { get; set; } = 100f;
@@ -23,6 +25,13 @@ public sealed class MoneyPickup : Component, IInteractable
 	protected override void OnStart()
 	{
 		EnsureNetworkObject();
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( _networkReady ) return;
+
+		_networkReady = WorldPickupNetworking.TrySpawnOrRefresh( GameObject, $"money pickup ${Amount:N0}", ref _networkWarningLogged );
 	}
 
 	void IInteractable.Interact( GameObject player )
@@ -66,7 +75,6 @@ public sealed class MoneyPickup : Component, IInteractable
 
 	private void EnsureNetworkObject()
 	{
-		GameObject.NetworkMode = NetworkMode.Object;
-		GameObject.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
+		WorldPickupNetworking.Configure( GameObject );
 	}
 }
