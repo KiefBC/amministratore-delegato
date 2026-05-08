@@ -1,12 +1,13 @@
 @using Sandbox;
 @using Sandbox.UI;
+@using Sandbox.Systems.Roles;
 @namespace Sandbox.Systems.UI
 @inherits PanelComponent
 
 <root style="opacity: @(Opacity);">
 	@if ( ShouldShow )
 	{
-		<div class="player-title-card" style="min-width: @(CardMinWidth)px; padding: @(CardPaddingY)px @(CardPaddingX)px;">
+		<div class="player-title-card @RoleClass" style="min-width: @(CardMinWidth)px; padding: @(CardPaddingY)px @(CardPaddingX)px;">
 			<div class="player-name" style="font-size: @(NameFontSize)px;">@DisplayName</div>
 			<div class="player-level" style="font-size: @(LevelFontSize)px;">Lv @Level</div>
 		</div>
@@ -18,10 +19,18 @@
 	[Property] public PlayerTitleComponent Title { get; set; }
 
 	private PlayerStatsComponent _stats;
+	private PlayerRoleComponent _role;
 
 	private bool ShouldShow => Player.IsValid() && Player.Active && ActiveController.IsValid();
 	private int Level => _stats.IsValid() ? _stats.PlayerLevel : 1;
 	private string DisplayName => ResolvePlayerName( Player );
+	private PlayerRole Role => _role.IsValid() ? _role.Role : PlayerRole.User;
+	private string RoleClass => Role switch
+	{
+		PlayerRole.Admin => "role-admin",
+		PlayerRole.Moderator => "role-moderator",
+		_ => "role-user"
+	};
 	private PlayerController ActiveController
 	{
 		get
@@ -39,20 +48,20 @@
 
 	protected override void OnStart()
 	{
-		FindStats();
+		FindDependencies();
 	}
 
 	protected override void OnUpdate()
 	{
-		FindStats();
+		FindDependencies();
 	}
 
-	private void FindStats()
+	private void FindDependencies()
 	{
 		if ( !Player.IsValid() ) return;
-		if ( _stats.IsValid() ) return;
 
-		_stats = Player.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+		if ( !_stats.IsValid() ) _stats = Player.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+		if ( !_role.IsValid() ) _role = Player.Components.GetInDescendantsOrSelf<PlayerRoleComponent>();
 	}
 
 	private static string ResolvePlayerName( GameObject player )
@@ -83,6 +92,7 @@
 		var hc = new System.HashCode();
 		hc.Add( ShouldShow );
 		hc.Add( DisplayName );
+		hc.Add( Role );
 		hc.Add( Level );
 		hc.Add( _stats?.StatsVersion ?? 0 );
 		hc.Add( CardMinWidth );

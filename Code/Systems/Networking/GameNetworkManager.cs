@@ -20,6 +20,8 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 	[Property] public string PlayerTemplateName { get; set; } = "Player Controller";
 	[Property] public List<GameObject> SpawnPoints { get; set; } = new();
 	[Property] public int StartingWallet { get; set; } = 1000;
+	[Property] public Sandbox.Systems.Roles.RoleConfig RoleConfig { get; set; }
+	[Property] public string RoleConfigPath { get; set; } = Sandbox.Systems.Roles.RoleConfig.DefaultPath;
 
 	private readonly Dictionary<string, GameObject> _players = new();
 	private GameObject _template;
@@ -71,6 +73,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		player.Name = $"Player - {connection.DisplayName}";
 		player.Enabled = true;
 		PreparePlayerForNetwork( player );
+		AssignPlayerRole( player, connection );
 		CopyPlayerTitleSettings( source, player );
 		InitializeStartingWallet( player );
 
@@ -85,9 +88,11 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		}
 
 		_players[key] = player;
-		Log.Info( $"[Network] Spawned player for {connection.DisplayName}." );
+		var assignedRole = AssignedRoleName( player );
+		Log.Info( $"[Network] Spawned player for {connection.DisplayName} as {assignedRole}." );
 		GameLogSystem.Current?.Info( "network", "Player spawned", player, connection, GameLogSystem.Fields(
 			("displayName", connection.DisplayName),
+			("role", assignedRole),
 			("startingWallet", StartingWallet) ) );
 	}
 
@@ -153,6 +158,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		EnsurePlayerFinance( player );
 		EnsurePlayerAppearance( player );
 		EnsurePlayerTitle( player );
+		EnsurePlayerRole( player );
 
 		foreach ( var profile in player.Components.GetAll<PlayerProfileComponent>( FindMode.EverythingInSelfAndDescendants ) )
 		{
@@ -167,6 +173,11 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		foreach ( var finance in player.Components.GetAll<PlayerFinanceComponent>( FindMode.EverythingInSelfAndDescendants ) )
 		{
 			ConfigureNetworkObject( finance.GameObject );
+		}
+
+		foreach ( var role in player.Components.GetAll<Sandbox.Systems.Roles.PlayerRoleComponent>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			ConfigureNetworkObject( role.GameObject );
 		}
 
 		foreach ( var backpack in player.Components.GetAll<Backpack>( FindMode.EverythingInSelfAndDescendants ) )
@@ -224,6 +235,47 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( player.Components.GetInDescendantsOrSelf<Sandbox.Systems.UI.PlayerTitleComponent>().IsValid() ) return;
 
 		player.Components.Create<Sandbox.Systems.UI.PlayerTitleComponent>();
+	}
+
+	private static void EnsurePlayerRole( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+		if ( player.Components.GetInDescendantsOrSelf<Sandbox.Systems.Roles.PlayerRoleComponent>().IsValid() ) return;
+
+		player.Components.Create<Sandbox.Systems.Roles.PlayerRoleComponent>();
+	}
+
+	private void AssignPlayerRole( GameObject player, Connection connection )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( !player.IsValid() || connection is null ) return;
+
+		var roleComponent = player.Components.GetInDescendantsOrSelf<Sandbox.Systems.Roles.PlayerRoleComponent>();
+		if ( !roleComponent.IsValid() ) return;
+
+		var config = RoleConfig ?? Sandbox.Systems.Roles.RoleConfig.Resolve( RoleConfigPath );
+		var steamId = connection.SteamId.ToString();
+		var role = config.ResolveRole( steamId );
+		roleComponent.TrySetRole( role );
+		var configPath = string.IsNullOrWhiteSpace( config.ResourcePath ) ? "fallback/default" : config.ResourcePath;
+		var adminMatch = config.IsAdminSteamId( steamId );
+		var moderatorMatch = config.IsModeratorSteamId( steamId );
+		Log.Info( $"[Roles] {connection.DisplayName} ({steamId}) assigned {role}. config={configPath}; admins={config.AdminCount}; moderators={config.ModeratorCount}; adminMatch={adminMatch}; moderatorMatch={moderatorMatch}." );
+
+		GameLogSystem.Current?.Info( "roles", "Player role assigned", player, connection, GameLogSystem.Fields(
+			("config", configPath),
+			("steamId", steamId),
+			("adminMatch", adminMatch.ToString()),
+			("moderatorMatch", moderatorMatch.ToString()),
+			("role", role.ToString()) ) );
+	}
+
+	private static string AssignedRoleName( GameObject player )
+	{
+		if ( !player.IsValid() ) return "unknown";
+
+		var role = player.Components.GetInDescendantsOrSelf<Sandbox.Systems.Roles.PlayerRoleComponent>();
+		return role.IsValid() ? role.Role.ToString() : "unknown";
 	}
 
 	private static void CopyPlayerTitleSettings( GameObject source, GameObject player )

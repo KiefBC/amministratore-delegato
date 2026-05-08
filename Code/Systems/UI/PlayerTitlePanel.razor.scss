@@ -21,6 +21,18 @@ PlayerTitlePanel {
 		white-space: nowrap;
 	}
 
+	.role-admin .player-name {
+		color: #ff4545;
+	}
+
+	.role-moderator .player-name {
+		color: #ff9f2f;
+	}
+
+	.role-user .player-name {
+		color: white;
+	}
+
 	.player-level {
 		margin-top: 4px;
 		color: $text-secondary;
