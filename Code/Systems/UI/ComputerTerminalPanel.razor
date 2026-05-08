@@ -158,12 +158,8 @@
 	private GameObject _player;
 	private Backpack _backpack;
 	private PlayerFinanceComponent _finance;
-	private UIStateManager _uiState;
-	private PlayerController _playerController;
 	private MarketDataSystem _market;
 	private bool _isOpen;
-	private bool _hasControlLock;
-	private bool _cachedUseInputControls;
 	private string _selectedStock = "AAPL";
 	private StockTimeframe _timeframe = StockTimeframe.OneDay;
 	private StockOrderMode _orderMode = StockOrderMode.Buy;
@@ -199,7 +195,6 @@
 		if ( !_isOpen ) return;
 
 		_market?.RequestStockCandles( _selectedStock, _timeframe );
-		LockPlayerControl();
 		PollHoverState();
 		PollTextEntryFocus();
 		SanitizeSharesInput();
@@ -222,12 +217,12 @@
 		if ( _isOpen ) return;
 
 		FindLocalPlayer();
+		if ( UiModeSystem.Current?.TryOpen( this, UiModeKind.StockTerminal, lockMovement: true, hideHud: true ) != true ) return;
+
 		_isOpen = true;
 		_sharesInputFocused = false;
 		ClearPanelCaches();
-		_uiState?.RequestUIFocus( this );
 		ComputerTerminalSystem.SetTerminalOpen( true );
-		LockPlayerControl();
 	}
 
 	public void Close()
@@ -237,8 +232,7 @@
 		_isOpen = false;
 		_sharesInputFocused = false;
 		ClearPanelCaches();
-		RestorePlayerControl();
-		_uiState?.ReleaseUIFocus( this );
+		UiModeSystem.Current?.Close( this );
 		ComputerTerminalSystem.SetTerminalOpen( false );
 	}
 
@@ -260,28 +254,6 @@
 		_player = Sandbox.LocalPlayer.GameObject( Scene );
 		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
 		_finance = _player?.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
-		_uiState = _player?.Components.Get<UIStateManager>();
-		_playerController = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
-	}
-
-	private void LockPlayerControl()
-	{
-		if ( _hasControlLock ) return;
-
-		_playerController = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
-		if ( !_playerController.IsValid() ) return;
-
-		_cachedUseInputControls = _playerController.UseInputControls;
-		_playerController.UseInputControls = false;
-		_hasControlLock = true;
-	}
-
-	private void RestorePlayerControl()
-	{
-		if ( !_hasControlLock ) return;
-
-		if ( _playerController.IsValid() ) _playerController.UseInputControls = _cachedUseInputControls;
-		_hasControlLock = false;
 	}
 
 	private void SelectStock( string symbol )

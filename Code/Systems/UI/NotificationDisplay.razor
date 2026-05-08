@@ -4,7 +4,7 @@
 @inherits PanelComponent
 
 <root>
-	@if ( _notifications.Count > 0 && !DeskUiState.IsAnyDeskUiOpen )
+	@if ( _notifications.Count > 0 && UiModeSystem.Current?.HidesHud != true )
 	{
 		<div class="notification-stack">
 			@foreach ( var notification in _notifications )
@@ -33,7 +33,7 @@
 	{
 		var hc = new System.HashCode();
 		hc.Add( _notifications.Count );
-		hc.Add( DeskUiState.IsAnyDeskUiOpen );
+		hc.Add( UiModeSystem.Current?.HidesHud == true );
 		foreach ( var notification in _notifications )
 		{
 			hc.Add( notification.Id );

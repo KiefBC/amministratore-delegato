@@ -262,7 +262,6 @@
 	private static readonly string[] QuickSlotKeys = { "Z", "X", "C", "V" };
 
 	private Backpack _backpack;
-	private UIStateManager _uiState;
 	private UnitComponent _unit;
 	private PlayerStatsComponent _stats;
 	private GameObject _player;
@@ -324,7 +323,8 @@
 
 		if ( Input.Pressed( "Inventory" ) )
 		{
-			Toggle();
+			if ( _isOpen ) Close();
+			else if ( UiModeSystem.Current?.BlocksShortcuts != true ) Open();
 		}
 		else if ( _isOpen && Input.EscapePressed )
 		{
@@ -359,7 +359,6 @@
 	{
 		_player = Sandbox.LocalPlayer.GameObject( Scene );
 		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
-		_uiState = _player?.Components.Get<UIStateManager>();
 		_unit = _player?.Components.GetInDescendantsOrSelf<UnitComponent>();
 		_stats = _player?.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
 	}
@@ -643,9 +642,10 @@
 	private void Open()
 	{
 		if ( _isOpen ) return;
+		if ( UiModeSystem.Current?.TryOpen( this, UiModeKind.Inventory ) != true ) return;
+
 		_isOpen = true;
 		_characterPreviewPanel = null;
-		_uiState?.RequestUIFocus( this );
 	}
 
 	private void Close()
@@ -661,7 +661,7 @@
 		_characterPreviewPanel = null;
 		_cachedLayoutRows = -1;
 		_cachedLayoutCols = -1;
-		_uiState?.ReleaseUIFocus( this );
+		UiModeSystem.Current?.Close( this );
 		_backpack?.ClearSelection();
 	}
 

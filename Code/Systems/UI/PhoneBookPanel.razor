@@ -66,12 +66,8 @@
 	private sealed record ContactRow( GameObject Player, string Name, string Affiliation, long NetWorth, bool IsLocal, string Status );
 
 	private GameObject _player;
-	private UIStateManager _uiState;
-	private PlayerController _playerController;
 	private Sandbox.UI.Panel _closePanel;
 	private bool _isOpen;
-	private bool _hasControlLock;
-	private bool _cachedUseInputControls;
 	private bool _hoveredClose;
 	private bool _controlPressed;
 
@@ -87,7 +83,6 @@
 		FindLocalPlayer();
 		if ( !_isOpen ) return;
 
-		LockPlayerControl();
 		PollCloseButton();
 
 		if ( Input.EscapePressed )
@@ -107,11 +102,11 @@
 		if ( _isOpen ) return;
 
 		FindLocalPlayer();
+		if ( UiModeSystem.Current?.TryOpen( this, UiModeKind.PhoneBook, lockMovement: true, hideHud: true ) != true ) return;
+
 		_isOpen = true;
 		_closePanel = null;
-		_uiState?.RequestUIFocus( this );
 		PhoneBookSystem.SetPhoneBookOpen( true );
-		LockPlayerControl();
 	}
 
 	public void Close()
@@ -122,8 +117,7 @@
 		_hoveredClose = false;
 		_controlPressed = false;
 		_closePanel = null;
-		RestorePlayerControl();
-		_uiState?.ReleaseUIFocus( this );
+		UiModeSystem.Current?.Close( this );
 		PhoneBookSystem.SetPhoneBookOpen( false );
 	}
 
@@ -132,28 +126,6 @@
 		if ( Sandbox.LocalPlayer.Owns( _player ) ) return;
 
 		_player = Sandbox.LocalPlayer.GameObject( Scene );
-		_uiState = _player?.Components.Get<UIStateManager>();
-		_playerController = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
-	}
-
-	private void LockPlayerControl()
-	{
-		if ( _hasControlLock ) return;
-
-		_playerController = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
-		if ( !_playerController.IsValid() ) return;
-
-		_cachedUseInputControls = _playerController.UseInputControls;
-		_playerController.UseInputControls = false;
-		_hasControlLock = true;
-	}
-
-	private void RestorePlayerControl()
-	{
-		if ( !_hasControlLock ) return;
-
-		if ( _playerController.IsValid() ) _playerController.UseInputControls = _cachedUseInputControls;
-		_hasControlLock = false;
 	}
 
 	private void PollCloseButton()
@@ -350,7 +322,7 @@
 		hc.Add( _isOpen );
 		hc.Add( _hoveredClose );
 		hc.Add( _controlPressed );
-		hc.Add( DeskUiState.IsAnyDeskUiOpen );
+		hc.Add( UiModeSystem.Current?.HidesHud == true );
 		hc.Add( MarketDataSystem.Current?.PriceVersion ?? 0 );
 
 		if ( _isOpen )

@@ -4,12 +4,12 @@
 @inherits PanelComponent
 
 <root>
-	@if ( !DeskUiState.IsAnyDeskUiOpen )
+	@if ( UiModeSystem.Current?.HidesHud != true )
 	{
 		<div class="dot"></div>
 	}
 </root>
 
 @code {
-	protected override int BuildHash() => System.HashCode.Combine( DeskUiState.IsAnyDeskUiOpen );
+	protected override int BuildHash() => System.HashCode.Combine( UiModeSystem.Current?.HidesHud == true );
 }

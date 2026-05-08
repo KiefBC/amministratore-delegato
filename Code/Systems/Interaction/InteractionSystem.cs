@@ -31,6 +31,7 @@ public sealed class InteractionSystem : GameObjectSystem<InteractionSystem>
 	private void OnTick()
 	{
 		CurrentTarget = null;
+		if ( UiModeSystem.Current?.BlocksWorldInput == true ) return;
 
 		if ( !Sandbox.LocalPlayer.Owns( LocalPlayer ) )
 		{

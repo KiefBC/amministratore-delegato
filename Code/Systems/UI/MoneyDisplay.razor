@@ -4,7 +4,7 @@
 @inherits PanelComponent
 
 <root>
-	@if ( !DeskUiState.IsAnyDeskUiOpen )
+	@if ( UiModeSystem.Current?.HidesHud != true )
 	{
 		<div class="money @FlashClass">
 			<span class="amount">$@Amount.ToString( "N0" )</span>
@@ -60,5 +60,5 @@
 		_backpack = Sandbox.LocalPlayer.Component<Backpack>( Scene );
 	}
 
-	protected override int BuildHash() => System.HashCode.Combine( _displayAmount, _flashTimer > 0f, System.Math.Sign( _lastDelta ), DeskUiState.IsAnyDeskUiOpen );
+	protected override int BuildHash() => System.HashCode.Combine( _displayAmount, _flashTimer > 0f, System.Math.Sign( _lastDelta ), UiModeSystem.Current?.HidesHud == true );
 }

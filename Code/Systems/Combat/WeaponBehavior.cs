@@ -13,7 +13,6 @@ public sealed class WeaponBehavior : Component
 	[Property] public Equipment Equipment { get; set; }
 	[Property] public Backpack Backpack { get; set; }
 
-	private UIStateManager _uiState;
 	private bool _lastRequestedAiming;
 
 	public enum WeaponState
@@ -54,7 +53,6 @@ public sealed class WeaponBehavior : Component
 		Backpack ??= Components.Get<Backpack>();
 		BodyRenderer ??= Components.Get<SkinnedModelRenderer>();
 		AnimHelper ??= Components.Get<CitizenAnimationHelper>();
-		_uiState = Components.GetInAncestorsOrSelf<UIStateManager>();
 	}
 
 	protected override void OnUpdate()
@@ -63,7 +61,7 @@ public sealed class WeaponBehavior : Component
 		ApplyAnimationState();
 
 		if ( !IsLocalOwner ) return;
-		if ( _uiState?.IsAnyUIOpen == true )
+		if ( UiModeSystem.Current?.IsCursorVisible == true )
 		{
 			RequestAimingIfChanged( false );
 			return;

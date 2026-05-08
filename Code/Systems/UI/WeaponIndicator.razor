@@ -5,7 +5,7 @@
 @inherits PanelComponent
 
 <root>
-	@if ( !string.IsNullOrEmpty( _weaponName ) && !DeskUiState.IsAnyDeskUiOpen )
+	@if ( !string.IsNullOrEmpty( _weaponName ) && UiModeSystem.Current?.HidesHud != true )
 	{
 		<div class="weapon @PanelStateClass">
 			<span class="state">@StateLabel</span>
@@ -101,5 +101,5 @@
 	protected override int BuildHash() => System.HashCode.Combine(
 		_weaponName, _holstered, _state, _currentAmmo, _magazineSize,
 		_state == WeaponBehavior.WeaponState.Reloading ? (int)(_reloadProgress * 100) : 0,
-		DeskUiState.IsAnyDeskUiOpen );
+		UiModeSystem.Current?.HidesHud == true );
 }
