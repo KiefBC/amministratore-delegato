@@ -43,6 +43,8 @@ public sealed class ComputerTerminalSystem : GameObjectSystem<ComputerTerminalSy
 
 	public static ComputerTerminalPanel OpenForScene( Scene scene )
 	{
+		PhoneBookSystem.Current?.Close();
+
 		var panel = EnsurePanel( scene );
 		panel?.Open();
 		return panel;

@@ -4,12 +4,12 @@
 @inherits PanelComponent
 
 <root class="@RootClass">
-	@if ( !ComputerTerminalSystem.IsAnyTerminalOpen && !IsIdleCollapsed && HasBusinessCard )
+	@if ( !DeskUiState.IsAnyDeskUiOpen && !IsIdleCollapsed && HasBusinessCard )
 	{
 		<BusinessCardPanel class="business-card" style="@BusinessCardStyle()" PlayerName="@BusinessCardName()" NetWorthText="@BusinessCardWorthText()" Affiliation="@BusinessCardAffiliation()" CloseClicked=@HideBusinessCard DragStarted=@StartBusinessCardDrag Dragged=@DragBusinessCard DragStopped=@StopBusinessCardDrag />
 	}
 
-	@if ( !ComputerTerminalSystem.IsAnyTerminalOpen )
+	@if ( !DeskUiState.IsAnyDeskUiOpen )
 	{
 		<div class="chat-window">
 			<div class="chat-title">Placeholder Chat Title</div>
@@ -104,7 +104,7 @@
 		_chat = ChatSystem.Current;
 		FindLocalPlayer();
 
-		if ( ComputerTerminalSystem.IsAnyTerminalOpen )
+		if ( DeskUiState.IsAnyDeskUiOpen )
 		{
 			if ( _isOpen ) Close( clearDraft: true );
 			else HideBusinessCard();
@@ -503,7 +503,7 @@
 		hc.Add( IsIdleCollapsed );
 		hc.Add( IsCursorUsable );
 		hc.Add( _draggingBusinessCard );
-		hc.Add( ComputerTerminalSystem.IsAnyTerminalOpen );
+		hc.Add( DeskUiState.IsAnyDeskUiOpen );
 		hc.Add( (int)_businessCardPosition.x );
 		hc.Add( (int)_businessCardPosition.y );
 

@@ -12,6 +12,7 @@ ComputerTerminalPanel {
 
 	&.open {
 		pointer-events: auto;
+		cursor: default;
 	}
 
 	.stock-terminal {
@@ -20,6 +21,7 @@ ComputerTerminalPanel {
 		padding: 28px;
 		background-color: rgba( 2, 7, 13, 0.97 );
 		text-shadow: $text-shadow-default;
+		cursor: default;
 	}
 
 	.stock-panel {
@@ -27,6 +29,7 @@ ComputerTerminalPanel {
 		height: 100%;
 		flex-direction: row;
 		gap: 16px;
+		cursor: default;
 	}
 
 	.terminal-card {
@@ -34,6 +37,7 @@ ComputerTerminalPanel {
 		border: 1px solid rgba( 92, 136, 168, 0.34 );
 		border-radius: 10px;
 		box-shadow: 0 0 28px rgba( 0, 0, 0, 0.36 );
+		cursor: default;
 	}
 
 	.terminal-card.inset {

@@ -1,0 +1,370 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Collections.Generic;
+@using System.Linq;
+@namespace Sandbox
+@inherits PanelComponent
+
+<root class="@(IsOpen ? "open" : "")">
+	@if ( IsOpen )
+	{
+		<div class="phone-book-overlay">
+			<div class="phone-book-shell">
+				<div class="phone-book-header">
+					<div>
+						<span>Desk Phone</span>
+						<b>Company Directory</b>
+					</div>
+					<button class="phone-close action-close @CloseClass()">Esc</button>
+				</div>
+
+				<div class="phone-book-subtitle">
+					Look up online players from the desk phone book.
+				</div>
+
+				<div class="contact-list">
+					@foreach ( var contact in ContactRows() )
+					{
+						<div class="contact-card @(contact.IsLocal ? "local" : "")">
+							<div class="contact-avatar">@Initials( contact.Name )</div>
+							<div class="contact-main">
+								<div class="contact-name-row">
+									<span class="contact-name">@contact.Name</span>
+									@if ( contact.IsLocal )
+									{
+										<small>You</small>
+									}
+								</div>
+								<div class="contact-meta">
+									<span>@contact.Affiliation</span>
+									<span>@contact.Status</span>
+								</div>
+							</div>
+							<div class="contact-worth">
+								<span>Net Worth</span>
+								<b>$@contact.NetWorth.ToString( "N0" )</b>
+							</div>
+						</div>
+					}
+
+					@if ( !ContactRows().Any() )
+					{
+						<div class="empty-directory">No online contacts found.</div>
+					}
+				</div>
+
+				<div class="phone-book-footer">
+					<span>@ContactRows().Count().ToString( "N0" ) contacts online</span>
+					<span>Press Esc to hang up</span>
+				</div>
+			</div>
+		</div>
+	}
+</root>
+
+@code {
+	private sealed record ContactRow( GameObject Player, string Name, string Affiliation, long NetWorth, bool IsLocal, string Status );
+
+	private GameObject _player;
+	private UIStateManager _uiState;
+	private PlayerController _playerController;
+	private Sandbox.UI.Panel _closePanel;
+	private bool _isOpen;
+	private bool _hasControlLock;
+	private bool _cachedUseInputControls;
+	private bool _hoveredClose;
+	private bool _controlPressed;
+
+	public bool IsOpen => _isOpen;
+
+	protected override void OnStart()
+	{
+		FindLocalPlayer();
+	}
+
+	protected override void OnUpdate()
+	{
+		FindLocalPlayer();
+		if ( !_isOpen ) return;
+
+		LockPlayerControl();
+		PollCloseButton();
+
+		if ( Input.EscapePressed )
+		{
+			Input.EscapePressed = false;
+			Close();
+		}
+	}
+
+	protected override void OnDisabled()
+	{
+		if ( _isOpen ) Close();
+	}
+
+	public void Open()
+	{
+		if ( _isOpen ) return;
+
+		FindLocalPlayer();
+		_isOpen = true;
+		_closePanel = null;
+		_uiState?.RequestUIFocus( this );
+		PhoneBookSystem.SetPhoneBookOpen( true );
+		LockPlayerControl();
+	}
+
+	public void Close()
+	{
+		if ( !_isOpen ) return;
+
+		_isOpen = false;
+		_hoveredClose = false;
+		_controlPressed = false;
+		_closePanel = null;
+		RestorePlayerControl();
+		_uiState?.ReleaseUIFocus( this );
+		PhoneBookSystem.SetPhoneBookOpen( false );
+	}
+
+	private void FindLocalPlayer()
+	{
+		if ( Sandbox.LocalPlayer.Owns( _player ) ) return;
+
+		_player = Sandbox.LocalPlayer.GameObject( Scene );
+		_uiState = _player?.Components.Get<UIStateManager>();
+		_playerController = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
+	}
+
+	private void LockPlayerControl()
+	{
+		if ( _hasControlLock ) return;
+
+		_playerController = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
+		if ( !_playerController.IsValid() ) return;
+
+		_cachedUseInputControls = _playerController.UseInputControls;
+		_playerController.UseInputControls = false;
+		_hasControlLock = true;
+	}
+
+	private void RestorePlayerControl()
+	{
+		if ( !_hasControlLock ) return;
+
+		if ( _playerController.IsValid() ) _playerController.UseInputControls = _cachedUseInputControls;
+		_hasControlLock = false;
+	}
+
+	private void PollCloseButton()
+	{
+		_hoveredClose = false;
+		_controlPressed = false;
+		if ( Panel is null ) return;
+
+		_closePanel ??= FindByClass( Panel, "action-close" );
+		if ( _closePanel is null || !_closePanel.IsInside( Mouse.Position ) ) return;
+
+		_hoveredClose = true;
+		_controlPressed = Input.Down( "Attack1" );
+		if ( Input.Pressed( "Attack1" ) ) Close();
+	}
+
+	private string CloseClass()
+	{
+		if ( !_hoveredClose ) return "";
+		return _controlPressed ? "hover pressed" : "hover";
+	}
+
+	private IEnumerable<ContactRow> ContactRows()
+	{
+		var rows = new List<ContactRow>();
+		var seen = new HashSet<GameObject>();
+
+		foreach ( var controller in Scene.GetAllComponents<PlayerController>() )
+		{
+			if ( !controller.IsValid() || !controller.GameObject.IsValid() || !controller.GameObject.Active ) continue;
+
+			var player = PlayerRoot( controller.GameObject );
+			if ( !player.IsValid() || !seen.Add( player ) ) continue;
+
+			rows.Add( new ContactRow(
+				player,
+				PlayerName( player ),
+				Affiliation( player ),
+				NetWorth( player ),
+				Sandbox.LocalPlayer.Owns( player ),
+				controller.IsProxy ? "Remote line" : "Local line" ) );
+		}
+
+		return rows
+			.OrderByDescending( x => x.IsLocal )
+			.ThenBy( x => x.Name, System.StringComparer.OrdinalIgnoreCase );
+	}
+
+	private static GameObject PlayerRoot( GameObject gameObject )
+	{
+		var controller = gameObject.Components.GetInAncestorsOrSelf<PlayerController>();
+		if ( !controller.IsValid() ) controller = gameObject.Components.GetInDescendantsOrSelf<PlayerController>();
+		return controller.IsValid() ? controller.GameObject : gameObject;
+	}
+
+	private static string PlayerName( GameObject player )
+	{
+		var owner = OwnerFor( player );
+		if ( owner is not null && !string.IsNullOrWhiteSpace( owner.DisplayName ) ) return owner.DisplayName;
+
+		return player.IsValid() && !string.IsNullOrWhiteSpace( player.Name )
+			? TrimSpawnedPlayerPrefix( player.Name )
+			: "Player";
+	}
+
+	private static string Affiliation( GameObject player )
+	{
+		var profile = player.Components.GetInDescendantsOrSelf<PlayerProfileComponent>();
+		return profile.IsValid()
+			? profile.AffiliationDisplayName
+			: PlayerProfileComponent.DisplayNameForAffiliation( PlayerProfileComponent.IndependentAffiliationId );
+	}
+
+	private static long NetWorth( GameObject player )
+	{
+		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
+		var finance = player.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+		long total = 0;
+
+		if ( backpack.IsValid() )
+		{
+			total += backpack.Wallet;
+			foreach ( var item in backpack.Items.Values )
+			{
+				if ( !item.IsValid ) continue;
+
+				var definition = backpack.GetDefinition( item );
+				if ( definition is null ) continue;
+
+				total += (long)definition.Value * item.StackCount;
+			}
+		}
+
+		if ( finance.IsValid() )
+		{
+			total += finance.BankBalance;
+			total += StockValue( finance );
+			total += CryptoValue( finance );
+			total += BusinessValue( finance );
+			total -= finance.DebtBalance;
+		}
+
+		return total;
+	}
+
+	private static long StockValue( PlayerFinanceComponent finance )
+	{
+		decimal total = 0m;
+		foreach ( var pair in finance.StockShares )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var price = MarketDataSystem.Current?.StockPrice( pair.Key ) ?? FinanceCatalog.Stock( pair.Key )?.FallbackPrice ?? 0m;
+			total += pair.Value * price;
+		}
+
+		return decimal.ToInt64( decimal.Round( total ) );
+	}
+
+	private static long CryptoValue( PlayerFinanceComponent finance )
+	{
+		decimal total = 0m;
+		foreach ( var pair in finance.CryptoMilliUnits )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var price = MarketDataSystem.Current?.CryptoPrice( pair.Key ) ?? FinanceCatalog.Coin( pair.Key )?.FallbackPrice ?? 0m;
+			total += (pair.Value / 1000m) * price;
+		}
+
+		return decimal.ToInt64( decimal.Round( total ) );
+	}
+
+	private static long BusinessValue( PlayerFinanceComponent finance )
+	{
+		long total = 0;
+		foreach ( var pair in finance.OwnedBusinesses )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var offer = FinanceCatalog.Business( pair.Key );
+			if ( offer is null ) continue;
+
+			total += (long)offer.Cost * pair.Value;
+		}
+
+		return total;
+	}
+
+	private static Connection OwnerFor( GameObject player )
+	{
+		if ( !player.IsValid() ) return null;
+
+		var owner = player.Network.Owner;
+		if ( owner is not null ) return owner;
+
+		var root = player.Root;
+		return root.IsValid() && root != player ? root.Network.Owner : null;
+	}
+
+	private static string TrimSpawnedPlayerPrefix( string name )
+	{
+		const string spawnedPlayerPrefix = "Player - ";
+		if ( name.StartsWith( spawnedPlayerPrefix, System.StringComparison.OrdinalIgnoreCase ) )
+		{
+			name = name[spawnedPlayerPrefix.Length..];
+		}
+
+		return string.IsNullOrWhiteSpace( name ) ? "Player" : name.Trim();
+	}
+
+	private static string Initials( string text )
+	{
+		if ( string.IsNullOrWhiteSpace( text ) ) return "??";
+
+		var cleaned = new string( text.Where( char.IsLetterOrDigit ).Take( 2 ).ToArray() );
+		return string.IsNullOrWhiteSpace( cleaned ) ? "??" : cleaned.ToUpperInvariant();
+	}
+
+	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
+	{
+		if ( root is null ) return null;
+		if ( root.HasClass( className ) ) return root;
+
+		foreach ( var child in root.Children )
+		{
+			var found = FindByClass( child, className );
+			if ( found is not null ) return found;
+		}
+
+		return null;
+	}
+
+	protected override int BuildHash()
+	{
+		var hc = new System.HashCode();
+		hc.Add( _isOpen );
+		hc.Add( _hoveredClose );
+		hc.Add( _controlPressed );
+		hc.Add( DeskUiState.IsAnyDeskUiOpen );
+		hc.Add( MarketDataSystem.Current?.PriceVersion ?? 0 );
+
+		if ( _isOpen )
+		{
+			foreach ( var contact in ContactRows() )
+			{
+				hc.Add( contact.Player.GetHashCode() );
+				hc.Add( contact.Name );
+				hc.Add( contact.Affiliation );
+				hc.Add( contact.NetWorth );
+				hc.Add( contact.IsLocal );
+			}
+		}
+
+		return hc.ToHashCode();
+	}
+}

@@ -4,12 +4,12 @@
 @inherits PanelComponent
 
 <root>
-	@if ( !ComputerTerminalSystem.IsAnyTerminalOpen )
+	@if ( !DeskUiState.IsAnyDeskUiOpen )
 	{
 		<div class="dot"></div>
 	}
 </root>
 
 @code {
-	protected override int BuildHash() => System.HashCode.Combine( ComputerTerminalSystem.IsAnyTerminalOpen );
+	protected override int BuildHash() => System.HashCode.Combine( DeskUiState.IsAnyDeskUiOpen );
 }

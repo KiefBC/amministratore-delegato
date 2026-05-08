@@ -32,6 +32,21 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
+	public static void RequestUseDeskDevice( GameObject deskGo, GameObject player, int device )
+	{
+		if ( !CallerOwns( player ) ) return;
+		if ( !deskGo.IsValid() ) return;
+		if ( !System.Enum.IsDefined( typeof( DeskDeviceType ), device ) ) return;
+
+		foreach ( var interactable in deskGo.Components.GetAll<DeskDeviceInteractable>() )
+		{
+			if ( !interactable.IsValid() ) continue;
+			interactable.TryUseDeviceOnHost( player, (DeskDeviceType)device );
+			return;
+		}
+	}
+
+	[Rpc.Host]
 	public static void RequestUseInventorySlot( GameObject player, int slot )
 	{
 		if ( !CallerOwns( player ) ) return;
@@ -424,6 +439,15 @@ public static class GameNetworkRpc
 		if ( !Sandbox.LocalPlayer.Owns( player ) ) return;
 
 		ComputerTerminalSystem.OpenForScene( player.Scene );
+	}
+
+	[Rpc.Broadcast]
+	public static void BroadcastOpenPhoneBook( GameObject player )
+	{
+		if ( !CallerIsHost() ) return;
+		if ( !Sandbox.LocalPlayer.Owns( player ) ) return;
+
+		PhoneBookSystem.OpenForScene( player.Scene );
 	}
 
 	[Rpc.Broadcast]

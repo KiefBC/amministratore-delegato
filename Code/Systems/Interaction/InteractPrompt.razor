@@ -4,7 +4,7 @@
 @inherits PanelComponent
 
 <root>
-	@if ( Target is not null && !ComputerTerminalSystem.IsAnyTerminalOpen )
+	@if ( Target is not null && !string.IsNullOrWhiteSpace( Target.Prompt ) && !DeskUiState.IsAnyDeskUiOpen )
 	{
 		<div class="prompt">Press <span class="key">E</span> to @Verb</div>
 	}
@@ -25,5 +25,5 @@
 		return idx < 0 ? prompt : prompt[(idx + 4)..];
 	}
 
-	protected override int BuildHash() => System.HashCode.Combine( Target?.Prompt, ComputerTerminalSystem.IsAnyTerminalOpen );
+	protected override int BuildHash() => System.HashCode.Combine( Target?.Prompt, DeskUiState.IsAnyDeskUiOpen );
 }

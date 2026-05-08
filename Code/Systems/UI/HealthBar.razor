@@ -5,7 +5,7 @@
 @inherits PanelComponent
 
 <root>
-	@if ( Player is not null && !ComputerTerminalSystem.IsAnyTerminalOpen )
+	@if ( Player is not null && !DeskUiState.IsAnyDeskUiOpen )
 	{
 		<div class="hud-cluster">
 			<div class="health @FlashClass">
@@ -116,5 +116,5 @@
 		}
 	}
 
-	protected override int BuildHash() => System.HashCode.Combine( _displayHealth, _maxHealth, _displayStamina, _maxStamina, Player?.IsHungry ?? false, Player?.IsThirsty ?? false, _flashTimer > 0f, ComputerTerminalSystem.IsAnyTerminalOpen );
+	protected override int BuildHash() => System.HashCode.Combine( _displayHealth, _maxHealth, _displayStamina, _maxStamina, Player?.IsHungry ?? false, Player?.IsThirsty ?? false, _flashTimer > 0f, DeskUiState.IsAnyDeskUiOpen );
 }

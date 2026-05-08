@@ -74,6 +74,8 @@ public sealed class InteractionSystem : GameObjectSystem<InteractionSystem>
 
 		if ( !Networking.IsHost )
 		{
+			if ( interactable is IClientInteractable clientInteractable && clientInteractable.TryClientInteract( player ) ) return;
+
 			GameNetworkRpc.RequestInteract( component.GameObject, player );
 			return;
 		}
