@@ -4,7 +4,7 @@
 @inherits PanelComponent
 
 <root>
-	@if ( _notifications.Count > 0 )
+	@if ( _notifications.Count > 0 && !ComputerTerminalSystem.IsAnyTerminalOpen )
 	{
 		<div class="notification-stack">
 			@foreach ( var notification in _notifications )
@@ -33,6 +33,7 @@
 	{
 		var hc = new System.HashCode();
 		hc.Add( _notifications.Count );
+		hc.Add( ComputerTerminalSystem.IsAnyTerminalOpen );
 		foreach ( var notification in _notifications )
 		{
 			hc.Add( notification.Id );

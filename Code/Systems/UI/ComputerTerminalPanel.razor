@@ -1,0 +1,573 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Linq;
+@namespace Sandbox
+@inherits PanelComponent
+
+<root class="@(IsOpen ? "open" : "")">
+	@if ( IsOpen )
+	{
+		<div class="stock-terminal">
+			<div class="stock-panel">
+				<div class="left-panel terminal-card">
+					<div class="panel-title">Current Stocks</div>
+					<div class="stock-list">
+						@foreach ( var row in StockRows() )
+						{
+							var selected = row.Symbol == _selectedStock;
+							<div class="stock-row @(selected ? "selected" : "") @(_hoveredStock == row.Symbol ? "hover" : "")" onclick="@(() => SelectStock( row.Symbol ))">
+								<div class="stock-symbol-badge">@Initials( row.Symbol )</div>
+								<div class="stock-copy">
+									<span class="stock-symbol">@row.Symbol</span>
+									<span class="stock-name">@row.Name</span>
+								</div>
+								<div class="stock-quote">
+									<span>$@row.Price.ToString( "N2" )</span>
+									<b class="@(row.Change >= 0 ? "up" : "down")">@SignedPercent( row.Change )</b>
+								</div>
+							</div>
+						}
+					</div>
+
+					<div class="order-form terminal-card inset">
+						<div class="form-title">@(_orderMode == StockOrderMode.Buy ? "Buy Shares" : "Sell Shares")</div>
+						<div class="mode-toggle">
+							<button class="mode-button @(_orderMode == StockOrderMode.Buy ? "active" : "") action-mode-buy @ControlClass( "mode-buy" )" onclick="@(() => SetOrderMode( StockOrderMode.Buy ))">Buy</button>
+							<button class="mode-button sell @(_orderMode == StockOrderMode.Sell ? "active" : "") action-mode-sell @ControlClass( "mode-sell" )" onclick="@(() => SetOrderMode( StockOrderMode.Sell ))">Sell</button>
+						</div>
+
+						<label>@(_orderMode == StockOrderMode.Buy ? "Shares To Buy" : "Shares To Sell")</label>
+						<TextEntry @ref="_sharesInput" class="terminal-input shares-input" Value:bind="@_sharesText" placeholder="1" />
+
+						<div class="estimate-row">
+							<span>@(_orderMode == StockOrderMode.Buy ? "Est. Cost" : "Est. Proceeds")</span>
+							<b>$@EstimatedOrderTotal().ToString( "N0" )</b>
+						</div>
+
+						<button class="submit-button @(_orderMode == StockOrderMode.Sell ? "sell" : "") action-submit @ControlClass( "submit" )" onclick="@SubmitOrder">
+							@(_orderMode == StockOrderMode.Buy ? "Buy" : "Sell")
+						</button>
+
+						@if ( HasMessage )
+						{
+							<div class="terminal-message @MessageClass">
+								<span>@_messageTitle</span>
+								<p>@_messageBody</p>
+							</div>
+						}
+					</div>
+				</div>
+
+				<div class="chart-panel terminal-card">
+					<div class="chart-header">
+						<div>
+							<div class="panel-title">Candle Chart</div>
+							<div class="selected-stock">@_selectedStock</div>
+							<div class="selected-name">@(FinanceCatalog.Stock( _selectedStock )?.Name ?? "Stock")</div>
+						</div>
+						<div class="chart-price">
+							<span>$@Price( _selectedStock ).ToString( "N2" )</span>
+							<b class="@(SelectedStockChange() >= 0 ? "up" : "down")">@SignedPercent( SelectedStockChange() )</b>
+						</div>
+						<button class="close-button action-close @ControlClass( "close" )" onclick="@Close">Esc</button>
+					</div>
+
+					<div class="timeframe-row">
+						@foreach ( var option in TimeframeOptions )
+						{
+							<button class="timeframe-button @(_timeframe == option.Key ? "active" : "") action-timeframe-@TimeframeId( option.Key ) @ControlClass( $"timeframe-{TimeframeId( option.Key )}" )" onclick="@(() => SelectTimeframe( option.Key ))">@option.Label</button>
+						}
+					</div>
+
+					<div class="candle-chart">
+						<div class="grid-line one"></div>
+						<div class="grid-line two"></div>
+						<div class="grid-line three"></div>
+						<div class="candle-strip">
+							@foreach ( var candle in RenderCandles() )
+							{
+								<div class="candle-slot">
+									<div class="candle-wick" style="top: @(candle.WickTop)px; height: @(candle.WickHeight)px;"></div>
+									<div class="candle-body @(candle.Up ? "up" : "down")" style="top: @(candle.BodyTop)px; height: @(candle.BodyHeight)px;"></div>
+								</div>
+							}
+						</div>
+					</div>
+
+					<div class="chart-footer">
+						<span>@TimeframeLabel()</span>
+						<span>@(_market?.StatusText ?? "Fallback market data")</span>
+					</div>
+				</div>
+
+				<div class="portfolio-panel terminal-card">
+					<div class="panel-title">Portfolio Summary</div>
+					<div class="portfolio-total">$@StockValue().ToString( "N0" )</div>
+					<div class="summary-row"><span>Cash</span><b>$@Wallet.ToString( "N0" )</b></div>
+					<div class="summary-row"><span>Stock Value</span><b>$@StockValue().ToString( "N0" )</b></div>
+					<div class="summary-row"><span>PnL</span><b class="@(TotalPnlPercent() >= 0 ? "up" : "down")">@SignedPercent( TotalPnlPercent() )</b></div>
+
+					<div class="holdings-list">
+						@foreach ( var row in PortfolioRows() )
+						{
+							<div class="holding-row">
+								<div>
+									<span>@row.Symbol</span>
+									<small>@row.Shares.ToString( "N0" ) shares</small>
+								</div>
+								<div>
+									<b>$@row.Value.ToString( "N0" )</b>
+									<small class="@(row.PnlPercent >= 0 ? "up" : "down")">@SignedPercent( row.PnlPercent )</small>
+								</div>
+							</div>
+						}
+
+						@if ( !PortfolioRows().Any() )
+						{
+							<div class="empty-portfolio">No stock positions yet.</div>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+</root>
+
+@code {
+	private enum StockOrderMode { Buy, Sell }
+	private sealed record StockRow( string Symbol, string Name, decimal Price, decimal Change );
+	private sealed record TimeframeOption( StockTimeframe Key, string Label );
+	private sealed record RenderCandle( int WickTop, int WickHeight, int BodyTop, int BodyHeight, bool Up );
+	private sealed record PortfolioRow( string Symbol, int Shares, int Value, decimal PnlPercent );
+
+	private const int ChartHeight = 300;
+	private static readonly TimeframeOption[] TimeframeOptions =
+	{
+		new( StockTimeframe.OneHour, "1H" ),
+		new( StockTimeframe.OneDay, "1D" ),
+		new( StockTimeframe.SevenDays, "7D" ),
+	};
+
+	private GameObject _player;
+	private Backpack _backpack;
+	private PlayerFinanceComponent _finance;
+	private UIStateManager _uiState;
+	private PlayerController _playerController;
+	private MarketDataSystem _market;
+	private bool _isOpen;
+	private bool _hasControlLock;
+	private bool _cachedUseInputControls;
+	private string _selectedStock = "AAPL";
+	private StockTimeframe _timeframe = StockTimeframe.OneDay;
+	private StockOrderMode _orderMode = StockOrderMode.Buy;
+	private string _sharesText = "1";
+	private TextEntry _sharesInput = null;
+	private Sandbox.UI.Panel _sharesInputPanel;
+	private Sandbox.UI.Panel _stockListPanel;
+	private string _hoveredStock;
+	private string _hoveredControl;
+	private bool _controlPressed;
+	private bool _sharesInputFocused;
+	private NotificationKind _messageKind = NotificationKind.Info;
+	private string _messageTitle;
+	private string _messageBody;
+	private float _messageTimer;
+	private int _messageVersion;
+
+	public bool IsOpen => _isOpen;
+	private int Wallet => _backpack?.Wallet ?? 0;
+	private bool HasMessage => _messageTimer > 0f && !string.IsNullOrWhiteSpace( _messageTitle );
+	private string MessageClass => _messageKind.ToString().ToLowerInvariant();
+
+	protected override void OnStart()
+	{
+		FindLocalPlayer();
+	}
+
+	protected override void OnUpdate()
+	{
+		FindLocalPlayer();
+		_market = MarketDataSystem.Current;
+
+		if ( !_isOpen ) return;
+
+		_market?.RequestStockCandles( _selectedStock, _timeframe );
+		LockPlayerControl();
+		PollHoverState();
+		PollTextEntryFocus();
+		SanitizeSharesInput();
+		TickMessage();
+
+		if ( Input.EscapePressed )
+		{
+			Input.EscapePressed = false;
+			Close();
+		}
+	}
+
+	protected override void OnDisabled()
+	{
+		if ( _isOpen ) Close();
+	}
+
+	public void Open()
+	{
+		if ( _isOpen ) return;
+
+		FindLocalPlayer();
+		_isOpen = true;
+		_sharesInputFocused = false;
+		ClearPanelCaches();
+		_uiState?.RequestUIFocus( this );
+		ComputerTerminalSystem.SetTerminalOpen( true );
+		LockPlayerControl();
+	}
+
+	public void Close()
+	{
+		if ( !_isOpen ) return;
+
+		_isOpen = false;
+		_sharesInputFocused = false;
+		ClearPanelCaches();
+		RestorePlayerControl();
+		_uiState?.ReleaseUIFocus( this );
+		ComputerTerminalSystem.SetTerminalOpen( false );
+	}
+
+	public void ShowMessage( int kind, string title, string message, float shownDuration )
+	{
+		if ( System.Enum.IsDefined( typeof( NotificationKind ), kind ) ) _messageKind = (NotificationKind)kind;
+		else _messageKind = NotificationKind.Info;
+
+		_messageTitle = string.IsNullOrWhiteSpace( title ) ? "Stock Order" : title;
+		_messageBody = message ?? "";
+		_messageTimer = shownDuration > 0f ? shownDuration : 3f;
+		_messageVersion++;
+	}
+
+	private void FindLocalPlayer()
+	{
+		if ( Sandbox.LocalPlayer.Owns( _player ) ) return;
+
+		_player = Sandbox.LocalPlayer.GameObject( Scene );
+		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
+		_finance = _player?.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+		_uiState = _player?.Components.Get<UIStateManager>();
+		_playerController = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
+	}
+
+	private void LockPlayerControl()
+	{
+		if ( _hasControlLock ) return;
+
+		_playerController = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
+		if ( !_playerController.IsValid() ) return;
+
+		_cachedUseInputControls = _playerController.UseInputControls;
+		_playerController.UseInputControls = false;
+		_hasControlLock = true;
+	}
+
+	private void RestorePlayerControl()
+	{
+		if ( !_hasControlLock ) return;
+
+		if ( _playerController.IsValid() ) _playerController.UseInputControls = _cachedUseInputControls;
+		_hasControlLock = false;
+	}
+
+	private void SelectStock( string symbol )
+	{
+		_selectedStock = symbol;
+		_market?.RequestStockCandles( _selectedStock, _timeframe );
+	}
+
+	private void SelectTimeframe( StockTimeframe timeframe )
+	{
+		_timeframe = timeframe;
+		_market?.RequestStockCandles( _selectedStock, _timeframe );
+	}
+
+	private void SetOrderMode( StockOrderMode mode )
+	{
+		_orderMode = mode;
+	}
+
+	private void SubmitOrder()
+	{
+		if ( !_player.IsValid() || !TryParseAmount( _sharesText, out var shares ) )
+		{
+			ShowMessage( (int)NotificationKind.Warning, "Stock Order", "Enter a valid share amount.", 2.5f );
+			return;
+		}
+
+		if ( _orderMode == StockOrderMode.Buy ) GameNetworkRpc.RequestBuyStockShares( _player, _selectedStock, shares );
+		else GameNetworkRpc.RequestSellStock( _player, _selectedStock, shares );
+	}
+
+	private IEnumerable<StockRow> StockRows()
+	{
+		foreach ( var stock in FinanceCatalog.Stocks )
+		{
+			yield return new StockRow( stock.Symbol, stock.Name, Price( stock.Symbol ), StockChangePercent( stock.Symbol ) );
+		}
+	}
+
+	private IReadOnlyList<StockCandle> Candles()
+	{
+		return _market?.StockCandles( _selectedStock, _timeframe ) ?? System.Array.Empty<StockCandle>();
+	}
+
+	private IEnumerable<RenderCandle> RenderCandles()
+	{
+		var candles = Candles().Where( x => x.High > x.Low ).TakeLast( 64 ).ToArray();
+		if ( candles.Length == 0 ) yield break;
+
+		var high = candles.Max( x => x.High );
+		var low = candles.Min( x => x.Low );
+		var range = decimal.Max( 0.01m, high - low );
+
+		foreach ( var candle in candles )
+		{
+			var highY = PriceY( candle.High, high, low, range );
+			var lowY = PriceY( candle.Low, high, low, range );
+			var openY = PriceY( candle.Open, high, low, range );
+			var closeY = PriceY( candle.Close, high, low, range );
+			var bodyTop = int.Min( openY, closeY );
+			var bodyHeight = int.Max( 4, int.Abs( closeY - openY ) );
+			yield return new RenderCandle( highY, int.Max( 4, lowY - highY ), bodyTop, bodyHeight, candle.IsUp );
+		}
+	}
+
+	private static int PriceY( decimal price, decimal high, decimal low, decimal range )
+	{
+		var normalized = (high - price) / range;
+		return int.Clamp( decimal.ToInt32( decimal.Round( normalized * ChartHeight ) ), 0, ChartHeight );
+	}
+
+	private IEnumerable<PortfolioRow> PortfolioRows()
+	{
+		if ( !_finance.IsValid() ) yield break;
+
+		foreach ( var stock in FinanceCatalog.Stocks )
+		{
+			if ( !_finance.StockShares.TryGetValue( stock.Symbol, out var shares ) || shares <= 0 ) continue;
+			var value = decimal.ToInt32( decimal.Round( shares * Price( stock.Symbol ) ) );
+			var basis = _finance.StockCostBasis.TryGetValue( stock.Symbol, out var cost ) ? cost : 0;
+			var pnl = basis > 0 ? ((value - basis) / (decimal)basis) * 100m : 0m;
+			yield return new PortfolioRow( stock.Symbol, shares, value, pnl );
+		}
+	}
+
+	private int StockValue()
+	{
+		if ( !_finance.IsValid() ) return 0;
+		decimal total = 0m;
+		foreach ( var pair in _finance.StockShares ) total += pair.Value * Price( pair.Key );
+		return decimal.ToInt32( decimal.Round( total ) );
+	}
+
+	private int TotalCostBasis()
+	{
+		if ( !_finance.IsValid() ) return 0;
+		var total = 0;
+		foreach ( var pair in _finance.StockCostBasis ) total += pair.Value;
+		return total;
+	}
+
+	private decimal TotalPnlPercent()
+	{
+		var basis = TotalCostBasis();
+		if ( basis <= 0 ) return 0m;
+		return ((StockValue() - basis) / (decimal)basis) * 100m;
+	}
+
+	private decimal Price( string symbol ) => _market?.StockPrice( symbol ) ?? FinanceCatalog.Stock( symbol )?.FallbackPrice ?? 0m;
+
+	private decimal StockChangePercent( string symbol )
+	{
+		var candles = _market?.StockCandles( symbol, StockTimeframe.OneDay );
+		if ( candles is not null && candles.Count > 1 )
+		{
+			var first = candles.First().Open;
+			var last = candles.Last().Close;
+			if ( first > 0m ) return ((last - first) / first) * 100m;
+		}
+
+		return FinanceCatalog.Stock( symbol )?.ChangePercent ?? 0m;
+	}
+
+	private decimal SelectedStockChange() => StockChangePercent( _selectedStock );
+
+	private int EstimatedOrderTotal()
+	{
+		if ( !TryParseAmount( _sharesText, out var shares ) ) return 0;
+		if ( _orderMode == StockOrderMode.Sell ) shares = int.Min( shares, OwnedStockShares( _selectedStock ) );
+		return decimal.ToInt32( decimal.Ceiling( shares * Price( _selectedStock ) ) );
+	}
+
+	private int OwnedStockShares( string symbol ) => _finance.IsValid() && _finance.StockShares.TryGetValue( symbol ?? "", out var shares ) ? shares : 0;
+
+	private void PollHoverState()
+	{
+		_hoveredStock = null;
+		_hoveredControl = null;
+		_controlPressed = false;
+		if ( Panel is null ) return;
+
+		var mouse = Mouse.Position;
+		_stockListPanel ??= FindByClass( Panel, "stock-list" );
+		if ( _stockListPanel is not null )
+		{
+			var index = 0;
+			var rows = StockRows().ToArray();
+			foreach ( var child in _stockListPanel.Children )
+			{
+				if ( !child.HasClass( "stock-row" ) ) continue;
+				if ( index < rows.Length && child.IsInside( mouse ) ) _hoveredStock = rows[index].Symbol;
+				index++;
+			}
+		}
+
+		foreach ( var target in ControlTargets() )
+		{
+			var panel = FindByClass( Panel, target.ClassName );
+			if ( panel is null || !panel.IsInside( mouse ) ) continue;
+
+			_hoveredControl = target.Id;
+			_controlPressed = Input.Down( "Attack1" );
+			return;
+		}
+	}
+
+	private IEnumerable<(string Id, string ClassName)> ControlTargets()
+	{
+		yield return ("close", "action-close");
+		yield return ("mode-buy", "action-mode-buy");
+		yield return ("mode-sell", "action-mode-sell");
+		yield return ("submit", "action-submit");
+		yield return ("timeframe-onehour", "action-timeframe-onehour");
+		yield return ("timeframe-oneday", "action-timeframe-oneday");
+		yield return ("timeframe-sevendays", "action-timeframe-sevendays");
+	}
+
+	private string ControlClass( string id )
+	{
+		if ( _hoveredControl != id ) return "";
+		return _controlPressed ? "hover pressed" : "hover";
+	}
+
+	private void PollTextEntryFocus()
+	{
+		if ( Panel is null ) return;
+
+		if ( Input.Pressed( "Attack1" ) )
+		{
+			_sharesInputPanel ??= FindByClass( Panel, "shares-input" );
+			_sharesInputFocused = _sharesInputPanel is not null && _sharesInputPanel.IsInside( Mouse.Position );
+		}
+
+		if ( _sharesInputFocused ) _sharesInput?.Focus();
+	}
+
+	private void SanitizeSharesInput()
+	{
+		var clean = DigitsOnly( _sharesInput?.Text ?? _sharesText );
+		if ( _sharesInput is not null && _sharesInput.Text != clean ) _sharesInput.Text = clean;
+		if ( _sharesText != clean ) _sharesText = clean;
+	}
+
+	private void TickMessage()
+	{
+		if ( _messageTimer <= 0f ) return;
+		_messageTimer -= Time.Delta;
+	}
+
+	private void ClearPanelCaches()
+	{
+		_hoveredStock = null;
+		_hoveredControl = null;
+		_controlPressed = false;
+		_stockListPanel = null;
+		_sharesInputPanel = null;
+	}
+
+	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
+	{
+		if ( root is null ) return null;
+		if ( root.HasClass( className ) ) return root;
+
+		foreach ( var child in root.Children )
+		{
+			var found = FindByClass( child, className );
+			if ( found is not null ) return found;
+		}
+
+		return null;
+	}
+
+	private static string TimeframeId( StockTimeframe timeframe )
+	{
+		return timeframe.ToString().ToLowerInvariant();
+	}
+
+	private string TimeframeLabel()
+	{
+		return _timeframe switch
+		{
+			StockTimeframe.OneHour => "Last hour / 1 minute candles",
+			StockTimeframe.OneDay => "Today / 5 minute candles",
+			StockTimeframe.SevenDays => "Seven days / 1 hour candles",
+			_ => "Chart",
+		};
+	}
+
+	private static bool TryParseAmount( string text, out int amount )
+	{
+		return int.TryParse( DigitsOnly( text ), out amount ) && amount > 0;
+	}
+
+	private static string DigitsOnly( string text )
+	{
+		if ( string.IsNullOrEmpty( text ) ) return "";
+
+		var chars = new System.Text.StringBuilder( text.Length );
+		foreach ( var ch in text )
+		{
+			if ( ch >= '0' && ch <= '9' ) chars.Append( ch );
+		}
+
+		return chars.ToString();
+	}
+
+	private static string Initials( string text )
+	{
+		if ( string.IsNullOrWhiteSpace( text ) ) return "--";
+		var cleaned = new string( text.Where( char.IsLetterOrDigit ).Take( 3 ).ToArray() );
+		return cleaned.ToUpperInvariant();
+	}
+
+	private static string SignedPercent( decimal value ) => $"{(value >= 0 ? "+" : "")}{value:0.##}%";
+
+	protected override int BuildHash()
+	{
+		var hc = new System.HashCode();
+		hc.Add( _isOpen );
+		hc.Add( Wallet );
+		hc.Add( _finance?.FinanceVersion ?? 0 );
+		hc.Add( _market?.PriceVersion ?? 0 );
+		hc.Add( _market?.CandleVersion ?? 0 );
+		hc.Add( _market?.StatusText );
+		hc.Add( _selectedStock );
+		hc.Add( _timeframe );
+		hc.Add( _orderMode );
+		hc.Add( _sharesText );
+		hc.Add( _hoveredStock );
+		hc.Add( _hoveredControl );
+		hc.Add( _controlPressed );
+		hc.Add( HasMessage );
+		hc.Add( _messageVersion );
+		return hc.ToHashCode();
+	}
+}

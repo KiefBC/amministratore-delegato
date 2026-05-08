@@ -1,0 +1,449 @@
+@import "/Systems/UI/_theme.scss";
+
+ComputerTerminalPanel {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	font-family: $font-default;
+	color: white;
+
+	&.open {
+		pointer-events: auto;
+	}
+
+	.stock-terminal {
+		width: 100%;
+		height: 100%;
+		padding: 28px;
+		background-color: rgba( 2, 7, 13, 0.97 );
+		text-shadow: $text-shadow-default;
+	}
+
+	.stock-panel {
+		width: 100%;
+		height: 100%;
+		flex-direction: row;
+		gap: 16px;
+	}
+
+	.terminal-card {
+		background-color: rgba( 6, 18, 31, 0.94 );
+		border: 1px solid rgba( 92, 136, 168, 0.34 );
+		border-radius: 10px;
+		box-shadow: 0 0 28px rgba( 0, 0, 0, 0.36 );
+	}
+
+	.terminal-card.inset {
+		background-color: rgba( 1, 10, 20, 0.72 );
+		border-color: rgba( 92, 136, 168, 0.24 );
+		box-shadow: none;
+	}
+
+	.left-panel, .portfolio-panel {
+		width: 338px;
+		padding: 16px;
+		flex-direction: column;
+		gap: 14px;
+	}
+
+	.chart-panel {
+		flex: 1;
+		padding: 18px;
+		flex-direction: column;
+		gap: 14px;
+		min-width: 520px;
+	}
+
+	.panel-title {
+		font-size: 15px;
+		font-weight: 900;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+		color: rgba( 255, 255, 255, 0.86 );
+	}
+
+	.stock-list, .holdings-list {
+		flex: 1;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.stock-row, .summary-row, .holding-row, .chart-header, .chart-price, .timeframe-row, .chart-footer, .mode-toggle, .estimate-row {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.stock-row {
+		height: 70px;
+		padding: 10px;
+		gap: 10px;
+		border: 1px solid rgba( 92, 136, 168, 0.18 );
+		border-radius: 8px;
+		background-color: rgba( 3, 13, 25, 0.62 );
+		cursor: pointer;
+		transition: $transition-fast;
+	}
+
+	.stock-row.hover, .stock-row.selected {
+		border-color: rgba( 58, 226, 133, 0.7 );
+		background-color: rgba( 9, 45, 34, 0.62 );
+	}
+
+	.stock-symbol-badge {
+		width: 42px;
+		height: 42px;
+		align-items: center;
+		justify-content: center;
+		border-radius: 8px;
+		background-color: rgba( 58, 226, 133, 0.13 );
+		border: 1px solid rgba( 58, 226, 133, 0.35 );
+		color: #3df092;
+		font-size: 12px;
+		font-weight: 900;
+	}
+
+	.stock-copy {
+		flex: 1;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.stock-symbol {
+		font-size: 18px;
+		font-weight: 900;
+		color: white;
+	}
+
+	.stock-name {
+		font-size: 11px;
+		color: rgba( 255, 255, 255, 0.55 );
+	}
+
+	.stock-quote {
+		width: 76px;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 2px;
+	}
+
+	.stock-quote span {
+		font-size: 14px;
+		font-weight: 800;
+	}
+
+	.stock-quote b, .chart-price b, .summary-row b, .holding-row small {
+		font-size: 12px;
+		font-weight: 900;
+	}
+
+	.up { color: #21e87e; }
+	.down { color: #ff4d5f; }
+
+	.order-form {
+		padding: 14px;
+		flex-direction: column;
+		gap: 11px;
+	}
+
+	.form-title {
+		font-size: 20px;
+		font-weight: 900;
+	}
+
+	.mode-toggle {
+		height: 42px;
+		gap: 8px;
+	}
+
+	.mode-button, .submit-button, .timeframe-button, .close-button {
+		align-items: center;
+		justify-content: center;
+		border-radius: 7px;
+		font-size: 13px;
+		font-weight: 900;
+		text-transform: uppercase;
+		cursor: pointer;
+		transition: $transition-fast;
+		color: white;
+		text-shadow: $text-shadow-default;
+	}
+
+	.mode-button {
+		flex: 1;
+		height: 42px;
+		background-color: rgba( 18, 35, 52, 0.95 );
+		border: 1px solid rgba( 92, 136, 168, 0.3 );
+	}
+
+	.mode-button.active, .mode-button.hover {
+		background-color: rgba( 8, 115, 59, 0.94 );
+		border-color: rgba( 58, 226, 133, 0.82 );
+	}
+
+	.mode-button.sell.active, .mode-button.sell.hover {
+		background-color: rgba( 148, 30, 44, 0.94 );
+		border-color: rgba( 255, 77, 95, 0.82 );
+	}
+
+	.mode-button.pressed, .submit-button.pressed, .timeframe-button.pressed, .close-button.pressed {
+		background-color: rgba( 255, 255, 255, 0.14 );
+	}
+
+	.order-form label {
+		font-size: 11px;
+		font-weight: 800;
+		text-transform: uppercase;
+		color: rgba( 255, 255, 255, 0.56 );
+	}
+
+	.terminal-input {
+		height: 46px;
+		padding: 0 12px;
+		background-color: rgba( 0, 8, 18, 0.9 );
+		border: 1px solid rgba( 92, 136, 168, 0.45 );
+		border-radius: 6px;
+		color: white;
+		font-size: 19px;
+		font-weight: 800;
+	}
+
+	.estimate-row {
+		height: 34px;
+		justify-content: space-between;
+		color: rgba( 255, 255, 255, 0.62 );
+		font-size: 13px;
+	}
+
+	.estimate-row b {
+		color: #ffd76a;
+		font-size: 18px;
+	}
+
+	.submit-button {
+		height: 48px;
+		background-color: #0aa34d;
+		border: 1px solid #21e87e;
+		color: #06120b;
+		text-shadow: none;
+	}
+
+	.submit-button.sell {
+		background-color: #b91f32;
+		border-color: #ff4d5f;
+		color: white;
+		text-shadow: $text-shadow-default;
+	}
+
+	.submit-button.hover {
+		background-color: #16c568;
+	}
+
+	.submit-button.sell.hover {
+		background-color: #cf293d;
+	}
+
+	.terminal-message {
+		padding: 10px;
+		flex-direction: column;
+		gap: 3px;
+		border-radius: 7px;
+		border: 1px solid rgba( 92, 136, 168, 0.25 );
+		background-color: rgba( 11, 25, 42, 0.92 );
+	}
+
+	.terminal-message.success { border-color: rgba( 58, 226, 133, 0.62 ); }
+	.terminal-message.warning, .terminal-message.error { border-color: rgba( 255, 77, 95, 0.62 ); }
+	.terminal-message span { font-size: 13px; font-weight: 900; text-transform: uppercase; }
+	.terminal-message p { font-size: 12px; color: rgba( 255, 255, 255, 0.72 ); }
+
+	.chart-header {
+		height: 92px;
+		justify-content: space-between;
+		gap: 14px;
+		border-bottom: 1px solid rgba( 92, 136, 168, 0.22 );
+		padding-bottom: 12px;
+	}
+
+	.selected-stock {
+		font-size: 38px;
+		font-weight: 900;
+		line-height: 38px;
+	}
+
+	.selected-name {
+		font-size: 13px;
+		color: rgba( 255, 255, 255, 0.58 );
+	}
+
+	.chart-price {
+		flex: 1;
+		justify-content: flex-end;
+		gap: 12px;
+	}
+
+	.chart-price span {
+		font-size: 32px;
+		font-weight: 900;
+		color: #ffd76a;
+	}
+
+	.close-button {
+		width: 58px;
+		height: 46px;
+		background-color: rgba( 255, 255, 255, 0.06 );
+		border: 1px solid rgba( 255, 255, 255, 0.18 );
+	}
+
+	.close-button.hover {
+		background-color: rgba( 255, 77, 95, 0.28 );
+		border-color: rgba( 255, 77, 95, 0.58 );
+	}
+
+	.timeframe-row {
+		height: 44px;
+		gap: 8px;
+	}
+
+	.timeframe-button {
+		width: 76px;
+		height: 38px;
+		background-color: rgba( 18, 35, 52, 0.95 );
+		border: 1px solid rgba( 92, 136, 168, 0.3 );
+	}
+
+	.timeframe-button.active, .timeframe-button.hover {
+		background-color: rgba( 9, 45, 34, 0.88 );
+		border-color: rgba( 58, 226, 133, 0.78 );
+		color: #3df092;
+	}
+
+	.candle-chart {
+		position: relative;
+		flex: 1;
+		min-height: 340px;
+		background-color: rgba( 1, 10, 20, 0.68 );
+		border: 1px solid rgba( 92, 136, 168, 0.2 );
+		border-radius: 9px;
+		overflow: hidden;
+	}
+
+	.grid-line {
+		position: absolute;
+		left: 18px;
+		right: 18px;
+		height: 1px;
+		background-color: rgba( 92, 136, 168, 0.2 );
+	}
+
+	.grid-line.one { top: 25%; }
+	.grid-line.two { top: 50%; }
+	.grid-line.three { top: 75%; }
+
+	.candle-strip {
+		position: absolute;
+		left: 22px;
+		right: 22px;
+		bottom: 20px;
+		height: 300px;
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 4px;
+	}
+
+	.candle-slot {
+		position: relative;
+		flex: 1;
+		height: 300px;
+		min-width: 5px;
+	}
+
+	.candle-wick {
+		position: absolute;
+		left: 50%;
+		width: 2px;
+		background-color: rgba( 255, 255, 255, 0.48 );
+	}
+
+	.candle-body {
+		position: absolute;
+		left: 25%;
+		right: 25%;
+		min-width: 4px;
+		border-radius: 2px;
+		background-color: #ff4d5f;
+	}
+
+	.candle-body.up {
+		background-color: #21e87e;
+	}
+
+	.chart-footer {
+		height: 28px;
+		justify-content: space-between;
+		font-size: 12px;
+		color: rgba( 255, 255, 255, 0.58 );
+	}
+
+	.portfolio-total {
+		font-size: 42px;
+		font-weight: 900;
+		color: #ffd76a;
+		padding-bottom: 6px;
+		border-bottom: 1px solid rgba( 92, 136, 168, 0.22 );
+	}
+
+	.summary-row {
+		height: 32px;
+		justify-content: space-between;
+		font-size: 13px;
+		color: rgba( 255, 255, 255, 0.62 );
+	}
+
+	.summary-row b {
+		font-size: 15px;
+		color: white;
+	}
+
+	.holding-row {
+		padding: 10px 0;
+		justify-content: space-between;
+		border-bottom: 1px solid rgba( 92, 136, 168, 0.16 );
+	}
+
+	.holding-row div {
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.holding-row div:last-child {
+		align-items: flex-end;
+	}
+
+	.holding-row span, .holding-row b {
+		font-size: 16px;
+		font-weight: 900;
+	}
+
+	.holding-row small {
+		color: rgba( 255, 255, 255, 0.54 );
+	}
+
+	.holding-row small.up { color: #21e87e; }
+	.holding-row small.down { color: #ff4d5f; }
+
+	.empty-portfolio {
+		margin-top: 10px;
+		padding: 16px;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid rgba( 92, 136, 168, 0.2 );
+		border-radius: 8px;
+		background-color: rgba( 1, 10, 20, 0.5 );
+		color: rgba( 255, 255, 255, 0.55 );
+		font-size: 13px;
+	}
+}

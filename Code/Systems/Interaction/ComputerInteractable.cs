@@ -1,12 +1,8 @@
 using Sandbox;
 
 /// <summary>
-/// Stub interactable that proves the seam works: implements <see cref="IInteractable"/>,
-/// no edits to <see cref="InteractionSystem"/>, <c>InteractPrompt.razor</c>, <c>Inventory</c>,
-/// or any other file required. Same pattern any future interactable (ATM, locker, vehicle door,
-/// dropped item) follows — one component, one file.
-///
-/// To test: add this component to any empty GameObject in the scene, walk near it, press E.
+/// Computer terminal entry point. Interaction is host-validated, then the owning
+/// client opens a local-only finance UI.
 /// </summary>
 public sealed class ComputerInteractable : Component, IInteractable
 {
@@ -18,10 +14,18 @@ public sealed class ComputerInteractable : Component, IInteractable
 	Vector3 IInteractable.InteractPosition => WorldPosition;
 	float IInteractable.InteractRange => Range;
 	string IInteractable.Prompt => "Press E to Use Computer";
-	bool IInteractable.CanInteract( GameObject player ) => true;
+	bool IInteractable.CanInteract( GameObject player ) => player.IsValid();
 
 	void IInteractable.Interact( GameObject player )
 	{
-		Log.Info( $"[Computer] Used by {player?.Name ?? "null"} on {GameObject.Name}" );
+		if ( !Networking.IsHost ) return;
+
+		if ( Sandbox.LocalPlayer.Owns( player ) )
+		{
+			ComputerTerminalSystem.OpenForScene( Scene );
+			return;
+		}
+
+		GameNetworkRpc.BroadcastOpenComputerTerminal( player );
 	}
 }

@@ -4,15 +4,18 @@
 @inherits PanelComponent
 
 <root>
-	<div class="money @FlashClass">
-		<span class="amount">$@Amount.ToString( "N0" )</span>
-		@if ( _flashTimer > 0f && _lastDelta != 0 )
-		{
-			<span class="delta @(_lastDelta > 0 ? "positive" : "negative")">
-				@(_lastDelta > 0 ? "+" : "")@_lastDelta.ToString( "N0" )
-			</span>
-		}
-	</div>
+	@if ( !ComputerTerminalSystem.IsAnyTerminalOpen )
+	{
+		<div class="money @FlashClass">
+			<span class="amount">$@Amount.ToString( "N0" )</span>
+			@if ( _flashTimer > 0f && _lastDelta != 0 )
+			{
+				<span class="delta @(_lastDelta > 0 ? "positive" : "negative")">
+					@(_lastDelta > 0 ? "+" : "")@_lastDelta.ToString( "N0" )
+				</span>
+			}
+		</div>
+	}
 </root>
 
 @code {
@@ -57,5 +60,5 @@
 		_backpack = Sandbox.LocalPlayer.Component<Backpack>( Scene );
 	}
 
-	protected override int BuildHash() => System.HashCode.Combine( _displayAmount, _flashTimer > 0f, System.Math.Sign( _lastDelta ) );
+	protected override int BuildHash() => System.HashCode.Combine( _displayAmount, _flashTimer > 0f, System.Math.Sign( _lastDelta ), ComputerTerminalSystem.IsAnyTerminalOpen );
 }

@@ -374,6 +374,7 @@
               "__enabled": true,
               "Flags": 0,
               "Bounty": 0,
+              "CorpseLifetimeSeconds": 60,
               "HealthRegenPerMinute": 0,
               "MaxArmor": 0,
               "MaxHealth": 100,
@@ -6830,7 +6831,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Position",
-                "Value": "-39.9986916,-6.57093525,-4.95910645E-05"
+                "Value": "-47.5741806,-9.25033665,-5.91278076E-05"
               },
               {
                 "Target": {
@@ -6838,7 +6839,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Rotation",
-                "Value": "-7.4505806E-07,-5.06639481E-07,0.209456921,0.977817059"
+                "Value": "-8.64267349E-07,-5.36441803E-07,0.23796013,0.971273959"
               },
               {
                 "Target": {
@@ -6854,7 +6855,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Position",
-                "Value": "-27.2031269,-51.4964333,45.1143951"
+                "Value": "-35.2640457,-62.4476471,50.055954"
               },
               {
                 "Target": {
@@ -6862,7 +6863,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Rotation",
-                "Value": "0.672110558,-0.169002444,-0.498218179,0.521044612"
+                "Value": "-0.252898097,-0.0283819139,0.964283228,0.0734732449"
               },
               {
                 "Target": {
@@ -6878,7 +6879,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Position",
-                "Value": "11.692502,-5.12599945E-05,-0.000105142593"
+                "Value": "11.6925011,-4.93526459E-05,-0.000104188919"
               },
               {
                 "Target": {
@@ -6886,7 +6887,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Rotation",
-                "Value": "-1.93715096E-06,5.36441803E-07,0.0301842988,-0.999544561"
+                "Value": "-1.90734863E-06,5.21540642E-07,0.030184269,-0.999544621"
               },
               {
                 "Target": {
@@ -6902,7 +6903,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Position",
-                "Value": "11.4816647,3.30209732E-05,-6.48498535E-05"
+                "Value": "11.4816704,3.29017639E-05,-6.49690628E-05"
               },
               {
                 "Target": {
@@ -6910,7 +6911,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Rotation",
-                "Value": "0.704695642,-0.0222176313,-0.0532006845,-0.707163751"
+                "Value": "0.704695642,-0.0222175419,-0.0532006621,-0.707163751"
               },
               {
                 "Target": {
@@ -6926,7 +6927,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Position",
-                "Value": "-29.5228825,-49.7292252,-47.9488144"
+                "Value": "-36.5463638,-61.2094154,-53.7528305"
               },
               {
                 "Target": {
@@ -6934,7 +6935,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Rotation",
-                "Value": "-0.676162839,0.202837616,-0.332451165,0.625409484"
+                "Value": "0.392923117,-0.0263552666,0.91449362,-0.0928354412"
               },
               {
                 "Target": {
@@ -6950,7 +6951,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Position",
-                "Value": "11.6925287,-3.24249268E-05,1.1920929E-06"
+                "Value": "11.6925259,-3.17692757E-05,4.17232513E-06"
               },
               {
                 "Target": {
@@ -6958,7 +6959,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Rotation",
-                "Value": "-2.35438347E-06,1.34110451E-07,-0.0301857591,0.999544501"
+                "Value": "-2.34693289E-06,4.47034836E-08,-0.0301858075,0.999544621"
               },
               {
                 "Target": {
@@ -6974,7 +6975,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Position",
-                "Value": "11.4816618,6.03199005E-05,-7.58171082E-05"
+                "Value": "11.4816628,5.81145287E-05,-7.59363174E-05"
               },
               {
                 "Target": {
@@ -6982,7 +6983,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Rotation",
-                "Value": "0.707604945,-0.0219993591,0.0532981753,0.704251587"
+                "Value": "0.707605064,-0.0219993722,0.0532981306,0.704251647"
               },
               {
                 "Target": {
@@ -6998,7 +6999,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Position",
-                "Value": "-33.7105789,71.4748764,3.81469727E-05"
+                "Value": "-21.1983547,84.0268555,1.1920929E-05"
               },
               {
                 "Target": {
@@ -7006,7 +7007,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Rotation",
-                "Value": "-0.646852493,0.762615263,4.69386578E-07,-3.24845314E-06"
+                "Value": "-0.487604499,0.873064697,5.97850885E-07,-3.14414501E-06"
               },
               {
                 "Target": {
@@ -7022,7 +7023,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Position",
-                "Value": "3.5937717,2.39312649E-05,-6.02900982E-05"
+                "Value": "3.59376907,2.36015767E-05,-6.03203662E-05"
               },
               {
                 "Target": {
@@ -7030,7 +7031,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Rotation",
-                "Value": "2.98023224E-07,-6.03497028E-07,0.201891333,0.979408324"
+                "Value": "2.98023224E-07,-5.96046448E-07,0.201891333,0.979408264"
               },
               {
                 "Target": {
@@ -7142,7 +7143,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Position",
-                "Value": "17.8480988,0.000121593475,-3.81469727E-05"
+                "Value": "17.8481007,0.000124454498,-3.81469727E-05"
               },
               {
                 "Target": {
@@ -7166,7 +7167,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Position",
-                "Value": "16.5251999,1.3589859E-05,-3.38554382E-05"
+                "Value": "16.5251999,1.33514404E-05,-3.33786011E-05"
               },
               {
                 "Target": {
@@ -9353,6 +9354,7 @@
               "__enabled": true,
               "Flags": 0,
               "Bounty": 80,
+              "CorpseLifetimeSeconds": 60,
               "HealthRegenPerMinute": 0,
               "MaxArmor": 0,
               "MaxHealth": 100,
@@ -9373,6 +9375,544 @@
             }
           ],
           "Children": []
+        },
+        {
+          "__guid": "12c7e3ab-adf8-4601-9b4a-3fbc7d2bec6f",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Computer Desk",
+          "Position": "307.953339,-127.681129,0",
+          "Rotation": "0,0,0.70710665,0.707106829",
+          "Scale": "1,1,1",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.Prop",
+              "__guid": "515cbe33-54de-43e6-990b-00be194d10fe",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "Health": 150,
+              "IsStatic": false,
+              "MaterialGroup": null,
+              "Model": "models/sbox_props/office_desk/office_desk.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnPropBreak": null,
+              "OnPropTakeDamage": null,
+              "StartAsleep": false,
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelRenderer",
+              "__guid": "b0aa4541-6d14-4c02-b4b4-3549146c3bf6",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "CreateAttachments": false,
+              "LodOverride": null,
+              "MaterialGroup": null,
+              "MaterialOverride": null,
+              "Materials": null,
+              "Model": "models/sbox_props/office_desk/office_desk.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "RenderOptions": {
+                "GameLayer": true,
+                "OverlayLayer": false,
+                "BloomLayer": false,
+                "AfterUILayer": false
+              },
+              "RenderType": "On",
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelCollider",
+              "__guid": "18445f2e-75fe-4c03-afc7-a69984d368c7",
+              "__enabled": true,
+              "Flags": 0,
+              "ColliderFlags": 0,
+              "Elasticity": null,
+              "Friction": null,
+              "IsTrigger": false,
+              "Model": "models/sbox_props/office_desk/office_desk.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnObjectTriggerEnter": null,
+              "OnObjectTriggerExit": null,
+              "OnTriggerEnter": null,
+              "OnTriggerExit": null,
+              "RollingResistance": null,
+              "Static": false,
+              "Surface": null,
+              "SurfaceVelocity": "0,0,0"
+            },
+            {
+              "__type": "Sandbox.Rigidbody",
+              "__guid": "59288d79-6805-4700-8d49-49b08ba4963c",
+              "__enabled": true,
+              "Flags": 0,
+              "AngularDamping": 0,
+              "EnableImpactDamage": true,
+              "EnhancedCcd": false,
+              "Gravity": true,
+              "GravityScale": 1,
+              "ImpactDamage": 0,
+              "LinearDamping": 0,
+              "Locking": {
+                "X": false,
+                "Y": false,
+                "Z": false,
+                "Pitch": false,
+                "Yaw": false,
+                "Roll": false
+              },
+              "MassCenterOverride": "0,0,0",
+              "MassOverride": 30,
+              "MinImpactDamageSpeed": 500,
+              "MotionEnabled": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OverrideMassCenter": false,
+              "RigidbodyFlags": 0,
+              "StartAsleep": false
+            },
+            {
+              "__type": "ComputerInteractable",
+              "__guid": "fe1d7828-b550-4ad6-af63-aa205eb93c66",
+              "__enabled": true,
+              "Flags": 0,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "Range": 80
+            }
+          ],
+          "Children": [
+            {
+              "__guid": "950d7c48-5e5a-4fd1-8635-b60bd379a31b",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Enter Trigger",
+              "Position": "31.3496361,3.81469727E-05,0",
+              "Rotation": "0,0,0,1",
+              "Scale": "0.447122037,1,1",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [
+                {
+                  "__type": "Sandbox.ModelRenderer",
+                  "__guid": "a3e17cff-1b0a-4dd3-a53c-745c5e987050",
+                  "__enabled": false,
+                  "Flags": 0,
+                  "BodyGroups": 18446744073709551615,
+                  "CreateAttachments": false,
+                  "LodOverride": null,
+                  "MaterialGroup": null,
+                  "MaterialOverride": null,
+                  "Materials": null,
+                  "Model": "models/dev/box.vmdl",
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "RenderOptions": {
+                    "GameLayer": true,
+                    "OverlayLayer": false,
+                    "BloomLayer": false,
+                    "AfterUILayer": false
+                  },
+                  "RenderType": "On",
+                  "Tint": "1,1,1,1"
+                },
+                {
+                  "__type": "Sandbox.BoxCollider",
+                  "__guid": "e1ec999a-9f2f-40ea-a0b9-53be551ce306",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "Center": "0,0,0",
+                  "ColliderFlags": 0,
+                  "Elasticity": null,
+                  "Friction": null,
+                  "IsTrigger": true,
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "OnObjectTriggerEnter": null,
+                  "OnObjectTriggerExit": null,
+                  "OnTriggerEnter": {
+                    "__version": 9,
+                    "__guid": "30ae2dce-b275-439f-8854-85941f22a305",
+                    "__changeId": 1,
+                    "UserData": {
+                      "Title": "On Collider Enter"
+                    },
+                    "Variables": [],
+                    "Nodes": [
+                      {
+                        "Id": 0,
+                        "Type": "input"
+                      }
+                    ],
+                    "Links": []
+                  },
+                  "OnTriggerExit": null,
+                  "RollingResistance": null,
+                  "Scale": "50,50,50",
+                  "Static": false,
+                  "Surface": null,
+                  "SurfaceVelocity": "0,0,0"
+                },
+                {
+                  "__type": "ComputerInteractable",
+                  "__guid": "7f71bd73-33f8-45c8-95ff-b635a9ceda70",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "Range": 100
+                }
+              ],
+              "Children": []
+            },
+            {
+              "__guid": "5803c0a4-220b-4397-94af-3fae0fc1e08b",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Computer",
+              "Position": "1.52587891E-05,4.09272616E-12,32.3995819",
+              "Rotation": "0,0,-1,1.78813934E-07",
+              "Scale": "0.532273889,0.532273889,0.532273889",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [
+                {
+                  "__type": "Sandbox.Prop",
+                  "__guid": "520cd58d-c717-4aec-b292-6ac65b910adc",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "BodyGroups": 18446744073709551615,
+                  "Health": 0,
+                  "IsStatic": false,
+                  "MaterialGroup": null,
+                  "Model": "models/lokamodels/lokachop_sqr.vmdl",
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "OnPropBreak": null,
+                  "OnPropTakeDamage": null,
+                  "StartAsleep": false,
+                  "Tint": "1,1,1,1"
+                },
+                {
+                  "__type": "Sandbox.ModelRenderer",
+                  "__guid": "54188f19-55df-4602-b68c-ed60ca8208e7",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "BodyGroups": 18446744073709551615,
+                  "CreateAttachments": false,
+                  "LodOverride": null,
+                  "MaterialGroup": null,
+                  "MaterialOverride": null,
+                  "Materials": null,
+                  "Model": "models/lokamodels/lokachop_sqr.vmdl",
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "RenderOptions": {
+                    "GameLayer": true,
+                    "OverlayLayer": false,
+                    "BloomLayer": false,
+                    "AfterUILayer": false
+                  },
+                  "RenderType": "On",
+                  "Tint": "1,1,1,1"
+                },
+                {
+                  "__type": "Sandbox.ModelCollider",
+                  "__guid": "c5f9a2bf-63ca-4bfa-af0b-b3e7df8b7e11",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "ColliderFlags": 0,
+                  "Elasticity": null,
+                  "Friction": null,
+                  "IsTrigger": false,
+                  "Model": "models/lokamodels/lokachop_sqr.vmdl",
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "OnObjectTriggerEnter": null,
+                  "OnObjectTriggerExit": null,
+                  "OnTriggerEnter": null,
+                  "OnTriggerExit": null,
+                  "RollingResistance": null,
+                  "Static": false,
+                  "Surface": null,
+                  "SurfaceVelocity": "0,0,0"
+                },
+                {
+                  "__type": "Sandbox.Rigidbody",
+                  "__guid": "fcdd03f4-a167-4858-b850-cb4344d15173",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "AngularDamping": 0,
+                  "EnableImpactDamage": true,
+                  "EnhancedCcd": false,
+                  "Gravity": true,
+                  "GravityScale": 1,
+                  "ImpactDamage": 0,
+                  "LinearDamping": 0,
+                  "Locking": {
+                    "X": false,
+                    "Y": false,
+                    "Z": false,
+                    "Pitch": false,
+                    "Yaw": false,
+                    "Roll": false
+                  },
+                  "MassCenterOverride": "0,0,0",
+                  "MassOverride": 0,
+                  "MinImpactDamageSpeed": 500,
+                  "MotionEnabled": true,
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "OverrideMassCenter": false,
+                  "RigidbodyFlags": 0,
+                  "StartAsleep": false
+                }
+              ],
+              "Children": []
+            },
+            {
+              "__guid": "905b7b27-ee43-445c-9ede-02611b5eeaa2",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Desk Phone",
+              "Position": "5.23101234,24.6068459,32.1720963",
+              "Rotation": "0,0,-0.965925813,-0.258818865",
+              "Scale": "1,1,1",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [
+                {
+                  "__type": "Sandbox.ModelRenderer",
+                  "__guid": "f6f4e08b-6353-4152-b292-3dc405c7c823",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "BodyGroups": 18446744073709551615,
+                  "CreateAttachments": false,
+                  "LodOverride": null,
+                  "MaterialGroup": null,
+                  "MaterialOverride": null,
+                  "Materials": null,
+                  "Model": "models/objects/phone_a.vmdl",
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "RenderOptions": {
+                    "GameLayer": true,
+                    "OverlayLayer": false,
+                    "BloomLayer": false,
+                    "AfterUILayer": false
+                  },
+                  "RenderType": "On",
+                  "Tint": "1,1,1,1"
+                }
+              ],
+              "Children": []
+            },
+            {
+              "__guid": "363cdd27-c938-4f10-a087-2b690440ff67",
+              "__version": 2,
+              "Flags": 0,
+              "Name": "Lamp",
+              "Position": "2.4048605,-22.1816101,32.1421432",
+              "Rotation": "0,0,0.382683486,0.923879385",
+              "Scale": "0.582149744,0.582149744,0.582149744",
+              "Tags": "",
+              "Enabled": true,
+              "NetworkMode": 2,
+              "NetworkFlags": 0,
+              "NetworkOrphaned": 0,
+              "NetworkTransmit": true,
+              "OwnerTransfer": 1,
+              "Components": [
+                {
+                  "__type": "Sandbox.Prop",
+                  "__guid": "5bbec19d-60f3-4e77-8cd9-725a5cc1c550",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "BodyGroups": 18446744073709551615,
+                  "Health": 0,
+                  "IsStatic": false,
+                  "MaterialGroup": null,
+                  "Model": "models/props/desk_lamp/desk_lamp.vmdl",
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "OnPropBreak": null,
+                  "OnPropTakeDamage": null,
+                  "StartAsleep": false,
+                  "Tint": "1,1,1,1"
+                },
+                {
+                  "__type": "Sandbox.ModelRenderer",
+                  "__guid": "fca2482b-c66f-4381-ba88-84437170e0b7",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "BodyGroups": 18446744073709551615,
+                  "CreateAttachments": false,
+                  "LodOverride": null,
+                  "MaterialGroup": null,
+                  "MaterialOverride": null,
+                  "Materials": null,
+                  "Model": "models/props/desk_lamp/desk_lamp.vmdl",
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "RenderOptions": {
+                    "GameLayer": true,
+                    "OverlayLayer": false,
+                    "BloomLayer": false,
+                    "AfterUILayer": false
+                  },
+                  "RenderType": "On",
+                  "Tint": "1,1,1,1"
+                },
+                {
+                  "__type": "Sandbox.ModelCollider",
+                  "__guid": "0fa9d955-6c7c-43a2-8930-e8ff70e5770b",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "ColliderFlags": 0,
+                  "Elasticity": null,
+                  "Friction": null,
+                  "IsTrigger": false,
+                  "Model": "models/props/desk_lamp/desk_lamp.vmdl",
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "OnObjectTriggerEnter": null,
+                  "OnObjectTriggerExit": null,
+                  "OnTriggerEnter": null,
+                  "OnTriggerExit": null,
+                  "RollingResistance": null,
+                  "Static": false,
+                  "Surface": null,
+                  "SurfaceVelocity": "0,0,0"
+                },
+                {
+                  "__type": "Sandbox.Rigidbody",
+                  "__guid": "b93a4fb4-61aa-49e6-a968-7f8ba7d5b5e0",
+                  "__enabled": true,
+                  "Flags": 0,
+                  "AngularDamping": 0,
+                  "EnableImpactDamage": true,
+                  "EnhancedCcd": false,
+                  "Gravity": true,
+                  "GravityScale": 1,
+                  "ImpactDamage": 0,
+                  "LinearDamping": 0,
+                  "Locking": {
+                    "X": false,
+                    "Y": false,
+                    "Z": false,
+                    "Pitch": false,
+                    "Yaw": false,
+                    "Roll": false
+                  },
+                  "MassCenterOverride": "0,0,0",
+                  "MassOverride": 0,
+                  "MinImpactDamageSpeed": 500,
+                  "MotionEnabled": true,
+                  "OnComponentDestroy": null,
+                  "OnComponentDisabled": null,
+                  "OnComponentEnabled": null,
+                  "OnComponentFixedUpdate": null,
+                  "OnComponentStart": null,
+                  "OnComponentUpdate": null,
+                  "OverrideMassCenter": false,
+                  "RigidbodyFlags": 0,
+                  "StartAsleep": false
+                }
+              ],
+              "Children": []
+            }
+          ]
         }
       ]
     },
@@ -9673,6 +10213,55 @@
           "Children": []
         }
       ]
+    },
+    {
+      "__guid": "165fae13-0431-4817-9b0d-17a4103dd4f4",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "Computer Terminal",
+      "Position": "0,0,0",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "",
+      "Enabled": true,
+      "NetworkMode": 0,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
+        {
+          "__type": "Sandbox.ScreenPanel",
+          "__guid": "9601edea-e4ec-4b17-818a-a343fe4e8057",
+          "__enabled": true,
+          "Flags": 0,
+          "AutoScreenScale": true,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "Opacity": 1,
+          "Scale": 1,
+          "ScaleStrategy": "ConsistentHeight",
+          "TargetCamera": null,
+          "ZIndex": 260
+        },
+        {
+          "__type": "Sandbox.ComputerTerminalPanel",
+          "__guid": "eaddd042-eedb-47a1-aad2-4835f4810152",
+          "__enabled": true,
+          "Flags": 0,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null
+        }
+      ],
+      "Children": []
     }
   ],
   "SceneProperties": {
@@ -9716,8 +10305,12 @@
   "__references": [
     "defqwop.glockg20#207365",
     "facepunch.ladder#139177",
+    "facepunch.office_desk#149879",
+    "fish.desk_lamp#105254",
+    "loka.lokachop_sqr#24856",
     "pcjr.chair20#41836",
     "peteisverycool.linkragdoll#185308",
+    "playbtg.phonea#119445",
     "polyrats.untitled_13#13983",
     "randkassets.antique_chair#26996",
     "thebox.metalstairs#179430"

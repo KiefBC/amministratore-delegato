@@ -4,50 +4,53 @@
 @inherits PanelComponent
 
 <root class="@RootClass">
-	@if ( !IsIdleCollapsed && HasBusinessCard )
+	@if ( !ComputerTerminalSystem.IsAnyTerminalOpen && !IsIdleCollapsed && HasBusinessCard )
 	{
 		<BusinessCardPanel class="business-card" style="@BusinessCardStyle()" PlayerName="@BusinessCardName()" NetWorthText="@BusinessCardWorthText()" Affiliation="@BusinessCardAffiliation()" CloseClicked=@HideBusinessCard DragStarted=@StartBusinessCardDrag Dragged=@DragBusinessCard DragStopped=@StopBusinessCardDrag />
 	}
 
-	<div class="chat-window">
-		<div class="chat-title">Placeholder Chat Title</div>
+	@if ( !ComputerTerminalSystem.IsAnyTerminalOpen )
+	{
+		<div class="chat-window">
+			<div class="chat-title">Placeholder Chat Title</div>
 
-		@if ( !IsIdleCollapsed )
-		{
-			<div class="chat-messages">
-				@foreach ( var message in VisibleMessages() )
+			@if ( !IsIdleCollapsed )
+			{
+				<div class="chat-messages">
+					@foreach ( var message in VisibleMessages() )
+					{
+						<div class="chat-message">
+							@if ( CanOpenBusinessCard( message ) )
+							{
+								<span class="chat-sender interactive" onclick="@(() => ShowBusinessCard( message ))">@message.SenderName</span>
+							}
+							else
+							{
+								<span class="chat-sender">@message.SenderName</span>
+							}
+							<span class="chat-separator">:</span>
+							<span class="chat-text">@message.Message</span>
+						</div>
+					}
+				</div>
+
+				@if ( _isOpen )
 				{
-					<div class="chat-message">
-						@if ( CanOpenBusinessCard( message ) )
-						{
-							<span class="chat-sender interactive" onclick="@(() => ShowBusinessCard( message ))">@message.SenderName</span>
-						}
-						else
-						{
-							<span class="chat-sender">@message.SenderName</span>
-						}
-						<span class="chat-separator">:</span>
-						<span class="chat-text">@message.Message</span>
+					<div class="chat-input-row">
+						<span class="chat-prompt">&gt;</span>
+						<TextEntry @ref="_input" class="chat-input" Value:bind=@_draft onsubmit="@SubmitMessage" placeholder="Type global message..." />
 					</div>
 				}
-			</div>
-
-			@if ( _isOpen )
-			{
-				<div class="chat-input-row">
-					<span class="chat-prompt">&gt;</span>
-					<TextEntry @ref="_input" class="chat-input" Value:bind=@_draft onsubmit="@SubmitMessage" placeholder="Type global message..." />
-				</div>
+				else
+				{
+					<div class="chat-input-row inactive">
+						<span class="chat-prompt">&gt;</span>
+						<span class="chat-input-placeholder">Press Enter to chat...</span>
+					</div>
+				}
 			}
-			else
-			{
-				<div class="chat-input-row inactive">
-					<span class="chat-prompt">&gt;</span>
-					<span class="chat-input-placeholder">Press Enter to chat...</span>
-				</div>
-			}
-		}
-	</div>
+		</div>
+	}
 </root>
 
 @code {
@@ -100,6 +103,13 @@
 	{
 		_chat = ChatSystem.Current;
 		FindLocalPlayer();
+
+		if ( ComputerTerminalSystem.IsAnyTerminalOpen )
+		{
+			if ( _isOpen ) Close( clearDraft: true );
+			else HideBusinessCard();
+			return;
+		}
 
 		if ( _suppressOpenUntilChatReleased && !Input.Down( "Chat" ) )
 		{
@@ -420,6 +430,7 @@
 		hc.Add( IsIdleCollapsed );
 		hc.Add( IsCursorUsable );
 		hc.Add( _draggingBusinessCard );
+		hc.Add( ComputerTerminalSystem.IsAnyTerminalOpen );
 		hc.Add( (int)_businessCardPosition.x );
 		hc.Add( (int)_businessCardPosition.y );
 

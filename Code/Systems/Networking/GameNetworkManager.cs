@@ -135,6 +135,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		ConfigureNetworkObject( player );
 		EnsurePlayerProfile( player );
 		EnsurePlayerStats( player );
+		EnsurePlayerFinance( player );
 		EnsurePlayerAppearance( player );
 
 		foreach ( var profile in player.Components.GetAll<PlayerProfileComponent>( FindMode.EverythingInSelfAndDescendants ) )
@@ -145,6 +146,11 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		foreach ( var stats in player.Components.GetAll<PlayerStatsComponent>( FindMode.EverythingInSelfAndDescendants ) )
 		{
 			ConfigureNetworkObject( stats.GameObject );
+		}
+
+		foreach ( var finance in player.Components.GetAll<PlayerFinanceComponent>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			ConfigureNetworkObject( finance.GameObject );
 		}
 
 		foreach ( var backpack in player.Components.GetAll<Backpack>( FindMode.EverythingInSelfAndDescendants ) )
@@ -176,6 +182,16 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( profile.IsValid() ) return;
 
 		player.Components.Create<PlayerProfileComponent>();
+	}
+
+	private static void EnsurePlayerFinance( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+
+		var finance = player.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+		if ( finance.IsValid() ) return;
+
+		player.Components.Create<PlayerFinanceComponent>();
 	}
 
 	private static void EnsurePlayerAppearance( GameObject player )

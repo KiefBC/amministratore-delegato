@@ -4,5 +4,12 @@
 @inherits PanelComponent
 
 <root>
-	<div class="dot"></div>
+	@if ( !ComputerTerminalSystem.IsAnyTerminalOpen )
+	{
+		<div class="dot"></div>
+	}
 </root>
+
+@code {
+	protected override int BuildHash() => System.HashCode.Combine( ComputerTerminalSystem.IsAnyTerminalOpen );
+}
