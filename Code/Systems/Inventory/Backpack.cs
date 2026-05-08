@@ -10,6 +10,7 @@ public sealed class Backpack : Component
 {
 	private const float MaxFireOriginDistance = 128f;
 	public const int EquipmentSlotCount = 8;
+	public const int ConsumableSlotCount = 4;
 
 	public enum EquipmentSlot
 	{
@@ -36,7 +37,7 @@ public sealed class Backpack : Component
 	private int _nextInstanceId = 1;
 
 	public int SlotCount => Rows * Cols;
-	public int TotalSlotCount => SlotCount + EquipmentSlotCount;
+	public int TotalSlotCount => SlotCount + EquipmentSlotCount + ConsumableSlotCount;
 	public (int row, int col)? Selected => _selected;
 
 	public enum SortMode
@@ -92,7 +93,17 @@ public sealed class Backpack : Component
 
 	public bool IsEquipmentSlot( int slot )
 	{
-		return slot >= SlotCount && slot < TotalSlotCount;
+		return slot >= SlotCount && slot < SlotCount + EquipmentSlotCount;
+	}
+
+	public int ConsumableSlotIndex( int index )
+	{
+		return SlotCount + EquipmentSlotCount + index;
+	}
+
+	public bool IsConsumableSlot( int slot )
+	{
+		return slot >= SlotCount + EquipmentSlotCount && slot < TotalSlotCount;
 	}
 
 	public ItemDefinition GetDefinition( InventoryItemState item )
@@ -547,11 +558,12 @@ public sealed class Backpack : Component
 
 	private bool CanPlaceItemInSlot( InventoryItemState item, int slot )
 	{
-		if ( !item.IsValid || !InBounds( slot ) ) return false;
-		if ( !IsEquipmentSlot( slot ) ) return true;
-
 		var definition = GetDefinition( item );
+		if ( !item.IsValid || !InBounds( slot ) ) return false;
+		if ( IsGridSlot( slot ) ) return true;
 		if ( definition is null ) return false;
+		if ( IsConsumableSlot( slot ) ) return definition.IsConsumable;
+		if ( !IsEquipmentSlot( slot ) ) return false;
 
 		return EquipmentSlotForIndex( slot ) switch
 		{

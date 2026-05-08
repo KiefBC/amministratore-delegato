@@ -5,7 +5,7 @@
   "Rarity": "Common",
   "Value": 5,
   "Weight": 1,
-  "MaxStack": 5,
+  "MaxStack": 50,
   "WorldModel": "",
   "Weapon": {
     "EquippedModel": "",

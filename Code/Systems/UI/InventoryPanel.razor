@@ -46,10 +46,16 @@
 					<div class="quick-slots">
 						@for ( var i = 0; i < QuickSlotKeys.Length; i++ )
 						{
-							var item = QuickItemFor( i );
+							var slotIndex = ConsumableSlotIndex( i );
+							var isHover = _hoveredConsumableSlot == i;
+							var isDragSource = slotIndex.HasValue && _dragging && _dragSourceSlot == slotIndex.Value;
+							var item = slotIndex.HasValue && !isDragSource ? _backpack.GetItemAt( slotIndex.Value ) : default;
 							var definition = DefinitionFor( item );
-							<div class="quick-slot @(item.IsValid ? "filled" : "empty")">
-								<span class="quick-key">@QuickSlotKeys[i]</span>
+							<div class="quick-slot @(item.IsValid ? "filled" : "empty") @(isHover ? "hover" : "")">
+								@if ( !string.IsNullOrEmpty( QuickSlotKeys[i] ) )
+								{
+									<span class="quick-key">@QuickSlotKeys[i]</span>
+								}
 								@if ( item.IsValid && definition is not null )
 								{
 									@if ( !string.IsNullOrEmpty( definition.Icon ) )
@@ -259,7 +265,8 @@
 	private const int InventoryCardMinHeight = 552;
 	private const int InventoryCardChromeWidth = 32;
 	private const int InventoryCardChromeHeight = 124;
-	private static readonly string[] QuickSlotKeys = { "Z", "X", "C", "V" };
+	private static readonly string[] QuickSlotKeys = { "Z", "X", "", "" };
+	private static readonly string[] ConsumableHotkeyActions = { "Consumable1", "Consumable2" };
 
 	private Backpack _backpack;
 	private UnitComponent _unit;
@@ -273,12 +280,14 @@
 	private Vector2 _mousePos;
 	private (int row, int col)? _hoveredSlot;
 	private string _hoveredEquipmentSlot;
+	private int? _hoveredConsumableSlot;
 	private bool _hoveredDropZone;
 	private Backpack.SortMode? _hoveredSortButton;
 	private bool _previewDragSuppressingInventoryInput;
 	private Sandbox.UI.Panel _gridPanel;
 	private Sandbox.UI.Panel _sortButtonsPanel;
 	private Sandbox.UI.Panel _equipmentSlotsPanel;
+	private Sandbox.UI.Panel _quickSlotsPanel;
 	private Sandbox.UI.Panel _dropZonePanel;
 	private Sandbox.UI.Panel _characterPreviewPanel;
 	private int _cachedLayoutRows = -1;
@@ -332,6 +341,8 @@
 			Close();
 		}
 
+		PollConsumableHotkeys();
+
 		if ( ShouldSuppressInventoryInputForCharacterPreview() )
 		{
 			ClearInventoryInteractionState();
@@ -351,6 +362,7 @@
 		PollHoveredSlot();
 		PollHoveredSortButton();
 		PollHoveredEquipmentSlot();
+		PollHoveredConsumableSlot();
 		PollHoveredDropZone();
 		PollMouseInput();
 	}
@@ -401,8 +413,26 @@
 		_dragging = false;
 		_hoveredSlot = null;
 		_hoveredEquipmentSlot = null;
+		_hoveredConsumableSlot = null;
 		_hoveredDropZone = false;
 		_hoveredSortButton = null;
+	}
+
+	private void PollConsumableHotkeys()
+	{
+		if ( _isOpen || !_backpack.IsValid() || !_player.IsValid() ) return;
+		if ( UiModeSystem.Current?.BlocksShortcuts == true ) return;
+
+		for ( var i = 0; i < ConsumableHotkeyActions.Length; i++ )
+		{
+			if ( !Input.Pressed( ConsumableHotkeyActions[i] ) ) continue;
+
+			var slot = _backpack.ConsumableSlotIndex( i );
+			if ( !_backpack.GetItemAt( slot ).IsValid ) return;
+
+			GameNetworkRpc.RequestUseInventorySlot( _player, slot );
+			return;
+		}
 	}
 
 	private void RefreshInventoryLayoutCache()
@@ -416,6 +446,7 @@
 		_gridPanel = null;
 		_sortButtonsPanel = null;
 		_equipmentSlotsPanel = null;
+		_quickSlotsPanel = null;
 		_dropZonePanel = null;
 		_cachedLayoutRows = rows;
 		_cachedLayoutCols = cols;
@@ -453,6 +484,16 @@
 					_backpack.ClearSelection();
 				}
 			}
+			else if ( ConsumableSlotIndex( _hoveredConsumableSlot ) is var consumableSlot && consumableSlot.HasValue )
+			{
+				if ( _backpack.GetItemAt( consumableSlot.Value ).IsValid )
+				{
+					_dragSourceSlot = consumableSlot.Value;
+					_mouseDownPos = _mousePos;
+					_dragging = false;
+					_backpack.ClearSelection();
+				}
+			}
 		}
 
 		if ( Input.Released( "Attack1" ) && _dragSourceSlot.HasValue )
@@ -479,6 +520,13 @@
 						GameNetworkRpc.RequestMoveInventorySlot( _player, fromSlot, toEquipmentSlot.Value );
 					}
 				}
+				else if ( ConsumableSlotIndex( _hoveredConsumableSlot ) is var toConsumableSlot && toConsumableSlot.HasValue )
+				{
+					if ( toConsumableSlot.Value != fromSlot )
+					{
+						GameNetworkRpc.RequestMoveInventorySlot( _player, fromSlot, toConsumableSlot.Value );
+					}
+				}
 				else if ( _hoveredDropZone || (!_hoveredSlot.HasValue && string.IsNullOrEmpty( _hoveredEquipmentSlot )) )
 				{
 					GameNetworkRpc.RequestDropInventorySlot( _player, fromSlot );
@@ -503,6 +551,13 @@
 			if ( _backpack.GetItemAt( row, col ).IsValid )
 			{
 				GameNetworkRpc.RequestUseInventorySlot( _player, ToSlot( row, col ) );
+			}
+		}
+		else if ( Input.Pressed( "Attack2" ) && ConsumableSlotIndex( _hoveredConsumableSlot ) is var useConsumableSlot && useConsumableSlot.HasValue )
+		{
+			if ( _backpack.GetItemAt( useConsumableSlot.Value ).IsValid )
+			{
+				GameNetworkRpc.RequestUseInventorySlot( _player, useConsumableSlot.Value );
 			}
 		}
 	}
@@ -609,6 +664,39 @@
 		_hoveredEquipmentSlot = null;
 	}
 
+	private void PollHoveredConsumableSlot()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_hoveredConsumableSlot = null;
+			return;
+		}
+
+		_quickSlotsPanel ??= FindByClass( Panel, "quick-slots" );
+		if ( _quickSlotsPanel is null )
+		{
+			_hoveredConsumableSlot = null;
+			return;
+		}
+
+		var screenPos = _mousePos;
+		var i = 0;
+		foreach ( var child in _quickSlotsPanel.Children )
+		{
+			if ( i >= Backpack.ConsumableSlotCount ) break;
+
+			if ( child.IsInside( screenPos ) )
+			{
+				_hoveredConsumableSlot = i;
+				return;
+			}
+
+			i++;
+		}
+
+		_hoveredConsumableSlot = null;
+	}
+
 	private void PollHoveredDropZone()
 	{
 		if ( !_isOpen || Panel is null )
@@ -657,6 +745,7 @@
 		_gridPanel = null;
 		_sortButtonsPanel = null;
 		_equipmentSlotsPanel = null;
+		_quickSlotsPanel = null;
 		_dropZonePanel = null;
 		_characterPreviewPanel = null;
 		_cachedLayoutRows = -1;
@@ -754,7 +843,11 @@
 		rows.Add( ("Value", $"${definition.Value * item.StackCount:N0}") );
 		rows.Add( ("Weight", $"{definition.Weight * item.StackCount}") );
 
-		if ( item.StackCount > 1 )
+		if ( definition.IsConsumable )
+		{
+			rows.Add( ("Amount", $"{item.StackCount} / {definition.MaxStack}") );
+		}
+		else if ( item.StackCount > 1 )
 		{
 			rows.Add( ("Stack", $"{item.StackCount} / {definition.MaxStack}") );
 		}
@@ -776,6 +869,8 @@
 			rows.Add( ("-", "") );
 			rows.Add( ("Type", $"{consumable.Category}") );
 			rows.Add( ("Tier", $"{consumable.Tier}") );
+			var benefit = ConsumableBenefitText( consumable );
+			if ( !string.IsNullOrEmpty( benefit ) ) rows.Add( ("Benefit", benefit) );
 			AddSignedTooltipRow( rows, "Health", consumable.Health );
 			AddSignedTooltipRow( rows, "Stamina", consumable.Stamina );
 			AddSignedTooltipRow( rows, "Hydration", consumable.Hydration );
@@ -788,6 +883,23 @@
 		}
 
 		return rows;
+	}
+
+	private string ConsumableBenefitText( ConsumableStats consumable )
+	{
+		var parts = new System.Collections.Generic.List<string>();
+		AddBenefitPart( parts, "HP", consumable.Health );
+		AddBenefitPart( parts, "STA", consumable.Stamina );
+		AddBenefitPart( parts, "HYD", consumable.Hydration );
+		AddBenefitPart( parts, "FOOD", consumable.Nutrition );
+
+		return string.Join( ", ", parts );
+	}
+
+	private void AddBenefitPart( System.Collections.Generic.List<string> parts, string label, float amount )
+	{
+		if ( System.MathF.Abs( amount ) <= 0.001f ) return;
+		parts.Add( $"{label} {(amount > 0f ? "+" : "")}{amount:0.##}" );
 	}
 
 	private void AddSignedTooltipRow( System.Collections.Generic.List<(string, string)> rows, string label, float amount, string suffix = "" )
@@ -882,22 +994,12 @@
 		};
 	}
 
-	private InventoryItemState QuickItemFor( int index )
+	private int? ConsumableSlotIndex( int? index )
 	{
-		if ( !_backpack.IsValid() ) return default;
+		if ( !_backpack.IsValid() || !index.HasValue ) return null;
+		if ( index.Value < 0 || index.Value >= Backpack.ConsumableSlotCount ) return null;
 
-		var seen = 0;
-		foreach ( var item in _backpack.Items.Values )
-		{
-			if ( !_backpack.IsGridSlot( item.SlotIndex ) ) continue;
-			var definition = DefinitionFor( item );
-			if ( definition is null || definition.IsWeapon || definition.IsCurrency ) continue;
-
-			if ( seen == index ) return item;
-			seen++;
-		}
-
-		return default;
+		return _backpack.ConsumableSlotIndex( index.Value );
 	}
 
 	private int TotalWeight()
@@ -962,7 +1064,7 @@
 			return ToSlot( _hoveredSlot.Value.row, _hoveredSlot.Value.col );
 		}
 
-		return EquipmentSlotIndex( _hoveredEquipmentSlot );
+		return EquipmentSlotIndex( _hoveredEquipmentSlot ) ?? ConsumableSlotIndex( _hoveredConsumableSlot );
 	}
 
 	protected override int BuildHash()
@@ -993,6 +1095,7 @@
 		hc.Add( _backpack.Selected );
 		hc.Add( _hoveredSlot );
 		hc.Add( _hoveredEquipmentSlot );
+		hc.Add( _hoveredConsumableSlot );
 		hc.Add( _hoveredDropZone );
 		hc.Add( _hoveredSortButton );
 		hc.Add( movingMouseHash );

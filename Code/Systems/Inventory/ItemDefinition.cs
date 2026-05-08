@@ -124,7 +124,7 @@ public partial class ItemDefinition : GameResource
 				Kind = ItemKind.Consumable,
 				Value = 2,
 				Weight = 1,
-				MaxStack = 10,
+				MaxStack = 50,
 				Consumable = new ConsumableStats
 				{
 					Category = ConsumableCategory.Drink,
@@ -140,7 +140,7 @@ public partial class ItemDefinition : GameResource
 				Kind = ItemKind.Consumable,
 				Value = 6,
 				Weight = 1,
-				MaxStack = 6,
+				MaxStack = 50,
 				Consumable = new ConsumableStats
 				{
 					Category = ConsumableCategory.Drink,
@@ -157,7 +157,7 @@ public partial class ItemDefinition : GameResource
 				Kind = ItemKind.Consumable,
 				Value = 5,
 				Weight = 1,
-				MaxStack = 5,
+				MaxStack = 50,
 				Consumable = new ConsumableStats
 				{
 					Category = ConsumableCategory.Food,
@@ -173,7 +173,7 @@ public partial class ItemDefinition : GameResource
 				Kind = ItemKind.Consumable,
 				Value = 25,
 				Weight = 1,
-				MaxStack = 3,
+				MaxStack = 50,
 				Consumable = new ConsumableStats
 				{
 					Category = ConsumableCategory.Food,
