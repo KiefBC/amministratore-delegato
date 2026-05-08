@@ -79,143 +79,149 @@
 					</div>
 				</div>
 
-				<div class="loadout-column">
-					<div class="equipment-slots">
-						@foreach ( var slot in EquipmentSlots() )
-						{
-							var isHover = _hoveredEquipmentSlot == slot.Key;
-							var isDragSource = _dragging && _dragSourceSlot == slot.SlotIndex;
-							var item = isDragSource ? default : slot.Item;
-							var definition = isDragSource ? null : slot.Definition;
-							<div class="equipment-slot @(item.IsValid ? "filled" : "empty") @(isHover ? "hover" : "") @(slot.Key)">
-								@if ( item.IsValid && definition is not null )
-								{
-									@if ( !string.IsNullOrEmpty( definition.Icon ) )
+				<div class="inventory-main-container">
+					<div class="equipment-component">
+						<div class="equipment-slots">
+							@foreach ( var slot in EquipmentSlots() )
+							{
+								var isHover = _hoveredEquipmentSlot == slot.Key;
+								var isDragSource = _dragging && _dragSourceSlot == slot.SlotIndex;
+								var item = isDragSource ? default : slot.Item;
+								var definition = isDragSource ? null : slot.Definition;
+								<div class="equipment-slot @(item.IsValid ? "filled" : "empty") @(isHover ? "hover" : "") @(slot.Key)">
+									@if ( item.IsValid && definition is not null )
 									{
-										<div class="equipment-icon" style="background-image: url(@definition.Icon);"></div>
+										@if ( !string.IsNullOrEmpty( definition.Icon ) )
+										{
+											<div class="equipment-icon" style="background-image: url(@definition.Icon);"></div>
+										}
+										else
+										{
+											<div class="icon-fallback">@FallbackLabel( definition )</div>
+										}
 									}
 									else
 									{
-										<div class="icon-fallback">@FallbackLabel( definition )</div>
+										<div class="slot-glyph">@slot.Glyph</div>
 									}
-								}
-								else
-								{
-									<div class="slot-glyph">@slot.Glyph</div>
-								}
-								<span class="equipment-label">@slot.Label</span>
+									<span class="equipment-label">@slot.Label</span>
+								</div>
+							}
+						</div>
+					</div>
+
+					<div class="inventory-component">
+						<div class="inventory-card" style="@InventoryCardStyle()">
+							<div class="inventory-meta">
+								<div class="meta-pill">
+									<span class="meta-icon">$</span>
+									<span>@_backpack.Wallet.ToString( "N0" )</span>
+								</div>
+								<div class="meta-pill">
+									<span class="meta-icon">WT</span>
+									<span>@FormatCarryWeight() / @CarryCapacity</span>
+								</div>
 							</div>
-						}
-					</div>
-				</div>
 
-				<div class="inventory-card">
-					<div class="inventory-meta">
-						<div class="meta-pill">
-							<span class="meta-icon">$</span>
-							<span>@_backpack.Wallet.ToString( "N0" )</span>
-						</div>
-						<div class="meta-pill">
-							<span class="meta-icon">WT</span>
-							<span>@FormatCarryWeight() / @CarryCapacity</span>
-						</div>
-					</div>
+							<div class="category-tabs">
+								<span class="category-tab active">Weapons</span>
+								<span class="category-tab">Armor</span>
+								<span class="category-tab">Tools</span>
+								<span class="category-tab">Materials</span>
+							</div>
 
-					<div class="category-tabs">
-						<span class="category-tab active">Weapons</span>
-						<span class="category-tab">Armor</span>
-						<span class="category-tab">Tools</span>
-						<span class="category-tab">Materials</span>
-					</div>
+							<div class="inventory-title">Armor & Weapons</div>
 
-					<div class="inventory-title">Armor & Weapons</div>
-
-					<div class="grid">
-						@for ( int r = 0; r < _backpack.Rows; r++ )
-						{
-							<div class="grid-row">
-								@for ( int c = 0; c < _backpack.Cols; c++ )
+							<div class="grid">
+								@for ( int r = 0; r < InventoryRows; r++ )
 								{
-									var row = r;
-									var col = c;
-									var slotIndex = ToSlot( row, col );
-									var isDragSource = _dragging && _dragSourceSlot == slotIndex;
-									var item = isDragSource ? default : _backpack.GetItemAt( slotIndex );
-									var definition = DefinitionFor( item );
-									var selected = !isDragSource
-										&& _backpack.Selected is var sel && sel.HasValue
-										&& sel.Value.row == row && sel.Value.col == col;
-									<div class="cell @(item.IsValid ? "filled" : "empty") @(selected ? "selected" : "")"
-										 style="@CellStyle( definition, selected, item.IsValid )">
-										@if ( item.IsValid && definition is not null )
+									<div class="grid-row">
+										@for ( int c = 0; c < InventoryCols; c++ )
 										{
-											@if ( !string.IsNullOrEmpty( definition.Icon ) )
+											var row = r;
+											var col = c;
+											var slotIndex = ToSlot( row, col );
+											var isDragSource = _dragging && _dragSourceSlot == slotIndex;
+											var item = isDragSource ? default : _backpack.GetItemAt( slotIndex );
+											var definition = DefinitionFor( item );
+											var selected = !isDragSource
+												&& _backpack.Selected is var sel && sel.HasValue
+												&& sel.Value.row == row && sel.Value.col == col;
+											<div class="cell @(item.IsValid ? "filled" : "empty") @(selected ? "selected" : "")"
+												 style="@CellStyle( definition, selected, item.IsValid )">
+												@if ( item.IsValid && definition is not null )
+												{
+													@if ( !string.IsNullOrEmpty( definition.Icon ) )
+													{
+														<div class="icon" style="background-image: url(@definition.Icon);"></div>
+													}
+													else
+													{
+														<div class="icon-fallback">@FallbackLabel( definition )</div>
+													}
+												@if ( item.StackCount > 1 )
+												{
+													<div class="stack">@FormatStack( item, definition )</div>
+												}
+											}
+										</div>
+									}
+									</div>
+								}
+							</div>
+
+							<div class="sort-line">
+								<span>Sort by:</span>
+								<div class="sort-buttons">
+									<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Type ? "hover" : "")">Type</div>
+									<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Rarity ? "hover" : "")">Rarity</div>
+									<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Worth ? "hover" : "")">Value</div>
+									<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Weight ? "hover" : "")">Weight</div>
+								</div>
+							</div>
+
+						</div>
+
+						<div class="drop-zone @(_hoveredDropZone ? "hover" : "")" style="@DropZoneStyle()">
+							<div class="drop-icon"></div>
+							<span>Drop</span>
+						</div>
+					</div>
+
+					<div class="tooltip-component">
+						@if ( !_dragging && HoveredItemSlot() is var hoverSlot && hoverSlot.HasValue )
+						{
+							var hoverItem = _backpack.GetItemAt( hoverSlot.Value );
+							var hoverDefinition = DefinitionFor( hoverItem );
+							if ( hoverItem.IsValid && hoverDefinition is not null )
+							{
+								<div class="tooltip rarity-@hoverDefinition.Rarity.ToString().ToLowerInvariant()">
+									<div class="tooltip-header">
+										<span class="tooltip-name">@TooltipName( hoverDefinition )</span>
+										<span class="tooltip-rarity">@hoverDefinition.Rarity</span>
+									</div>
+									<div class="tooltip-divider"></div>
+									<div class="tooltip-rows">
+										@foreach ( var (label, value) in TooltipRows( hoverItem, hoverDefinition ) )
+										{
+											@if ( label == "-" )
 											{
-												<div class="icon" style="background-image: url(@definition.Icon);"></div>
+												<div class="tooltip-divider"></div>
 											}
 											else
 											{
-												<div class="icon-fallback">@FallbackLabel( definition )</div>
+												<div class="tooltip-row">
+													<span class="tooltip-label">@label</span>
+													<span class="tooltip-value">@value</span>
+												</div>
 											}
-										@if ( item.StackCount > 1 )
-										{
-											<div class="stack">@FormatStack( item, definition )</div>
 										}
-									}
+									</div>
 								</div>
 							}
-							</div>
 						}
 					</div>
-
-					<div class="sort-line">
-						<span>Sort by:</span>
-						<div class="sort-buttons">
-							<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Type ? "hover" : "")">Type</div>
-							<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Rarity ? "hover" : "")">Rarity</div>
-							<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Worth ? "hover" : "")">Value</div>
-							<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Weight ? "hover" : "")">Weight</div>
-						</div>
-					</div>
-
 				</div>
-
-				<div class="drop-zone @(_hoveredDropZone ? "hover" : "")">
-					<div class="drop-icon"></div>
-					<span>Drop</span>
-				</div>
-
-				@if ( !_dragging && HoveredItemSlot() is var hoverSlot && hoverSlot.HasValue )
-				{
-					var hoverItem = _backpack.GetItemAt( hoverSlot.Value );
-					var hoverDefinition = DefinitionFor( hoverItem );
-					if ( hoverItem.IsValid && hoverDefinition is not null )
-					{
-						<div class="tooltip rarity-@hoverDefinition.Rarity.ToString().ToLowerInvariant()">
-							<div class="tooltip-header">
-								<span class="tooltip-name">@TooltipName( hoverDefinition )</span>
-								<span class="tooltip-rarity">@hoverDefinition.Rarity</span>
-							</div>
-							<div class="tooltip-divider"></div>
-							<div class="tooltip-rows">
-								@foreach ( var (label, value) in TooltipRows( hoverItem, hoverDefinition ) )
-								{
-									@if ( label == "-" )
-									{
-										<div class="tooltip-divider"></div>
-									}
-									else
-									{
-										<div class="tooltip-row">
-											<span class="tooltip-label">@label</span>
-											<span class="tooltip-value">@value</span>
-										</div>
-									}
-								}
-							</div>
-						</div>
-					}
-				}
 			</div>
 
 			<div class="bottom-hints">
@@ -247,6 +253,12 @@
 @code {
 	private const float DragThresholdPx = 6f;
 	private const int CarryCapacity = 300;
+	private const int InventoryCellSize = 68;
+	private const int InventoryCellGap = 6;
+	private const int InventoryCardMinWidth = 500;
+	private const int InventoryCardMinHeight = 552;
+	private const int InventoryCardChromeWidth = 32;
+	private const int InventoryCardChromeHeight = 124;
 	private static readonly string[] QuickSlotKeys = { "Z", "X", "C", "V" };
 
 	private Backpack _backpack;
@@ -270,10 +282,18 @@
 	private Sandbox.UI.Panel _equipmentSlotsPanel;
 	private Sandbox.UI.Panel _dropZonePanel;
 	private Sandbox.UI.Panel _characterPreviewPanel;
+	private int _cachedLayoutRows = -1;
+	private int _cachedLayoutCols = -1;
 
 	private int Level => _stats.IsValid() ? _stats.PlayerLevel : 1;
 	private float ExperiencePercent => _stats.IsValid() ? _stats.PlayerLevelProgressPercent : 0f;
 	private string ExperienceText => _stats.IsValid() ? $"Avg: {(ExperiencePercent * 100f):0}%" : "Stats loading";
+	private int InventoryRows => int.Max( 1, _backpack?.Rows ?? 1 );
+	private int InventoryCols => int.Max( 1, _backpack?.Cols ?? 1 );
+	private int InventoryGridWidth => GridSpan( InventoryCols );
+	private int InventoryGridHeight => GridSpan( InventoryRows );
+	private int InventoryCardWidth => int.Max( InventoryCardMinWidth, InventoryGridWidth + InventoryCardChromeWidth );
+	private int InventoryCardHeight => int.Max( InventoryCardMinHeight, InventoryGridHeight + InventoryCardChromeHeight );
 
 	private Vector2 CursorCss
 	{
@@ -317,6 +337,8 @@
 			ClearInventoryInteractionState();
 			return;
 		}
+
+		RefreshInventoryLayoutCache();
 
 		if ( _isOpen && _dragSourceSlot.HasValue && !_dragging )
 		{
@@ -382,6 +404,22 @@
 		_hoveredEquipmentSlot = null;
 		_hoveredDropZone = false;
 		_hoveredSortButton = null;
+	}
+
+	private void RefreshInventoryLayoutCache()
+	{
+		if ( !_isOpen || !_backpack.IsValid() ) return;
+
+		var rows = InventoryRows;
+		var cols = InventoryCols;
+		if ( rows == _cachedLayoutRows && cols == _cachedLayoutCols ) return;
+
+		_gridPanel = null;
+		_sortButtonsPanel = null;
+		_equipmentSlotsPanel = null;
+		_dropZonePanel = null;
+		_cachedLayoutRows = rows;
+		_cachedLayoutCols = cols;
 	}
 
 	private void PollMouseInput()
@@ -621,8 +659,26 @@
 		_equipmentSlotsPanel = null;
 		_dropZonePanel = null;
 		_characterPreviewPanel = null;
+		_cachedLayoutRows = -1;
+		_cachedLayoutCols = -1;
 		_uiState?.ReleaseUIFocus( this );
 		_backpack?.ClearSelection();
+	}
+
+	private static int GridSpan( int count )
+	{
+		count = int.Max( 1, count );
+		return (count * InventoryCellSize) + ((count - 1) * InventoryCellGap);
+	}
+
+	private string InventoryCardStyle()
+	{
+		return $"width: {InventoryCardWidth}px; height: {InventoryCardHeight}px;";
+	}
+
+	private string DropZoneStyle()
+	{
+		return $"height: {InventoryCardHeight}px;";
 	}
 
 	private string CellStyle( ItemDefinition definition, bool selected, bool filled )
@@ -704,7 +760,31 @@
 			rows.Add( ("Hold Type", $"{weapon.HoldType}") );
 		}
 
+		if ( definition.IsConsumable )
+		{
+			var consumable = definition.Consumable;
+			rows.Add( ("-", "") );
+			rows.Add( ("Type", $"{consumable.Category}") );
+			rows.Add( ("Tier", $"{consumable.Tier}") );
+			AddSignedTooltipRow( rows, "Health", consumable.Health );
+			AddSignedTooltipRow( rows, "Stamina", consumable.Stamina );
+			AddSignedTooltipRow( rows, "Hydration", consumable.Hydration );
+			AddSignedTooltipRow( rows, "Nutrition", consumable.Nutrition );
+			AddSignedTooltipRow( rows, "Health Regen", consumable.HealthRegenPerSecond, "/sec" );
+			AddSignedTooltipRow( rows, "Stamina Regen", consumable.StaminaRegenPerSecond, "/sec" );
+
+			if ( consumable.EffectDuration > 0f ) rows.Add( ("Duration", $"{consumable.EffectDuration:0}s") );
+			if ( consumable.HealthXp > 0f ) rows.Add( ("Health XP", $"{consumable.HealthXp:0.#}") );
+		}
+
 		return rows;
+	}
+
+	private void AddSignedTooltipRow( System.Collections.Generic.List<(string, string)> rows, string label, float amount, string suffix = "" )
+	{
+		if ( System.MathF.Abs( amount ) <= 0.001f ) return;
+
+		rows.Add( (label, $"{(amount > 0f ? "+" : "")}{amount:0.##}{suffix}") );
 	}
 
 	private System.Collections.Generic.IEnumerable<(string ClassName, string Icon, string Label, string Value)> StatRows()
@@ -856,12 +936,12 @@
 
 	private int ToSlot( int row, int col )
 	{
-		return row * (_backpack?.Cols ?? 1) + col;
+		return row * InventoryCols + col;
 	}
 
 	private (int row, int col) FromSlot( int slot )
 	{
-		var cols = _backpack?.Cols ?? 1;
+		var cols = InventoryCols;
 		return (slot / cols, slot % cols);
 	}
 
@@ -885,6 +965,8 @@
 		var hc = new System.HashCode();
 		hc.Add( _isOpen );
 		hc.Add( _backpack.InventoryVersion );
+		hc.Add( _backpack.Rows );
+		hc.Add( _backpack.Cols );
 		hc.Add( _backpack.EquippedInstanceId );
 		hc.Add( _backpack.Wallet );
 		hc.Add( _stats?.StatsVersion ?? 0 );

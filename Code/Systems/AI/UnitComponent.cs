@@ -132,6 +132,10 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	private bool _bountyPaid;
 	private bool _deathApplied;
 	private float _pendingHealthRegen;
+	private float _healthRegenModifierPerSecond;
+	private float _healthRegenModifierEndTime;
+	private float _staminaRegenModifierPerSecond;
+	private float _staminaRegenModifierEndTime;
 
 	[Hide] public float EffectiveMaxHealth => ResolvePlayerStats()?.EffectiveMaxHealth ?? MaxHealth;
 	[Hide] public float EffectiveMaxStamina => ResolvePlayerStats()?.EffectiveMaxStamina ?? MaxStamina;
@@ -283,6 +287,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		{
 			TickNeeds();
 			ApplyStatDerivedPools();
+			TickConsumableModifiers();
 			RegenerateHealth();
 			UpdateSprintLock();
 
@@ -347,6 +352,27 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		UpdateNeedsState();
 	}
 
+	public bool TryApplyConsumable( ItemDefinition definition )
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( IsDead ) return false;
+		if ( definition?.IsConsumable != true ) return false;
+
+		var consumable = definition.Consumable;
+		if ( consumable is null ) return false;
+
+		AdjustHealth( consumable.Health );
+		if ( IsDead ) return true;
+
+		AdjustStamina( consumable.Stamina );
+		AdjustHydration( consumable.Hydration );
+		AdjustNutrition( consumable.Nutrition );
+		UpdateNeedsState();
+
+		ApplyTimedConsumableModifiers( consumable );
+		return true;
+	}
+
 	private void RegenerateHealth()
 	{
 		var maxHealth = EffectiveMaxHealth;
@@ -392,6 +418,72 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 		IsThirsty = maxHydration > 0f && Hydration <= EffectiveThirstyThreshold;
 		IsHungry = maxNutrition > 0f && Nutrition <= EffectiveHungryThreshold;
+	}
+
+	private void AdjustHealth( float amount )
+	{
+		if ( amount == 0f ) return;
+
+		if ( amount < 0f ) _lastAttacker = null;
+		Health = float.Clamp( Health + amount, 0f, EffectiveMaxHealth );
+		if ( Health > 0f ) return;
+
+		IsDead = true;
+		TryPayBounty();
+	}
+
+	private void AdjustStamina( float amount )
+	{
+		if ( amount == 0f ) return;
+
+		Stamina = float.Clamp( Stamina + amount, 0f, EffectiveMaxStamina );
+		if ( Stamina <= 0f ) _sprintLocked = true;
+		else if ( _sprintLocked && Stamina >= EffectiveSprintResumeStamina ) _sprintLocked = false;
+	}
+
+	private void AdjustHydration( float amount )
+	{
+		if ( amount == 0f ) return;
+
+		Hydration = float.Clamp( Hydration + amount, 0f, EffectiveMaxHydration );
+	}
+
+	private void AdjustNutrition( float amount )
+	{
+		if ( amount == 0f ) return;
+
+		Nutrition = float.Clamp( Nutrition + amount, 0f, EffectiveMaxNutrition );
+	}
+
+	private void ApplyTimedConsumableModifiers( ConsumableStats consumable )
+	{
+		// Same-stat consumable modifiers replace each other; health and stamina can coexist.
+		ApplyTimedModifier( consumable.HealthRegenPerSecond, consumable.EffectDuration, ref _healthRegenModifierPerSecond, ref _healthRegenModifierEndTime );
+		ApplyTimedModifier( consumable.StaminaRegenPerSecond, consumable.EffectDuration, ref _staminaRegenModifierPerSecond, ref _staminaRegenModifierEndTime );
+	}
+
+	private void ApplyTimedModifier( float amountPerSecond, float duration, ref float currentAmount, ref float endTime )
+	{
+		if ( duration <= 0f ) return;
+		if ( System.MathF.Abs( amountPerSecond ) <= 0.001f ) return;
+
+		currentAmount = amountPerSecond;
+		endTime = Time.Now + duration;
+	}
+
+	private void TickConsumableModifiers()
+	{
+		ClearTimedModifierIfExpired( ref _healthRegenModifierPerSecond, ref _healthRegenModifierEndTime );
+		ClearTimedModifierIfExpired( ref _staminaRegenModifierPerSecond, ref _staminaRegenModifierEndTime );
+	}
+
+	private void ClearTimedModifierIfExpired( ref float currentAmount, ref float endTime )
+	{
+		if ( endTime <= 0f ) return;
+		if ( Time.Now < endTime ) return;
+
+		currentAmount = 0f;
+		endTime = 0f;
 	}
 
 	private UnitComponent DebugTargetUnit()
@@ -544,8 +636,8 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		return _stats;
 	}
 
-	private float EffectiveHealthRegenPerMinute => (ResolvePlayerStats()?.HealthRegenPerMinute ?? HealthRegenPerMinute) * (IsHungry ? EffectiveHungryHealthRegenMultiplier : 1f);
-	private float EffectiveStaminaRegenRate => (ResolvePlayerStats()?.StaminaRegenPerSecond ?? StaminaRegenRate) * (IsThirsty ? EffectiveThirstyStaminaRegenMultiplier : 1f);
+	private float EffectiveHealthRegenPerMinute => ((ResolvePlayerStats()?.HealthRegenPerMinute ?? HealthRegenPerMinute) * (IsHungry ? EffectiveHungryHealthRegenMultiplier : 1f)) + (_healthRegenModifierPerSecond * 60f);
+	private float EffectiveStaminaRegenRate => ((ResolvePlayerStats()?.StaminaRegenPerSecond ?? StaminaRegenRate) * (IsThirsty ? EffectiveThirstyStaminaRegenMultiplier : 1f)) + _staminaRegenModifierPerSecond;
 	private float EffectiveRunStaminaDrainRate => ResolvePlayerStats()?.RunStaminaDrainPerSecond ?? RunStaminaDrainRate;
 	private float EffectiveSprintResumeStamina => float.Max( 0f, ResolvePlayerStats()?.SprintResumeStamina ?? 0f );
 	private float EffectiveMaxHydration => ResolvePlayerStats()?.MaxHydration ?? 0f;

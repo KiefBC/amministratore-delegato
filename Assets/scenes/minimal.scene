@@ -223,6 +223,7 @@
           "__guid": "a2c5e1f0-1101-4f01-9e34-8a8c4f1e1a01",
           "__enabled": true,
           "Flags": 0,
+          "CursorHoldInput": "Walk",
           "OnComponentDestroy": null,
           "OnComponentDisabled": null,
           "OnComponentEnabled": null,
@@ -373,7 +374,10 @@
               "__enabled": true,
               "Flags": 0,
               "Bounty": 0,
+              "HealthRegenPerMinute": 0,
+              "MaxArmor": 0,
               "MaxHealth": 100,
+              "MaxStamina": 100,
               "ModelRenderer": {
                 "_type": "component",
                 "component_id": "d2898695-f228-4930-89dc-353c84ea4454",
@@ -389,6 +393,8 @@
               "OnComponentUpdate": null,
               "Patrol": null,
               "Physics": null,
+              "RunStaminaDrainRate": 1,
+              "StaminaRegenRate": 10,
               "Team": "Player"
             },
             {
@@ -432,14 +438,14 @@
               "__guid": "b2c5e1f0-1101-4f03-9e34-8a8c4f1e1a03",
               "__enabled": true,
               "Flags": 0,
-              "Cols": 6,
+              "Cols": 8,
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
               "OnComponentEnabled": null,
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
               "OnComponentUpdate": null,
-              "Rows": 4
+              "Rows": 8
             }
           ],
           "Children": [
@@ -3017,7 +3023,10 @@
           "__enabled": true,
           "Flags": 0,
           "Bounty": 80,
+          "HealthRegenPerMinute": 0,
+          "MaxArmor": 0,
           "MaxHealth": 100,
+          "MaxStamina": 100,
           "ModelRenderer": null,
           "Name": null,
           "OnComponentDestroy": null,
@@ -3028,6 +3037,8 @@
           "OnComponentUpdate": null,
           "Patrol": null,
           "Physics": null,
+          "RunStaminaDrainRate": 1,
+          "StaminaRegenRate": 10,
           "Team": "Enemy"
         }
       ],
@@ -6935,7 +6946,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Position",
-                "Value": "-32.2795219,-4.33896446,-4.00543213E-05"
+                "Value": "-39.9986916,-6.57093525,-4.95910645E-05"
               },
               {
                 "Target": {
@@ -6943,7 +6954,7 @@
                   "IdValue": "6e8970db-74e6-434e-af87-a7c0429a438b"
                 },
                 "Property": "Rotation",
-                "Value": "-5.51342964E-07,-4.17232513E-07,0.18077448,0.983523905"
+                "Value": "-7.4505806E-07,-5.06639481E-07,0.209456921,0.977817059"
               },
               {
                 "Target": {
@@ -6959,7 +6970,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Position",
-                "Value": "-24.6432724,-40.319355,36.2913208"
+                "Value": "-27.2031269,-51.4964333,45.1143951"
               },
               {
                 "Target": {
@@ -6967,7 +6978,7 @@
                   "IdValue": "786c3f9b-836d-40a1-94c8-4e2f3ca36ddc"
                 },
                 "Property": "Rotation",
-                "Value": "-0.563470662,0.233658135,-0.359129936,-0.706352174"
+                "Value": "0.672110558,-0.169002444,-0.498218179,0.521044612"
               },
               {
                 "Target": {
@@ -6983,7 +6994,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Position",
-                "Value": "11.6925001,-5.09619713E-05,-0.000103235245"
+                "Value": "11.692502,-5.12599945E-05,-0.000105142593"
               },
               {
                 "Target": {
@@ -6991,7 +7002,7 @@
                   "IdValue": "8d3a976a-f993-4b4c-82c0-a5f287de7806"
                 },
                 "Property": "Rotation",
-                "Value": "-1.9967556E-06,5.28991222E-07,0.0301842876,-0.999544561"
+                "Value": "-1.93715096E-06,5.36441803E-07,0.0301842988,-0.999544561"
               },
               {
                 "Target": {
@@ -7007,7 +7018,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Position",
-                "Value": "11.4816618,3.05771828E-05,-6.74128532E-05"
+                "Value": "11.4816647,3.30209732E-05,-6.48498535E-05"
               },
               {
                 "Target": {
@@ -7015,7 +7026,7 @@
                   "IdValue": "ab521161-8619-4404-a267-1063ff373f0f"
                 },
                 "Property": "Rotation",
-                "Value": "0.704695642,-0.022217663,-0.0532006882,-0.707163692"
+                "Value": "0.704695642,-0.0222176313,-0.0532006845,-0.707163751"
               },
               {
                 "Target": {
@@ -7031,7 +7042,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Position",
-                "Value": "-26.4144993,-39.6717529,-37.7509995"
+                "Value": "-29.5228825,-49.7292252,-47.9488144"
               },
               {
                 "Target": {
@@ -7039,7 +7050,7 @@
                   "IdValue": "d431ac7d-4eec-4bdf-b3cf-02cd5824c3f3"
                 },
                 "Property": "Rotation",
-                "Value": "0.463248491,-0.230481967,-0.493537009,-0.69907105"
+                "Value": "-0.676162839,0.202837616,-0.332451165,0.625409484"
               },
               {
                 "Target": {
@@ -7055,7 +7066,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Position",
-                "Value": "11.6925278,-3.1709671E-05,7.15255737E-07"
+                "Value": "11.6925287,-3.24249268E-05,1.1920929E-06"
               },
               {
                 "Target": {
@@ -7063,7 +7074,7 @@
                   "IdValue": "5f89a9fb-76fa-4234-aad6-95efbb27b6b5"
                 },
                 "Property": "Rotation",
-                "Value": "-2.35438347E-06,1.49011612E-07,-0.0301857144,0.999544501"
+                "Value": "-2.35438347E-06,1.34110451E-07,-0.0301857591,0.999544501"
               },
               {
                 "Target": {
@@ -7079,7 +7090,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Position",
-                "Value": "11.4816656,6.1750412E-05,-7.46250153E-05"
+                "Value": "11.4816618,6.03199005E-05,-7.58171082E-05"
               },
               {
                 "Target": {
@@ -7087,7 +7098,7 @@
                   "IdValue": "9374123b-c8b4-4795-9433-267d7ebf9d81"
                 },
                 "Property": "Rotation",
-                "Value": "0.707604945,-0.0219993591,0.0532981455,0.704251647"
+                "Value": "0.707604945,-0.0219993591,0.0532981753,0.704251587"
               },
               {
                 "Target": {
@@ -7103,7 +7114,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Position",
-                "Value": "-40.5403938,55.1206322,5.38825989E-05"
+                "Value": "-33.7105789,71.4748764,3.81469727E-05"
               },
               {
                 "Target": {
@@ -7111,7 +7122,7 @@
                   "IdValue": "3b601344-fcfe-4ea5-b321-613669f4ff1f"
                 },
                 "Property": "Rotation",
-                "Value": "-0.781805396,0.623522699,3.20374966E-07,-3.27825546E-06"
+                "Value": "-0.646852493,0.762615263,4.69386578E-07,-3.24845314E-06"
               },
               {
                 "Target": {
@@ -7127,7 +7138,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Position",
-                "Value": "3.59377098,2.5510788E-05,-6.03199005E-05"
+                "Value": "3.5937717,2.39312649E-05,-6.02900982E-05"
               },
               {
                 "Target": {
@@ -7135,7 +7146,7 @@
                   "IdValue": "b0698b48-04e9-4c72-8b29-b735751728ca"
                 },
                 "Property": "Rotation",
-                "Value": "2.68220901E-07,-6.14672899E-07,0.201891333,0.979408264"
+                "Value": "2.98023224E-07,-6.03497028E-07,0.201891333,0.979408324"
               },
               {
                 "Target": {
@@ -7247,7 +7258,7 @@
                   "IdValue": "cde25903-0b4a-4241-b7e1-4f59d5c4004e"
                 },
                 "Property": "Position",
-                "Value": "17.8480988,0.000119686127,-3.95774841E-05"
+                "Value": "17.8480988,0.000121593475,-3.81469727E-05"
               },
               {
                 "Target": {
@@ -7271,7 +7282,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Position",
-                "Value": "16.5251999,1.45435333E-05,-3.33786011E-05"
+                "Value": "16.5251999,1.3589859E-05,-3.38554382E-05"
               },
               {
                 "Target": {
@@ -7279,7 +7290,7 @@
                   "IdValue": "b979a6c5-4168-4ad5-95cd-930affb42116"
                 },
                 "Property": "Rotation",
-                "Value": "-0.0224069878,-0.0104060471,-0.51063323,0.859443188"
+                "Value": "-0.022406958,-0.0104060769,-0.51063323,0.859443188"
               }
             ],
             "MovedObjects": []
@@ -8773,6 +8784,148 @@
             }
           ],
           "Children": []
+        },
+        {
+          "__guid": "f84f90de-e15e-4848-9b0a-a331e48b01d6",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Fruit",
+          "Position": "109.011322,-9.62114716,-3.74728584",
+          "Rotation": "0,0,0,1",
+          "Scale": "1.35879207,1.35879207,1.35879207",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.Prop",
+              "__guid": "e414b02c-56fa-44ec-8353-aeffffc21d06",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "Health": 0,
+              "IsStatic": false,
+              "MaterialGroup": null,
+              "Model": "assets/untitled_13.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnPropBreak": null,
+              "OnPropTakeDamage": null,
+              "StartAsleep": false,
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelRenderer",
+              "__guid": "63fc0b07-7aaf-46eb-a630-85ef19feefea",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "CreateAttachments": false,
+              "LodOverride": null,
+              "MaterialGroup": null,
+              "MaterialOverride": null,
+              "Materials": null,
+              "Model": "assets/untitled_13.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "RenderOptions": {
+                "GameLayer": true,
+                "OverlayLayer": false,
+                "BloomLayer": false,
+                "AfterUILayer": false
+              },
+              "RenderType": "On",
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelCollider",
+              "__guid": "b9442224-5eef-4ebd-a079-323016909eec",
+              "__enabled": true,
+              "Flags": 0,
+              "ColliderFlags": 0,
+              "Elasticity": null,
+              "Friction": null,
+              "IsTrigger": false,
+              "Model": "assets/untitled_13.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnObjectTriggerEnter": null,
+              "OnObjectTriggerExit": null,
+              "OnTriggerEnter": null,
+              "OnTriggerExit": null,
+              "RollingResistance": null,
+              "Static": false,
+              "Surface": null,
+              "SurfaceVelocity": "0,0,0"
+            },
+            {
+              "__type": "Sandbox.Rigidbody",
+              "__guid": "eb3a0c85-07db-4dd8-a289-4f166cc5a9e6",
+              "__enabled": true,
+              "Flags": 0,
+              "AngularDamping": 0,
+              "EnableImpactDamage": true,
+              "EnhancedCcd": false,
+              "Gravity": true,
+              "GravityScale": 1,
+              "ImpactDamage": 0,
+              "LinearDamping": 0,
+              "Locking": {
+                "X": false,
+                "Y": false,
+                "Z": false,
+                "Pitch": false,
+                "Yaw": false,
+                "Roll": false
+              },
+              "MassCenterOverride": "0,0,0",
+              "MassOverride": 0,
+              "MinImpactDamageSpeed": 500,
+              "MotionEnabled": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OverrideMassCenter": false,
+              "RigidbodyFlags": 0,
+              "StartAsleep": false
+            },
+            {
+              "__type": "FoodPickup",
+              "__guid": "b74c015a-1ac3-4cc5-8868-cb43b1c9e621",
+              "__enabled": true,
+              "Flags": 0,
+              "Amount": 1,
+              "Definition": "items/fast_food.item",
+              "DefinitionPath": "items/water.item",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "PickupRange": 100
+            }
+          ],
+          "Children": []
         }
       ]
     },
@@ -9404,6 +9557,104 @@
           "Children": []
         }
       ]
+    },
+    {
+      "__guid": "b5d78fca-56ce-401c-abb8-1756b8618771",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "Notifications",
+      "Position": "0,0,0",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "",
+      "Enabled": true,
+      "NetworkMode": 0,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
+        {
+          "__type": "Sandbox.ScreenPanel",
+          "__guid": "0960fb65-06fe-4384-922e-4addf8c4d13a",
+          "__enabled": true,
+          "Flags": 0,
+          "AutoScreenScale": true,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "Opacity": 1,
+          "Scale": 1,
+          "ScaleStrategy": "ConsistentHeight",
+          "TargetCamera": null,
+          "ZIndex": 110
+        },
+        {
+          "__type": "Sandbox.NotificationDisplay",
+          "__guid": "b2a8b842-9a02-4836-8c3c-4ae290a8636b",
+          "__enabled": true,
+          "Flags": 0,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null
+        }
+      ],
+      "Children": []
+    },
+    {
+      "__guid": "beabf469-9661-4517-84ed-972ed0f5730d",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "Chat",
+      "Position": "0,0,0",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "",
+      "Enabled": true,
+      "NetworkMode": 0,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
+        {
+          "__type": "Sandbox.ScreenPanel",
+          "__guid": "97ca734b-76e1-4869-8d76-ab4fd4c08fae",
+          "__enabled": true,
+          "Flags": 0,
+          "AutoScreenScale": true,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "Opacity": 1,
+          "Scale": 1,
+          "ScaleStrategy": "ConsistentHeight",
+          "TargetCamera": null,
+          "ZIndex": 120
+        },
+        {
+          "__type": "Sandbox.ChatPanel",
+          "__guid": "4e94221d-9ca2-44df-9a85-2cc21c90510b",
+          "__enabled": true,
+          "Flags": 0,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null
+        }
+      ],
+      "Children": []
     }
   ],
   "SceneProperties": {
@@ -9449,6 +9700,7 @@
     "facepunch.ladder#139177",
     "pcjr.chair20#41836",
     "peteisverycool.linkragdoll#185308",
+    "polyrats.untitled_13#13983",
     "randkassets.antique_chair#26996",
     "thebox.metalstairs#179430"
   ],

@@ -235,7 +235,52 @@ public sealed class Backpack : Component
 			return true;
 		}
 
+		if ( definition.IsConsumable )
+		{
+			return TryConsumeItem( item, definition );
+		}
+
 		return false;
+	}
+
+	private bool TryConsumeItem( InventoryItemState item, ItemDefinition definition )
+	{
+		var unit = GameObject.Root.Components.GetInDescendantsOrSelf<UnitComponent>();
+		if ( !unit.IsValid() ) return false;
+
+		if ( !unit.TryApplyConsumable( definition ) ) return false;
+
+		var consumable = definition.Consumable;
+		if ( consumable?.HealthXp > 0f ) PlayerStats()?.AwardHealthFoodXp( consumable.HealthXp );
+
+		if ( item.StackCount > 1 )
+		{
+			item.StackCount--;
+			Items[item.InstanceId] = item;
+		}
+		else
+		{
+			RemoveItem( item.InstanceId );
+		}
+
+		Log.Info( $"[Consumable] {PlayerLogName()} consumed {definition.DisplayName}." );
+
+		GameNetworkRpc.BroadcastPlayerNotification(
+			GameObject.Root,
+			(int)NotificationKind.Success,
+			"Consumed",
+			definition.DisplayName,
+			2f );
+
+		Touch();
+		return true;
+	}
+
+	private string PlayerLogName()
+	{
+		var root = GameObject.Root;
+		if ( root.IsValid() && !string.IsNullOrWhiteSpace( root.Name ) ) return root.Name;
+		return GameObject.IsValid() && !string.IsNullOrWhiteSpace( GameObject.Name ) ? GameObject.Name : "unknown player";
 	}
 
 	public bool TryMoveSlot( int fromSlot, int toSlot )
@@ -613,6 +658,12 @@ public sealed class Backpack : Component
 			var money = go.Components.Create<MoneyPickup>();
 			money.DefinitionPath = item.DefinitionPath;
 			money.Amount = item.StackCount;
+		}
+		else if ( definition.IsConsumable )
+		{
+			var pickup = go.Components.Create<FoodPickup>();
+			pickup.DefinitionPath = item.DefinitionPath;
+			pickup.Amount = item.StackCount;
 		}
 		else
 		{

@@ -103,7 +103,7 @@ InventoryPanel {
 		flex: 1;
 		padding: 24px 34px 0 34px;
 		flex-direction: row;
-		gap: 14px;
+		gap: 12px;
 		align-items: center;
 	}
 
@@ -259,11 +259,34 @@ InventoryPanel {
 		pointer-events: none;
 	}
 
-	.loadout-column {
-		width: 148px;
-		height: 100%;
+	.inventory-main-container {
+		position: relative;
+		flex-direction: row;
 		align-items: center;
 		justify-content: center;
+		gap: 14px;
+	}
+
+	.equipment-component {
+		width: 148px;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.inventory-component {
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 16px;
+	}
+
+	.tooltip-component {
+		position: absolute;
+		left: 100%;
+		top: 0;
+		width: 238px;
+		margin-left: 14px;
+		pointer-events: none;
 	}
 
 	.equipment-slots {

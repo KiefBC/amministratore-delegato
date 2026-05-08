@@ -7,6 +7,10 @@ public partial class ItemDefinition : GameResource
 {
 	public const string GlockPath = "items/glock.item";
 	public const string MoneyPath = "items/money.item";
+	public const string WaterPath = "items/water.item";
+	public const string BeerPath = "items/beer.item";
+	public const string FastFoodPath = "items/fast_food.item";
+	public const string RestaurantMealPath = "items/restaurant_meal.item";
 
 	private static readonly Dictionary<string, ItemDefinition> Fallbacks = new();
 
@@ -23,15 +27,21 @@ public partial class ItemDefinition : GameResource
 
 	[HideIf( nameof( IsNotWeaponKind ), true )]
 	public WeaponStats Weapon { get; set; }
+	[HideIf( nameof( IsNotConsumableKind ), true )]
+	public ConsumableStats Consumable { get; set; }
 
 	[Hide]
 	public bool IsWeapon => Kind == ItemKind.Weapon && Weapon is not null;
 	[Hide]
 	public bool IsCurrency => Kind == ItemKind.Currency;
 	[Hide]
+	public bool IsConsumable => Kind == ItemKind.Consumable && Consumable is not null;
+	[Hide]
 	public string ModelPath => !string.IsNullOrWhiteSpace( Weapon?.EquippedModel ) ? Weapon.EquippedModel : WorldModel;
 	[Hide]
 	public bool IsNotWeaponKind => Kind != ItemKind.Weapon;
+	[Hide]
+	public bool IsNotConsumableKind => Kind != ItemKind.Consumable;
 
 	public static string PathFor( ItemDefinition definition )
 	{
@@ -108,9 +118,130 @@ public partial class ItemDefinition : GameResource
 				Weight = 0,
 				MaxStack = int.MaxValue,
 			},
+			WaterPath => new ItemDefinition
+			{
+				DisplayName = "Water",
+				Kind = ItemKind.Consumable,
+				Value = 2,
+				Weight = 1,
+				MaxStack = 10,
+				Consumable = new ConsumableStats
+				{
+					Category = ConsumableCategory.Drink,
+					Tier = ConsumableTier.Basic,
+					Hydration = 30f,
+					StaminaRegenPerSecond = 0.5f,
+					EffectDuration = 30f,
+				},
+			},
+			BeerPath => new ItemDefinition
+			{
+				DisplayName = "Beer",
+				Kind = ItemKind.Consumable,
+				Value = 6,
+				Weight = 1,
+				MaxStack = 6,
+				Consumable = new ConsumableStats
+				{
+					Category = ConsumableCategory.Drink,
+					Tier = ConsumableTier.Basic,
+					Stamina = 3f,
+					Hydration = -15f,
+					StaminaRegenPerSecond = -0.5f,
+					EffectDuration = 30f,
+				},
+			},
+			FastFoodPath => new ItemDefinition
+			{
+				DisplayName = "Fast Food",
+				Kind = ItemKind.Consumable,
+				Value = 5,
+				Weight = 1,
+				MaxStack = 5,
+				Consumable = new ConsumableStats
+				{
+					Category = ConsumableCategory.Food,
+					Tier = ConsumableTier.Cheap,
+					Health = 1f,
+					Nutrition = 25f,
+					HealthXp = 0.1f,
+				},
+			},
+			RestaurantMealPath => new ItemDefinition
+			{
+				DisplayName = "Restaurant Meal",
+				Kind = ItemKind.Consumable,
+				Value = 25,
+				Weight = 1,
+				MaxStack = 3,
+				Consumable = new ConsumableStats
+				{
+					Category = ConsumableCategory.Food,
+					Tier = ConsumableTier.Quality,
+					Health = 5f,
+					Nutrition = 60f,
+					HealthRegenPerSecond = 0.2f,
+					EffectDuration = 30f,
+					HealthXp = 1f,
+				},
+			},
 			_ => null,
 		};
 	}
+}
+
+public enum ConsumableCategory
+{
+	[Description( "Food item. Usually restores nutrition and health." )]
+	Food,
+	[Description( "Drink item. Usually restores hydration or changes stamina behavior." )]
+	Drink,
+}
+
+public enum ConsumableTier
+{
+	[Description( "Low-cost, low-effect consumable." )]
+	Cheap,
+	[Description( "Baseline consumable quality." )]
+	Basic,
+	[Description( "Better consumable with stronger flat or timed effects." )]
+	Quality,
+	[Description( "High-end consumable reserved for expensive or rare effects." )]
+	Premium,
+}
+
+public sealed class ConsumableStats
+{
+	[Description( "Broad consumable type for tuning and future UI filtering. Food and Drink do not change behavior by themselves." )]
+	public ConsumableCategory Category { get; set; } = ConsumableCategory.Food;
+	[Description( "Quality/price tier label for balancing. Tier does not change behavior by itself." )]
+	public ConsumableTier Tier { get; set; } = ConsumableTier.Basic;
+
+	[Range( -500f, 500f ), Step( 0.5f )]
+	[Description( "Flat current health change on use. Positive heals, negative damages, clamped to the player's effective health range." )]
+	public float Health { get; set; }
+	[Range( -500f, 500f ), Step( 0.5f )]
+	[Description( "Flat current stamina change on use. Positive restores stamina, negative drains it, clamped to the player's effective stamina range." )]
+	public float Stamina { get; set; }
+	[Range( -500f, 500f ), Step( 0.5f )]
+	[Description( "Flat hydration change on use. Positive hydrates, negative dehydrates, clamped to the player's hydration range." )]
+	public float Hydration { get; set; }
+	[Range( -500f, 500f ), Step( 0.5f )]
+	[Description( "Flat nutrition change on use. Positive fills hunger, negative reduces nutrition, clamped to the player's nutrition range." )]
+	public float Nutrition { get; set; }
+
+	[Range( -100f, 100f ), Step( 0.05f )]
+	[Description( "Timed additive health regen modifier in health per second. Replaces the previous health regen consumable modifier while active." )]
+	public float HealthRegenPerSecond { get; set; }
+	[Range( -100f, 100f ), Step( 0.05f )]
+	[Description( "Timed additive stamina regen modifier in stamina per second. Replaces the previous stamina regen consumable modifier while active." )]
+	public float StaminaRegenPerSecond { get; set; }
+	[Range( 0f, 600f ), Step( 1f )]
+	[Description( "Duration in seconds for health/stamina regen modifiers. Set to 0 for only flat instant effects." )]
+	public float EffectDuration { get; set; }
+	[Range( 0f, 1000f ), Step( 0.1f )]
+	[Description( "Optional health stat XP awarded by the host after this consumable is successfully used." )]
+	public float HealthXp { get; set; }
 }
 
 public sealed class WeaponStats

@@ -1,0 +1,22 @@
+{
+  "DisplayName": "Restaurant Meal",
+  "Kind": "Consumable",
+  "Icon": "",
+  "Rarity": "Uncommon",
+  "Value": 25,
+  "Weight": 1,
+  "MaxStack": 3,
+  "WorldModel": "",
+  "Consumable": {
+    "Category": "Food",
+    "Tier": "Quality",
+    "Health": 5,
+    "Stamina": 0,
+    "Hydration": 0,
+    "Nutrition": 60,
+    "HealthRegenPerSecond": 0.2,
+    "StaminaRegenPerSecond": 0,
+    "EffectDuration": 30,
+    "HealthXp": 1
+  }
+}
