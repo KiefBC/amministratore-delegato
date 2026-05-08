@@ -15,7 +15,7 @@
 						@foreach ( var row in StockRows() )
 						{
 							var selected = row.Symbol == _selectedStock;
-							<div class="stock-row @(selected ? "selected" : "") @(_hoveredStock == row.Symbol ? "hover" : "")" onclick="@(() => SelectStock( row.Symbol ))">
+							<div class="stock-row @(selected ? "selected" : "") @(_hoveredStock == row.Symbol ? "hover" : "")">
 								<div class="stock-symbol-badge">@Initials( row.Symbol )</div>
 								<div class="stock-copy">
 									<span class="stock-symbol">@row.Symbol</span>
@@ -427,6 +427,13 @@
 				if ( !child.HasClass( "stock-row" ) ) continue;
 				if ( index < rows.Length && child.IsInside( mouse ) ) _hoveredStock = rows[index].Symbol;
 				index++;
+			}
+
+			if ( !string.IsNullOrWhiteSpace( _hoveredStock ) && Input.Pressed( "Attack1" ) )
+			{
+				SelectStock( _hoveredStock );
+				_sharesInputFocused = false;
+				_sharesInput?.Blur();
 			}
 		}
 
