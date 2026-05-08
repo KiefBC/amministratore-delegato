@@ -416,6 +416,7 @@ public sealed class Backpack : Component
 
 		var muzzleOrigin = ValidateFireOrigin( origin );
 		var fireAim = ValidateFireAim( aim );
+		var stats = PlayerStats();
 		if ( Time.Now - item.LastFireTime < weapon.FireInterval ) return false;
 
 		item.Ammo--;
@@ -424,7 +425,8 @@ public sealed class Backpack : Component
 		Items[item.InstanceId] = item;
 		Touch();
 
-		var end = muzzleOrigin + fireAim.Forward * weapon.Range;
+		var fireDirection = ApplyRangedSpread( fireAim, stats );
+		var end = muzzleOrigin + fireDirection * weapon.Range;
 		var trace = Scene.Trace.Ray( muzzleOrigin, end )
 			.Size( Vector3.One * weapon.TraceSize )
 			.WithCollisionRules( "bullet" )
@@ -435,9 +437,14 @@ public sealed class Backpack : Component
 		var hitPosition = trace.Hit ? trace.HitPosition : end;
 		GameNetworkRpc.BroadcastShotDebug( GameObject.Root, hitPosition, trace.Hit );
 
-		if ( !trace.Hit ) return true;
+		if ( !trace.Hit )
+		{
+			stats?.AwardRangedShot( false );
+			return true;
+		}
 
 		var target = ResolveDamageableTarget( trace.GameObject );
+		stats?.AwardRangedShot( target is not null );
 		if ( target is null ) return true;
 
 		var info = new DamageInfo
@@ -451,6 +458,23 @@ public sealed class Backpack : Component
 
 		CombatSystem.Current?.DealDamage( target, in info );
 		return true;
+	}
+
+	private PlayerStatsComponent PlayerStats()
+	{
+		return GameObject.Root.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+	}
+
+	private Vector3 ApplyRangedSpread( Rotation aim, PlayerStatsComponent stats )
+	{
+		var spreadDegrees = stats.IsValid() ? stats.RangedSpreadDegrees : 0f;
+		if ( spreadDegrees <= 0f ) return aim.Forward;
+
+		var spreadAim = aim
+			* Rotation.FromPitch( System.Random.Shared.Float( -spreadDegrees, spreadDegrees ) )
+			* Rotation.FromYaw( System.Random.Shared.Float( -spreadDegrees, spreadDegrees ) );
+
+		return spreadAim.Forward;
 	}
 
 	public void Select( int row, int col )

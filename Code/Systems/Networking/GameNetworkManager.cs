@@ -136,6 +136,12 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( !player.IsValid() ) return;
 
 		ConfigureNetworkObject( player );
+		EnsurePlayerStats( player );
+
+		foreach ( var stats in player.Components.GetAll<PlayerStatsComponent>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			ConfigureNetworkObject( stats.GameObject );
+		}
 
 		foreach ( var backpack in player.Components.GetAll<Backpack>( FindMode.EverythingInSelfAndDescendants ) )
 		{
@@ -146,6 +152,16 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		{
 			ConfigureNetworkObject( unit.GameObject );
 		}
+	}
+
+	private static void EnsurePlayerStats( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+
+		var stats = player.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+		if ( stats.IsValid() ) return;
+
+		player.Components.Create<PlayerStatsComponent>();
 	}
 
 	private static void ConfigureNetworkObject( GameObject gameObject )

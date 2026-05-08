@@ -82,8 +82,8 @@
 
 		if ( Player is not null )
 		{
-			_maxHealth = Player.MaxHealth;
-			_maxStamina = Player.MaxStamina;
+			_maxHealth = Player.EffectiveMaxHealth;
+			_maxStamina = Player.EffectiveMaxStamina;
 		}
 	}
 
@@ -94,9 +94,9 @@
 		if ( Player is not null )
 		{
 			_displayHealth = Player.Health;
-			_maxHealth = Player.MaxHealth;
+			_maxHealth = Player.EffectiveMaxHealth;
 			_displayStamina = Player.Stamina;
-			_maxStamina = Player.MaxStamina;
+			_maxStamina = Player.EffectiveMaxStamina;
 		}
 	}
 

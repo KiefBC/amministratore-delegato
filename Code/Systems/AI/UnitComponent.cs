@@ -102,9 +102,20 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	private float _lastHealth;
 	private GameObject _lastAttacker;
+	private PlayerStatsComponent _stats;
+	private float _lastAppliedMaxHealth;
+	private float _lastAppliedMaxStamina;
 	private bool _wantsRunStaminaDrain;
+	private bool _isRunStaminaDrainActive;
+	private bool _sprintLocked;
 	private bool _bountyPaid;
 	private bool _deathApplied;
+
+	[Hide] public float EffectiveMaxHealth => ResolvePlayerStats()?.EffectiveMaxHealth ?? MaxHealth;
+	[Hide] public float EffectiveMaxStamina => ResolvePlayerStats()?.EffectiveMaxStamina ?? MaxStamina;
+	[Hide] public bool IsRunStaminaDrainActive => _isRunStaminaDrainActive;
+	[Hide] public bool HasStaminaToStartRunning => !IsDead && Stamina > 0f && Stamina >= EffectiveSprintResumeStamina;
+	[Hide] public bool HasStaminaToContinueRunning => !IsDead && Stamina > 0f;
 
 	[Button( "Hurt 10", "success" )]
 	public void HurtDebug() => OnDamage( new DamageInfo { Damage = MaxHealth } );
@@ -131,7 +142,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			incoming = AbsorbDamageWithArmor( incoming );
 		}
 
-		Health = float.Clamp( Health - incoming, 0f, MaxHealth );
+		Health = float.Clamp( Health - incoming, 0f, EffectiveMaxHealth );
 
 		if ( Health <= 0f )
 		{
@@ -142,13 +153,18 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	protected override void OnStart()
 	{
+		ResolvePlayerStats();
+
 		if ( Networking.IsHost )
 		{
-			Health = MaxHealth;
-			Stamina = MaxStamina;
+			Health = EffectiveMaxHealth;
+			Stamina = EffectiveMaxStamina;
 			Armor = MaxArmor;
 			IsDead = false;
 		}
+
+		_lastAppliedMaxHealth = EffectiveMaxHealth;
+		_lastAppliedMaxStamina = EffectiveMaxStamina;
 		_lastHealth = Health;
 		_deathApplied = false;
 	}
@@ -157,7 +173,11 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	{
 		if ( Networking.IsHost && !IsDead )
 		{
-			if ( _wantsRunStaminaDrain ) DrainRunStamina();
+			ApplyStatDerivedPools();
+			UpdateSprintLock();
+
+			_isRunStaminaDrainActive = false;
+			if ( _wantsRunStaminaDrain && !_sprintLocked && Stamina > 0f ) DrainRunStamina();
 			else RegenerateStamina();
 		}
 
@@ -179,7 +199,8 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		if ( amount <= 0f ) return true;
 		if ( Stamina < amount ) return false;
 
-		Stamina = float.Clamp( Stamina - amount, 0f, MaxStamina );
+		Stamina = float.Clamp( Stamina - amount, 0f, EffectiveMaxStamina );
+		if ( Stamina <= 0f ) _sprintLocked = true;
 		return true;
 	}
 
@@ -188,7 +209,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		if ( !Networking.IsHost ) return;
 		if ( amount <= 0f ) return;
 
-		Stamina = float.Clamp( Stamina + amount, 0f, MaxStamina );
+		Stamina = float.Clamp( Stamina + amount, 0f, EffectiveMaxStamina );
 	}
 
 	public void SetArmor( float amount )
@@ -201,6 +222,12 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	public void SetRunStaminaDrain( bool running )
 	{
 		if ( !Networking.IsHost ) return;
+
+		if ( running && !CanStartRunStaminaDrain() )
+		{
+			_wantsRunStaminaDrain = false;
+			return;
+		}
 
 		_wantsRunStaminaDrain = running;
 	}
@@ -216,19 +243,88 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	private void RegenerateStamina()
 	{
-		if ( StaminaRegenRate <= 0f ) return;
-		if ( Stamina >= MaxStamina ) return;
+		var maxStamina = EffectiveMaxStamina;
+		var regenRate = EffectiveStaminaRegenRate;
+		if ( regenRate <= 0f ) return;
+		if ( Stamina >= maxStamina ) return;
 
-		Stamina = float.Clamp( Stamina + StaminaRegenRate * Time.Delta, 0f, MaxStamina );
+		Stamina = float.Clamp( Stamina + regenRate * Time.Delta, 0f, maxStamina );
 	}
 
 	private void DrainRunStamina()
 	{
-		if ( RunStaminaDrainRate <= 0f ) return;
+		var drainRate = EffectiveRunStaminaDrainRate;
+		if ( drainRate <= 0f ) return;
 		if ( Stamina <= 0f ) return;
 
-		Stamina = float.Clamp( Stamina - RunStaminaDrainRate * Time.Delta, 0f, MaxStamina );
+		_isRunStaminaDrainActive = true;
+		Stamina = float.Clamp( Stamina - drainRate * Time.Delta, 0f, EffectiveMaxStamina );
+		if ( Stamina > 0f ) return;
+
+		_sprintLocked = true;
+		_wantsRunStaminaDrain = false;
 	}
+
+	private bool CanStartRunStaminaDrain()
+	{
+		if ( IsDead ) return false;
+		if ( _sprintLocked && Stamina < EffectiveSprintResumeStamina ) return false;
+
+		return Stamina > 0f && Stamina >= EffectiveSprintResumeStamina;
+	}
+
+	private void UpdateSprintLock()
+	{
+		if ( Stamina <= 0f )
+		{
+			_sprintLocked = true;
+			return;
+		}
+
+		if ( _sprintLocked && Stamina >= EffectiveSprintResumeStamina )
+		{
+			_sprintLocked = false;
+		}
+	}
+
+	private void ApplyStatDerivedPools()
+	{
+		var maxHealth = EffectiveMaxHealth;
+		var maxStamina = EffectiveMaxStamina;
+
+		if ( _lastAppliedMaxHealth <= 0f ) _lastAppliedMaxHealth = maxHealth;
+		if ( _lastAppliedMaxStamina <= 0f ) _lastAppliedMaxStamina = maxStamina;
+
+		if ( maxHealth != _lastAppliedMaxHealth )
+		{
+			var delta = maxHealth - _lastAppliedMaxHealth;
+			Health = delta > 0f && Health > 0f
+				? float.Clamp( Health + delta, 0f, maxHealth )
+				: float.Clamp( Health, 0f, maxHealth );
+			_lastAppliedMaxHealth = maxHealth;
+		}
+
+		if ( maxStamina != _lastAppliedMaxStamina )
+		{
+			var delta = maxStamina - _lastAppliedMaxStamina;
+			Stamina = delta > 0f
+				? float.Clamp( Stamina + delta, 0f, maxStamina )
+				: float.Clamp( Stamina, 0f, maxStamina );
+			_lastAppliedMaxStamina = maxStamina;
+		}
+	}
+
+	private PlayerStatsComponent ResolvePlayerStats()
+	{
+		if ( _stats.IsValid() ) return _stats;
+
+		_stats = GameObject.Root.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+		return _stats;
+	}
+
+	private float EffectiveStaminaRegenRate => ResolvePlayerStats()?.StaminaRegenPerSecond ?? StaminaRegenRate;
+	private float EffectiveRunStaminaDrainRate => ResolvePlayerStats()?.RunStaminaDrainPerSecond ?? RunStaminaDrainRate;
+	private float EffectiveSprintResumeStamina => float.Max( 0f, ResolvePlayerStats()?.SprintResumeStamina ?? 0f );
 
 	private void ApplyDeathState()
 	{

@@ -24,7 +24,7 @@
 					<div class="xp-track">
 						<div class="xp-fill" style="width: @(ExperiencePercent * 100)%;"></div>
 					</div>
-					<span class="xp-text">Exp: @Experience / @ExperienceMax</span>
+					<span class="xp-text">@ExperienceText</span>
 				</div>
 			</div>
 
@@ -252,6 +252,7 @@
 	private Backpack _backpack;
 	private UIStateManager _uiState;
 	private UnitComponent _unit;
+	private PlayerStatsComponent _stats;
 	private GameObject _player;
 
 	private bool _isOpen;
@@ -270,10 +271,9 @@
 	private Sandbox.UI.Panel _dropZonePanel;
 	private Sandbox.UI.Panel _characterPreviewPanel;
 
-	private int Level => 1;
-	private int Experience => 55;
-	private int ExperienceMax => 100;
-	private float ExperiencePercent => ExperienceMax > 0 ? float.Clamp( (float)Experience / ExperienceMax, 0f, 1f ) : 0f;
+	private int Level => _stats.IsValid() ? _stats.PlayerLevel : 1;
+	private float ExperiencePercent => _stats.IsValid() ? _stats.PlayerLevelProgressPercent : 0f;
+	private string ExperienceText => _stats.IsValid() ? $"Avg: {(ExperiencePercent * 100f):0}%" : "Stats loading";
 
 	private Vector2 CursorCss
 	{
@@ -339,6 +339,7 @@
 		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
 		_uiState = _player?.Components.Get<UIStateManager>();
 		_unit = _player?.Components.GetInDescendantsOrSelf<UnitComponent>();
+		_stats = _player?.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
 	}
 
 	private bool ShouldSuppressInventoryInputForCharacterPreview()
@@ -708,11 +709,29 @@
 
 	private System.Collections.Generic.IEnumerable<(string ClassName, string Icon, string Label, string Value)> StatRows()
 	{
-		yield return ("health", "+", "Health", FormatStatPool( _unit?.Health ?? 0f, _unit?.MaxHealth ?? 100f ));
-		yield return ("stamina", "EN", "Stamina", FormatStatPool( _unit?.Stamina ?? 0f, _unit?.MaxStamina ?? 100f ));
+		yield return ("health", "+", "Health", StatLevelText( PlayerStatType.Health, FormatStatPool( _unit?.Health ?? 0f, EffectiveMaxHealth() ) ));
+		yield return ("stamina", "EN", "Stamina", StatLevelText( PlayerStatType.Stamina, FormatStatPool( _unit?.Stamina ?? 0f, EffectiveMaxStamina() ) ));
+		yield return ("damage", "RG", "Ranged", StatLevelText( PlayerStatType.Ranged, $"Spread {(_stats.IsValid() ? _stats.RangedSpreadDegrees : 0f):0.0} deg" ));
+		yield return ("speed", "ME", "Punching", StatLevelText( PlayerStatType.Punching, _stats.IsValid() ? $"Damage {_stats.PunchDamage:0.0}" : "Damage 0" ));
+		yield return ("armor", "$", "Business", StatLevelText( PlayerStatType.Business, _stats.IsValid() ? $"${_stats.BusinessIncomePerSecond:0.0}/sec" : "$0/sec" ));
 		yield return ("armor", "AR", "Armor", FormatStatPool( _unit?.Armor ?? 0f, _unit?.MaxArmor ?? 0f ));
-		yield return ("damage", "DM", "Damage", $"{EquippedDamage():0}");
-		yield return ("speed", "AS", "Attack Speed", $"{EquippedFireRate():0.0}");
+	}
+
+	private string StatLevelText( PlayerStatType stat, string detail )
+	{
+		if ( !_stats.IsValid() ) return $"Lv 1 - {detail}";
+
+		return $"Lv {_stats.GetLevel( stat )} ({(_stats.GetLevelProgress( stat ) * 100f):0}%) - {detail}";
+	}
+
+	private float EffectiveMaxHealth()
+	{
+		return _stats.IsValid() ? _stats.EffectiveMaxHealth : _unit?.MaxHealth ?? 100f;
+	}
+
+	private float EffectiveMaxStamina()
+	{
+		return _stats.IsValid() ? _stats.EffectiveMaxStamina : _unit?.MaxStamina ?? 100f;
 	}
 
 	private string FormatStatPool( float current, float max )
@@ -868,10 +887,11 @@
 		hc.Add( _backpack.InventoryVersion );
 		hc.Add( _backpack.EquippedInstanceId );
 		hc.Add( _backpack.Wallet );
+		hc.Add( _stats?.StatsVersion ?? 0 );
 		hc.Add( _unit?.Health ?? 0f );
-		hc.Add( _unit?.MaxHealth ?? 0f );
+		hc.Add( EffectiveMaxHealth() );
 		hc.Add( _unit?.Stamina ?? 0f );
-		hc.Add( _unit?.MaxStamina ?? 0f );
+		hc.Add( EffectiveMaxStamina() );
 		hc.Add( _unit?.Armor ?? 0f );
 		hc.Add( _unit?.MaxArmor ?? 0f );
 		hc.Add( _dragging );
