@@ -484,13 +484,18 @@ public sealed class Backpack : Component
 
 		if ( !trace.Hit )
 		{
+			Log.Info( $"[Weapon] {PlayerLogName( GameObject.Root )} fired {definition.DisplayName} and missed." );
 			stats?.AwardRangedShot( false );
 			return true;
 		}
 
 		var target = ResolveDamageableTarget( trace.GameObject );
 		stats?.AwardRangedShot( target is not null );
-		if ( target is null ) return true;
+		if ( target is null )
+		{
+			Log.Info( $"[Weapon] {PlayerLogName( GameObject.Root )} fired {definition.DisplayName} and hit {HitObjectLogName( trace.GameObject )}, but no damageable target was found." );
+			return true;
+		}
 
 		var info = new DamageInfo
 		{
@@ -501,6 +506,7 @@ public sealed class Backpack : Component
 			Weapon = GameObject.Root,
 		};
 
+		Log.Info( $"[Weapon] {PlayerLogName( GameObject.Root )} shot {DamageableLogName( target )} with {definition.DisplayName} for {weapon.Damage:0.#} damage." );
 		CombatSystem.Current?.DealDamage( target, in info );
 		return true;
 	}
@@ -622,8 +628,7 @@ public sealed class Backpack : Component
 
 	private Rotation ValidateFireAim( Rotation requestedAim )
 	{
-		var controller = GameObject.Root.Components.GetInDescendantsOrSelf<PlayerController>();
-		return controller.IsValid() ? Rotation.From( controller.EyeAngles ) : requestedAim;
+		return requestedAim;
 	}
 
 	private Component.IDamageable ResolveDamageableTarget( GameObject hitObject )
@@ -637,6 +642,26 @@ public sealed class Backpack : Component
 		return controller.IsValid()
 			? controller.GameObject.Components.GetInDescendantsOrSelf<Component.IDamageable>()
 			: null;
+	}
+
+	private static string DamageableLogName( Component.IDamageable target )
+	{
+		if ( target is UnitComponent unit ) return PlayerLogName( unit.GameObject.Root );
+		if ( target is Component component ) return PlayerLogName( component.GameObject.Root );
+		return "unknown target";
+	}
+
+	private static string HitObjectLogName( GameObject hitObject )
+	{
+		if ( !hitObject.IsValid() ) return "unknown object";
+		if ( !string.IsNullOrWhiteSpace( hitObject.Name ) ) return hitObject.Name;
+		return "unnamed object";
+	}
+
+	private static string PlayerLogName( GameObject player )
+	{
+		if ( player.IsValid() && !string.IsNullOrWhiteSpace( player.Name ) ) return player.Name;
+		return "unknown player";
 	}
 
 	private void SpawnWorldPickup( InventoryItemState item, ItemDefinition definition, Vector3 position )

@@ -1,7 +1,10 @@
 using Sandbox;
+using Sandbox.Network;
 
 public sealed class UnitComponent : Component, Component.IDamageable
 {
+	private const float DeathPresentationDelay = 0.25f;
+
 	/// <summary>
 	/// Displayed name
 	/// </summary>
@@ -72,6 +75,11 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	public int Bounty { get; set; } = 0;
 
 	[Property]
+	[Range( 0f, 300f )]
+	[Step( 1f )]
+	public float CorpseLifetimeSeconds { get; set; } = 60f;
+
+	[Property]
 	public SkinnedModelRenderer ModelRenderer { get; set; }
 
 	/// <summary>
@@ -109,6 +117,9 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	public bool IsDead { get; set; }
 
 	[Sync( SyncFlags.FromHost )]
+	public float DeathTime { get; set; }
+
+	[Sync( SyncFlags.FromHost )]
 	public float Hydration { get; set; }
 
 	[Sync( SyncFlags.FromHost )]
@@ -130,12 +141,22 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	private bool _isRunStaminaDrainActive;
 	private bool _sprintLocked;
 	private bool _bountyPaid;
-	private bool _deathApplied;
+	private bool _bountyAttempted;
+	private bool _deathLogged;
+	private bool _deathControlsApplied;
+	private bool _deathEquipmentDisabled;
+	private bool _deathPatrolDisabled;
+	private bool _deathPresentationApplied;
+	private bool _deathPresentationWarningLogged;
+	private bool _corpseCleanedUp;
+	private float _deathObservedTime = -1f;
 	private float _pendingHealthRegen;
 	private float _healthRegenModifierPerSecond;
 	private float _healthRegenModifierEndTime;
 	private float _staminaRegenModifierPerSecond;
 	private float _staminaRegenModifierEndTime;
+	private GameObject _networkedCorpse;
+	private bool _networkedCorpseWarningLogged;
 
 	[Hide] public float EffectiveMaxHealth => ResolvePlayerStats()?.EffectiveMaxHealth ?? MaxHealth;
 	[Hide] public float EffectiveMaxStamina => ResolvePlayerStats()?.EffectiveMaxStamina ?? MaxStamina;
@@ -254,7 +275,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 		if ( Health <= 0f )
 		{
-			IsDead = true;
+			MarkDead();
 			TryPayBounty();
 		}
 	}
@@ -272,13 +293,14 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			Nutrition = EffectiveMaxNutrition;
 			UpdateNeedsState();
 			IsDead = false;
+			DeathTime = 0f;
 		}
 
 		_lastAppliedMaxHealth = EffectiveMaxHealth;
 		_lastAppliedMaxStamina = EffectiveMaxStamina;
 		_lastAppliedStaminaLevel = ResolvePlayerStats()?.StaminaLevel ?? 1;
 		_lastHealth = Health;
-		_deathApplied = false;
+		ResetDeathPresentationState();
 	}
 
 	protected override void OnUpdate()
@@ -296,10 +318,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			else RegenerateStamina();
 		}
 
-		if ( IsDead && !_deathApplied )
-		{
-			ApplyDeathState();
-		}
+		TickDeathState();
 
 		if ( Health == _lastHealth ) return;
 
@@ -428,8 +447,17 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		Health = float.Clamp( Health + amount, 0f, EffectiveMaxHealth );
 		if ( Health > 0f ) return;
 
-		IsDead = true;
+		MarkDead();
 		TryPayBounty();
+	}
+
+	private void MarkDead()
+	{
+		if ( IsDead ) return;
+
+		IsDead = true;
+		DeathTime = Time.Now;
+		TryCreateNetworkedPlayerCorpse();
 	}
 
 	private void AdjustStamina( float amount )
@@ -649,32 +677,307 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	private float EffectiveThirstyStaminaRegenMultiplier => float.Clamp( ResolvePlayerStats()?.ThirstyStaminaRegenMultiplier ?? 1f, 0f, 1f );
 	private float EffectiveHungryHealthRegenMultiplier => float.Clamp( ResolvePlayerStats()?.HungryHealthRegenMultiplier ?? 1f, 0f, 1f );
 
-	private void ApplyDeathState()
+	private void TickDeathState()
 	{
-		_deathApplied = true;
-		Log.Info( $"{Name} died" );
+		if ( !IsDead ) return;
 
-		if ( Physics.IsValid() )
+		if ( _deathObservedTime < 0f ) _deathObservedTime = Time.Now;
+
+		if ( !_deathLogged )
 		{
-			Physics.MotionEnabled = true;
-		}
-		else
-		{
-			Log.Warning( $"{Name}: Physics property is not assigned — cannot ragdoll on death" );
+			_deathLogged = true;
+			Log.Info( $"{Name} died" );
 		}
 
-		if ( Patrol.IsValid() )
+		if ( !_deathControlsApplied )
 		{
-			Patrol.Enabled = false;
+			DisablePlayerControlOnDeath();
+			_deathControlsApplied = true;
 		}
+
+		if ( !_deathEquipmentDisabled )
+		{
+			DisableEquipmentViewsOnDeath();
+			_deathEquipmentDisabled = true;
+		}
+
+		if ( !_deathPatrolDisabled )
+		{
+			if ( Patrol.IsValid() ) Patrol.Enabled = false;
+			_deathPatrolDisabled = true;
+		}
+
+		TryCreateNetworkedPlayerCorpse();
 
 		TryPayBounty();
+		TickDeathPresentation();
+	}
+
+	private void ResetDeathPresentationState()
+	{
+		_bountyAttempted = false;
+		_deathLogged = false;
+		_deathControlsApplied = false;
+		_deathEquipmentDisabled = false;
+		_deathPatrolDisabled = false;
+		_deathPresentationApplied = false;
+		_deathPresentationWarningLogged = false;
+		_networkedCorpseWarningLogged = false;
+		_corpseCleanedUp = false;
+		_deathObservedTime = -1f;
+	}
+
+	private void TickDeathPresentation()
+	{
+		if ( _corpseCleanedUp ) return;
+
+		if ( ShouldCleanupCorpse() )
+		{
+			CleanupCorpse();
+			return;
+		}
+
+		if ( _deathPresentationApplied ) return;
+		if ( DeathElapsed < DeathPresentationDelay || DeathObservedElapsed < DeathPresentationDelay ) return;
+
+		if ( Team == TeamType.Player )
+		{
+			HideLivingSkinnedRenderers();
+			_deathPresentationApplied = true;
+			return;
+		}
+
+		ApplyNonPlayerDeathPresentation();
+		_deathPresentationApplied = true;
+	}
+
+	private float DeathElapsed
+	{
+		get
+		{
+			var startTime = DeathTime > 0f ? DeathTime : _deathObservedTime;
+			if ( startTime < 0f ) return 0f;
+
+			return float.Max( 0f, Time.Now - startTime );
+		}
+	}
+
+	private float DeathObservedElapsed => _deathObservedTime < 0f ? 0f : float.Max( 0f, Time.Now - _deathObservedTime );
+
+	private bool ShouldCleanupCorpse()
+	{
+		return DeathElapsed >= float.Max( 0f, CorpseLifetimeSeconds );
+	}
+
+	private void CleanupCorpse()
+	{
+		HideLivingSkinnedRenderers();
+		_deathPresentationApplied = true;
+		_corpseCleanedUp = true;
+	}
+
+	private void ApplyNonPlayerDeathPresentation()
+	{
+		var bodyRenderer = ResolveBodyRenderer();
+		if ( bodyRenderer.IsValid() ) bodyRenderer.UseAnimGraph = false;
+
+		var deathPhysics = ResolveDeathPhysics();
+		if ( deathPhysics.IsValid() )
+		{
+			deathPhysics.MotionEnabled = true;
+			return;
+		}
+
+		if ( _deathPresentationWarningLogged ) return;
+
+		_deathPresentationWarningLogged = true;
+		Log.Warning( $"{Name}: Physics property is not assigned - cannot ragdoll on death" );
+	}
+
+	private void TryCreateNetworkedPlayerCorpse()
+	{
+		if ( !Networking.IsHost ) return;
+		if ( Team != TeamType.Player ) return;
+		if ( _networkedCorpse.IsValid() ) return;
+
+		var bodyRenderer = ResolveBodyRenderer();
+		if ( !bodyRenderer.IsValid() || bodyRenderer.Model is null )
+		{
+			if ( DeathObservedElapsed >= 2f ) WarnNetworkedCorpseFailed( "body renderer is not ready" );
+			return;
+		}
+
+		var corpse = CreateNetworkedPlayerCorpseObject( bodyRenderer );
+		if ( !corpse.IsValid() )
+		{
+			WarnNetworkedCorpseFailed( "corpse object could not be created" );
+			return;
+		}
+
+		if ( Networking.IsActive && !corpse.NetworkSpawn() )
+		{
+			corpse.Destroy();
+			WarnNetworkedCorpseFailed( "NetworkSpawn failed" );
+			return;
+		}
+
+		_networkedCorpse = corpse;
+	}
+
+	private GameObject CreateNetworkedPlayerCorpseObject( SkinnedModelRenderer bodyRenderer )
+	{
+		var corpse = new GameObject( $"{Name} Corpse" );
+		corpse.WorldTransform = bodyRenderer.GameObject.WorldTransform;
+		ConfigureCorpseNetworkObject( corpse );
+
+		var corpseBody = corpse.Components.Create<SkinnedModelRenderer>();
+		CopyCorpseRenderer( bodyRenderer, corpseBody );
+
+		var physics = corpse.Components.Create<ModelPhysics>();
+		physics.Renderer = corpseBody;
+		physics.MotionEnabled = true;
+
+		var lifetime = corpse.Components.Create<CorpseLifetimeComponent>();
+		lifetime.LifetimeSeconds = CorpseLifetimeSeconds;
+
+		CopyCorpseClothing( corpse, corpseBody, bodyRenderer );
+		return corpse;
+	}
+
+	private void CopyCorpseClothing( GameObject corpse, SkinnedModelRenderer corpseBody, SkinnedModelRenderer bodyRenderer )
+	{
+		var root = GameObject.Root;
+		if ( !root.IsValid() ) return;
+
+		foreach ( var sourceRenderer in root.Components.GetAll<SkinnedModelRenderer>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			if ( !sourceRenderer.IsValid() || sourceRenderer == bodyRenderer || sourceRenderer.Model is null ) continue;
+
+			var clothingObject = new GameObject( $"Corpse Clothing - {sourceRenderer.GameObject.Name}" );
+			clothingObject.SetParent( corpse, false );
+			clothingObject.LocalPosition = Vector3.Zero;
+			clothingObject.LocalRotation = Rotation.Identity;
+			clothingObject.LocalScale = Vector3.One;
+			ConfigureCorpseNetworkObject( clothingObject );
+
+			var corpseClothing = clothingObject.Components.Create<SkinnedModelRenderer>();
+			CopyCorpseRenderer( sourceRenderer, corpseClothing );
+			corpseClothing.BoneMergeTarget = corpseBody;
+		}
+	}
+
+	private static void CopyCorpseRenderer( SkinnedModelRenderer source, SkinnedModelRenderer target )
+	{
+		target.CopyFrom( source );
+		target.Enabled = true;
+		target.UseAnimGraph = false;
+	}
+
+	private static void ConfigureCorpseNetworkObject( GameObject gameObject )
+	{
+		if ( !gameObject.IsValid() ) return;
+
+		gameObject.NetworkMode = NetworkMode.Object;
+		gameObject.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
+	}
+
+	private void WarnNetworkedCorpseFailed( string reason )
+	{
+		if ( _networkedCorpseWarningLogged ) return;
+
+		_networkedCorpseWarningLogged = true;
+		Log.Warning( $"{Name}: player corpse was not spawned because {reason}." );
+	}
+
+	private SkinnedModelRenderer ResolveBodyRenderer()
+	{
+		if ( ModelRenderer.IsValid() && ModelRenderer.Model is not null ) return ModelRenderer;
+
+		var root = GameObject.Root;
+		if ( !root.IsValid() ) return ModelRenderer;
+
+		var equipment = root.Components.GetInDescendantsOrSelf<Equipment>();
+		if ( equipment.IsValid() && equipment.BodyRenderer.IsValid() && equipment.BodyRenderer.Model is not null )
+		{
+			ModelRenderer = equipment.BodyRenderer;
+			return ModelRenderer;
+		}
+
+		foreach ( var renderer in root.Components.GetAll<SkinnedModelRenderer>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			if ( !renderer.IsValid() || renderer.Model is null ) continue;
+
+			ModelRenderer = renderer;
+			return ModelRenderer;
+		}
+
+		return ModelRenderer;
+	}
+
+	private void HideLivingSkinnedRenderers()
+	{
+		var root = GameObject.Root;
+		if ( !root.IsValid() ) return;
+
+		foreach ( var renderer in root.Components.GetAll<SkinnedModelRenderer>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			renderer.Enabled = false;
+		}
+	}
+
+	private void DisableEquipmentViewsOnDeath()
+	{
+		var root = GameObject.Root;
+		if ( !root.IsValid() ) return;
+
+		foreach ( var equipment in root.Components.GetAll<Equipment>( FindMode.EnabledInSelfAndDescendants ) )
+		{
+			equipment.Enabled = false;
+		}
+	}
+
+	private ModelPhysics ResolveDeathPhysics()
+	{
+		if ( Physics.IsValid() ) return Physics;
+
+		var bodyRenderer = ResolveBodyRenderer();
+		if ( !bodyRenderer.IsValid() ) return null;
+
+		var physics = bodyRenderer.GameObject.Components.Get<ModelPhysics>();
+		if ( !physics.IsValid() ) physics = bodyRenderer.GameObject.Components.Create<ModelPhysics>();
+
+		physics.Renderer = bodyRenderer;
+		physics.MotionEnabled = false;
+		Physics = physics;
+		return physics;
+	}
+
+	private void DisablePlayerControlOnDeath()
+	{
+		if ( Team != TeamType.Player ) return;
+
+		var root = GameObject.Root;
+		if ( !root.IsValid() ) return;
+
+		var controller = root.Components.Get<PlayerController>();
+		if ( controller.IsValid() )
+		{
+			controller.UseInputControls = false;
+			controller.UseLookControls = false;
+		}
+
+		var player = root.Components.Get<PlayerComponent>();
+		if ( player.IsValid() ) player.Enabled = false;
 	}
 
 	private void TryPayBounty()
 	{
 		if ( !Networking.IsHost ) return;
+		if ( _bountyAttempted ) return;
 		if ( _bountyPaid ) return;
+
+		_bountyAttempted = true;
+
 		if ( Bounty <= 0 )
 		{
 			Log.Info( $"{Name}: no bounty paid because Bounty is {Bounty}" );

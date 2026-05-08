@@ -35,6 +35,11 @@ public sealed class Equipment : Component
 		UpdateView();
 	}
 
+	protected override void OnDisabled()
+	{
+		ClearView();
+	}
+
 	private void UpdateView()
 	{
 		EquippedState = default;

@@ -26,11 +26,40 @@ public sealed class CombatSystem : GameObjectSystem<CombatSystem>
 		var targetGo = (target as Component)?.GameObject;
 		var beforeUnit = target as UnitComponent;
 		var wasAlive = beforeUnit is null || !beforeUnit.IsDead;
+		var beforeHealth = beforeUnit?.Health ?? 0f;
+		var beforeArmor = beforeUnit?.Armor ?? 0f;
 		target.OnDamage( in info );
 
 		var afterUnit = target as UnitComponent;
 		var wasKill = wasAlive && afterUnit is not null && afterUnit.IsDead;
+		LogDamage( targetGo, info, beforeUnit, afterUnit, beforeHealth, beforeArmor, wasKill );
 		GameNetworkRpc.BroadcastDamaged( targetGo, info.Attacker, info.Weapon, info.Damage, info.Position, info.Origin, wasKill );
+	}
+
+	private static void LogDamage( GameObject targetGo, DamageInfo info, UnitComponent beforeUnit, UnitComponent afterUnit, float beforeHealth, float beforeArmor, bool wasKill )
+	{
+		var attackerName = GameObjectLogName( info.Attacker );
+		var targetName = UnitLogName( afterUnit ?? beforeUnit, targetGo );
+
+		if ( afterUnit is null )
+		{
+			Log.Info( $"[Combat] {attackerName} damaged {targetName} for {info.Damage:0.#}." );
+			return;
+		}
+
+		Log.Info( $"[Combat] {attackerName} damaged {targetName} for {info.Damage:0.#}. Health {beforeHealth:0.#}->{afterUnit.Health:0.#}, armor {beforeArmor:0.#}->{afterUnit.Armor:0.#}, kill={wasKill}." );
+	}
+
+	private static string UnitLogName( UnitComponent unit, GameObject targetGo )
+	{
+		if ( unit.IsValid() ) return GameObjectLogName( unit.GameObject.Root );
+		return GameObjectLogName( targetGo );
+	}
+
+	private static string GameObjectLogName( GameObject gameObject )
+	{
+		if ( gameObject.IsValid() && !string.IsNullOrWhiteSpace( gameObject.Name ) ) return gameObject.Name;
+		return "unknown";
 	}
 
 	public void NotifyDamaged( GameObject targetGo, DamageInfo info, bool wasKill )

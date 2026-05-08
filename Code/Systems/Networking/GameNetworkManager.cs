@@ -135,6 +135,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		ConfigureNetworkObject( player );
 		EnsurePlayerProfile( player );
 		EnsurePlayerStats( player );
+		EnsurePlayerAppearance( player );
 
 		foreach ( var profile in player.Components.GetAll<PlayerProfileComponent>( FindMode.EverythingInSelfAndDescendants ) )
 		{
@@ -175,6 +176,14 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( profile.IsValid() ) return;
 
 		player.Components.Create<PlayerProfileComponent>();
+	}
+
+	private static void EnsurePlayerAppearance( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+		if ( player.Components.GetInDescendantsOrSelf<PlayerAppearanceComponent>().IsValid() ) return;
+
+		player.Components.Create<PlayerAppearanceComponent>();
 	}
 
 	private static void ConfigureNetworkObject( GameObject gameObject )
