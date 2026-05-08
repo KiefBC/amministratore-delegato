@@ -140,90 +140,147 @@ public static class GameNetworkRpc
 		}
 
 		var cost = decimal.ToInt32( decimal.Ceiling( shares * price ) );
-		var balance = source == FinanceAccountSource.Bank ? finance.BankBalance : backpack.Wallet;
-		if ( balance < cost )
+		var fee = StockTradeFee( cost );
+		if ( cost > int.MaxValue - fee )
 		{
-			NotifyTerminal( player, NotificationKind.BadNews, "Insufficient Funds", $"Need ${cost:N0} in {AccountDisplayName( source )} to buy {shares:N0} {offer.Symbol} share{Plural( shares )}.", 3.5f );
+			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order total is too large.", 3f );
 			return;
 		}
 
-		if ( !finance.TryBuyStock( offer.Symbol, amount, price, source ) )
+		var total = cost + fee;
+		var balance = source == FinanceAccountSource.Bank ? finance.BankBalance : backpack.Wallet;
+		if ( balance < total )
+		{
+			NotifyTerminal( player, NotificationKind.BadNews, "Insufficient Funds", $"Need ${total:N0} in {AccountDisplayName( source )} to buy {shares:N0} {offer.Symbol} share{Plural( shares )} (${cost:N0} + ${fee:N0} fee).", 3.5f );
+			return;
+		}
+
+		if ( !finance.TryBuyStockShares( offer.Symbol, shares, price, source, fee ) )
 		{
 			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order could not be completed.", 3f );
 			return;
 		}
 
-		NotifyTerminal( player, NotificationKind.Success, "Stock Purchased", $"Bought {shares:N0} {offer.Symbol} share{Plural( shares )} for ${cost:N0}.", 3f );
+		AddStockTradeFeeToVault( player, offer.Symbol, cost, fee, "buy" );
+		NotifyTerminal( player, NotificationKind.Success, "Stock Purchased", $"Bought {shares:N0} {offer.Symbol} share{Plural( shares )} for ${cost:N0}. Fee ${fee:N0}; total ${total:N0}.", 3f );
 	}
 
 	[Rpc.Host]
 	public static void RequestBuyStockShares( GameObject player, string symbol, int shares )
 	{
-		if ( !CallerOwns( player ) ) return;
+		if ( !CallerOwns( player ) )
+		{
+			Log.Warning( $"[StockTerminal] Buy RPC rejected ownership; player={PlayerLogName( player )}; symbol={symbol}; shares={shares:N0}." );
+			return;
+		}
 
 		var offer = FinanceCatalog.Stock( symbol );
-		if ( offer is null ) return;
+		if ( offer is null )
+		{
+			Log.Warning( $"[StockTerminal] Buy RPC rejected unknown stock; player={PlayerLogName( player )}; symbol={symbol}; shares={shares:N0}." );
+			return;
+		}
 
 		var finance = FinanceFor( player );
 		var backpack = BackpackFor( player );
-		if ( !finance.IsValid() || !backpack.IsValid() ) return;
+		if ( !finance.IsValid() || !backpack.IsValid() )
+		{
+			Log.Warning( $"[StockTerminal] Buy RPC rejected missing components; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; financeValid={finance.IsValid()}; backpackValid={backpack.IsValid()}." );
+			return;
+		}
 
 		var price = MarketDataSystem.Current?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
 		if ( shares <= 0 || price <= 0m )
 		{
+			Log.Warning( $"[StockTerminal] Buy RPC rejected invalid amount; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
 			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", "Enter a valid share amount.", 2.5f );
 			return;
 		}
 
 		var cost = decimal.ToInt32( decimal.Ceiling( shares * price ) );
-		if ( backpack.Wallet < cost )
+		var fee = StockTradeFee( cost );
+		if ( cost > int.MaxValue - fee )
 		{
-			NotifyTerminal( player, NotificationKind.BadNews, "Insufficient Funds", $"Need ${cost:N0} cash to buy {shares:N0} {offer.Symbol} share{Plural( shares )}.", 3.5f );
+			Log.Warning( $"[StockTerminal] Buy RPC rejected oversized total; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; cost=${cost:N0}; fee=${fee:N0}." );
+			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order total is too large.", 3f );
 			return;
 		}
 
-		if ( !finance.TryBuyStockShares( offer.Symbol, shares, price, FinanceAccountSource.Wallet ) )
+		var total = cost + fee;
+		Log.Info( $"[StockTerminal] Buy RPC received; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}; cost=${cost:N0}; fee=${fee:N0}; total=${total:N0}; wallet=${backpack.Wallet:N0}." );
+		if ( backpack.Wallet < total )
 		{
+			Log.Warning( $"[StockTerminal] Buy RPC rejected insufficient funds; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; cost=${cost:N0}; fee=${fee:N0}; total=${total:N0}; wallet=${backpack.Wallet:N0}." );
+			NotifyTerminal( player, NotificationKind.BadNews, "Insufficient Funds", $"Need ${total:N0} cash to buy {shares:N0} {offer.Symbol} share{Plural( shares )} (${cost:N0} + ${fee:N0} fee).", 3.5f );
+			return;
+		}
+
+		if ( !finance.TryBuyStockShares( offer.Symbol, shares, price, FinanceAccountSource.Wallet, fee ) )
+		{
+			Log.Warning( $"[StockTerminal] Buy RPC failed during mutation; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; cost=${cost:N0}; fee=${fee:N0}; total=${total:N0}; wallet=${backpack.Wallet:N0}." );
 			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order could not be completed.", 3f );
 			return;
 		}
 
-		NotifyTerminal( player, NotificationKind.Success, "Stock Purchased", $"Bought {shares:N0} {offer.Symbol} share{Plural( shares )} for ${cost:N0}.", 3f );
+		AddStockTradeFeeToVault( player, offer.Symbol, cost, fee, "buy" );
+		Log.Info( $"[StockTerminal] Buy RPC completed; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; cost=${cost:N0}; fee=${fee:N0}; total=${total:N0}; wallet=${backpack.Wallet:N0}." );
+		NotifyTerminal( player, NotificationKind.Success, "Stock Purchased", $"Bought {shares:N0} {offer.Symbol} share{Plural( shares )} for ${cost:N0}. Fee ${fee:N0}; total ${total:N0}.", 3f );
 	}
 
 	[Rpc.Host]
 	public static void RequestSellStock( GameObject player, string symbol, int shares )
 	{
-		if ( !CallerOwns( player ) ) return;
+		if ( !CallerOwns( player ) )
+		{
+			Log.Warning( $"[StockTerminal] Sell RPC rejected ownership; player={PlayerLogName( player )}; symbol={symbol}; shares={shares:N0}." );
+			return;
+		}
 
 		var offer = FinanceCatalog.Stock( symbol );
-		if ( offer is null ) return;
+		if ( offer is null )
+		{
+			Log.Warning( $"[StockTerminal] Sell RPC rejected unknown stock; player={PlayerLogName( player )}; symbol={symbol}; shares={shares:N0}." );
+			return;
+		}
 
 		var finance = FinanceFor( player );
-		if ( !finance.IsValid() ) return;
+		if ( !finance.IsValid() )
+		{
+			Log.Warning( $"[StockTerminal] Sell RPC rejected missing finance; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}." );
+			return;
+		}
 
 		var price = MarketDataSystem.Current?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
-		if ( shares <= 0 )
+		if ( shares <= 0 || price <= 0m )
 		{
+			Log.Warning( $"[StockTerminal] Sell RPC rejected invalid amount; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
 			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", "Enter a valid share amount.", 2.5f );
 			return;
 		}
 
 		var owned = finance.StockShares.TryGetValue( offer.Symbol, out var held ) ? held : 0;
+		Log.Info( $"[StockTerminal] Sell RPC received; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}; owned={owned:N0}." );
 		if ( owned < shares )
 		{
+			Log.Warning( $"[StockTerminal] Sell RPC rejected insufficient shares; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; owned={owned:N0}." );
 			NotifyTerminal( player, NotificationKind.BadNews, "Not Enough Shares", $"You only hold {owned:N0} {offer.Symbol} share{Plural( owned )}.", 3f );
 			return;
 		}
 
 		var proceeds = decimal.ToInt32( decimal.Floor( shares * price ) );
-		if ( !finance.TrySellStock( offer.Symbol, shares, price ) )
+		var fee = StockTradeFee( proceeds );
+		var netProceeds = int.Max( 0, proceeds - fee );
+		Log.Info( $"[StockTerminal] Sell RPC priced; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; proceeds=${proceeds:N0}; fee=${fee:N0}; net=${netProceeds:N0}." );
+		if ( !finance.TrySellStock( offer.Symbol, shares, price, fee ) )
 		{
+			Log.Warning( $"[StockTerminal] Sell RPC failed during mutation; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; proceeds=${proceeds:N0}; fee=${fee:N0}; net=${netProceeds:N0}." );
 			NotifyTerminal( player, NotificationKind.BadNews, "Sell Order Failed", "The order could not be completed.", 3f );
 			return;
 		}
 
-		NotifyTerminal( player, NotificationKind.Success, "Stock Sold", $"Sold {shares:N0} {offer.Symbol} share{Plural( shares )} for ${proceeds:N0}.", 3f );
+		AddStockTradeFeeToVault( player, offer.Symbol, proceeds, fee, "sell" );
+		Log.Info( $"[StockTerminal] Sell RPC completed; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; proceeds=${proceeds:N0}; fee=${fee:N0}; net=${netProceeds:N0}." );
+		NotifyTerminal( player, NotificationKind.Success, "Stock Sold", $"Sold {shares:N0} {offer.Symbol} share{Plural( shares )} for ${proceeds:N0}. Fee ${fee:N0}; received ${netProceeds:N0}.", 3f );
 	}
 
 	[Rpc.Host]
@@ -369,6 +426,37 @@ public static class GameNetworkRpc
 	private static string Plural( int count )
 	{
 		return count == 1 ? "" : "s";
+	}
+
+	private static int StockTradeFee( int grossAmount )
+	{
+		return ServerVaultSystem.Current?.CalculateStockTradeFee( grossAmount )
+			?? ServerVaultSystem.CalculateStockTradeFee( grossAmount );
+	}
+
+	private static void AddStockTradeFeeToVault( GameObject player, string symbol, int grossAmount, int fee, string side )
+	{
+		if ( fee <= 0 ) return;
+
+		var vault = ServerVaultSystem.Current;
+		if ( vault is null )
+		{
+			Log.Warning( $"[ServerVault] Stock trade fee was charged but no vault system was available; side={side}; player={PlayerLogName( player )}; symbol={symbol}; gross=${grossAmount:N0}; fee=${fee:N0}." );
+			return;
+		}
+
+		vault.AddStockTradeFee( player, symbol, grossAmount, fee, side );
+	}
+
+	private static string PlayerLogName( GameObject player )
+	{
+		if ( !player.IsValid() ) return "<invalid>";
+		return string.IsNullOrWhiteSpace( player.Name ) ? "<unnamed>" : player.Name;
+	}
+
+	private static string PriceLog( decimal price )
+	{
+		return price.ToString( "N2", System.Globalization.CultureInfo.InvariantCulture );
 	}
 
 	private static bool CallerOwns( GameObject gameObject )

@@ -17,6 +17,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 	[Property] public GameObject PlayerPrefab { get; set; }
 	[Property] public string PlayerTemplateName { get; set; } = "Player Controller";
 	[Property] public List<GameObject> SpawnPoints { get; set; } = new();
+	[Property] public int StartingWallet { get; set; } = 1000;
 
 	private readonly Dictionary<string, GameObject> _players = new();
 	private GameObject _template;
@@ -65,6 +66,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		player.Name = $"Player - {connection.DisplayName}";
 		player.Enabled = true;
 		PreparePlayerForNetwork( player );
+		InitializeStartingWallet( player );
 
 		var spawned = player.NetworkSpawn( connection );
 		if ( !spawned )
@@ -200,6 +202,15 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( player.Components.GetInDescendantsOrSelf<PlayerAppearanceComponent>().IsValid() ) return;
 
 		player.Components.Create<PlayerAppearanceComponent>();
+	}
+
+	private void InitializeStartingWallet( GameObject player )
+	{
+		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
+		if ( !backpack.IsValid() ) return;
+
+		backpack.Wallet = int.Max( 0, StartingWallet );
+		backpack.InventoryVersion++;
 	}
 
 	private static void ConfigureNetworkObject( GameObject gameObject )

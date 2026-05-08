@@ -32,8 +32,8 @@
 					<div class="order-form terminal-card inset">
 						<div class="form-title">@(_orderMode == StockOrderMode.Buy ? "Buy Shares" : "Sell Shares")</div>
 						<div class="mode-toggle">
-							<button class="mode-button @(_orderMode == StockOrderMode.Buy ? "active" : "") action-mode-buy @ControlClass( "mode-buy" )" onclick="@(() => SetOrderMode( StockOrderMode.Buy ))">Buy</button>
-							<button class="mode-button sell @(_orderMode == StockOrderMode.Sell ? "active" : "") action-mode-sell @ControlClass( "mode-sell" )" onclick="@(() => SetOrderMode( StockOrderMode.Sell ))">Sell</button>
+							<button class="mode-button @(_orderMode == StockOrderMode.Buy ? "active" : "") action-mode-buy @ControlClass( "mode-buy" )">Buy</button>
+							<button class="mode-button sell @(_orderMode == StockOrderMode.Sell ? "active" : "") action-mode-sell @ControlClass( "mode-sell" )">Sell</button>
 						</div>
 
 						<label>@(_orderMode == StockOrderMode.Buy ? "Shares To Buy" : "Shares To Sell")</label>
@@ -41,10 +41,18 @@
 
 						<div class="estimate-row">
 							<span>@(_orderMode == StockOrderMode.Buy ? "Est. Cost" : "Est. Proceeds")</span>
+							<b>$@EstimatedOrderGross().ToString( "N0" )</b>
+						</div>
+						<div class="estimate-row fee-row">
+							<span>@TradeFeeLabel()</span>
+							<b>$@EstimatedOrderFee().ToString( "N0" )</b>
+						</div>
+						<div class="estimate-row total-row">
+							<span>@(_orderMode == StockOrderMode.Buy ? "Total" : "You Receive")</span>
 							<b>$@EstimatedOrderTotal().ToString( "N0" )</b>
 						</div>
 
-						<button class="submit-button @(_orderMode == StockOrderMode.Sell ? "sell" : "") action-submit @ControlClass( "submit" )" onclick="@SubmitOrder">
+						<button class="submit-button @(_orderMode == StockOrderMode.Sell ? "sell" : "") action-submit @ControlClass( "submit" )">
 							@(_orderMode == StockOrderMode.Buy ? "Buy" : "Sell")
 						</button>
 
@@ -60,8 +68,7 @@
 
 				<div class="chart-panel terminal-card">
 					<div class="chart-header">
-						<div>
-							<div class="panel-title">Candle Chart</div>
+						<div class="selected-stock-row">
 							<div class="selected-stock">@_selectedStock</div>
 							<div class="selected-name">@(FinanceCatalog.Stock( _selectedStock )?.Name ?? "Stock")</div>
 						</div>
@@ -69,13 +76,13 @@
 							<span>$@Price( _selectedStock ).ToString( "N2" )</span>
 							<b class="@(SelectedStockChange() >= 0 ? "up" : "down")">@SignedPercent( SelectedStockChange() )</b>
 						</div>
-						<button class="close-button action-close @ControlClass( "close" )" onclick="@Close">Esc</button>
+						<button class="close-button action-close @ControlClass( "close" )">Esc</button>
 					</div>
 
 					<div class="timeframe-row">
 						@foreach ( var option in TimeframeOptions )
 						{
-							<button class="timeframe-button @(_timeframe == option.Key ? "active" : "") action-timeframe-@TimeframeId( option.Key ) @ControlClass( $"timeframe-{TimeframeId( option.Key )}" )" onclick="@(() => SelectTimeframe( option.Key ))">@option.Label</button>
+							<button class="timeframe-button @(_timeframe == option.Key ? "active" : "") action-timeframe-@TimeframeId( option.Key ) @ControlClass( $"timeframe-{TimeframeId( option.Key )}" )">@option.Label</button>
 						}
 					</div>
 
@@ -296,17 +303,26 @@
 
 	private void SetOrderMode( StockOrderMode mode )
 	{
+		var previousMode = _orderMode;
 		_orderMode = mode;
+		Log.Info( $"[StockTerminal] Order mode selected {previousMode} -> {_orderMode}; stock={_selectedStock}; sharesText=\"{DigitsOnly( _sharesInput?.Text ?? _sharesText )}\"." );
 	}
 
 	private void SubmitOrder()
 	{
-		if ( !_player.IsValid() || !TryParseAmount( _sharesText, out var shares ) )
+		var rawSharesText = _sharesInput?.Text ?? _sharesText;
+		var cleanSharesText = DigitsOnly( rawSharesText );
+		_sharesText = cleanSharesText;
+		if ( _sharesInput is not null && _sharesInput.Text != cleanSharesText ) _sharesInput.Text = cleanSharesText;
+
+		if ( !_player.IsValid() || !TryParseAmount( cleanSharesText, out var shares ) )
 		{
+			Log.Warning( $"[StockTerminal] Submit order rejected locally; mode={_orderMode}; stock={_selectedStock}; rawShares=\"{rawSharesText}\"; cleanShares=\"{cleanSharesText}\"; playerValid={_player.IsValid()}." );
 			ShowMessage( (int)NotificationKind.Warning, "Stock Order", "Enter a valid share amount.", 2.5f );
 			return;
 		}
 
+		Log.Info( $"[StockTerminal] Submit order clicked; mode={_orderMode}; stock={_selectedStock}; shares={shares:N0}; estimatedGross=${EstimatedOrderGross():N0}; estimatedFee=${EstimatedOrderFee():N0}; estimatedFinal=${EstimatedOrderTotal():N0}; price=${PriceLog( Price( _selectedStock ) )}; wallet=${Wallet:N0}." );
 		if ( _orderMode == StockOrderMode.Buy ) GameNetworkRpc.RequestBuyStockShares( _player, _selectedStock, shares );
 		else GameNetworkRpc.RequestSellStock( _player, _selectedStock, shares );
 	}
@@ -405,11 +421,29 @@
 
 	private decimal SelectedStockChange() => StockChangePercent( _selectedStock );
 
-	private int EstimatedOrderTotal()
+	private int EstimatedOrderGross()
 	{
 		if ( !TryParseAmount( _sharesText, out var shares ) ) return 0;
 		if ( _orderMode == StockOrderMode.Sell ) shares = int.Min( shares, OwnedStockShares( _selectedStock ) );
-		return decimal.ToInt32( decimal.Ceiling( shares * Price( _selectedStock ) ) );
+
+		var value = shares * Price( _selectedStock );
+		return _orderMode == StockOrderMode.Buy
+			? decimal.ToInt32( decimal.Ceiling( value ) )
+			: decimal.ToInt32( decimal.Floor( value ) );
+	}
+
+	private int EstimatedOrderFee()
+	{
+		var gross = EstimatedOrderGross();
+		return ServerVaultSystem.Current?.CalculateStockTradeFee( gross )
+			?? ServerVaultSystem.CalculateStockTradeFee( gross );
+	}
+
+	private int EstimatedOrderTotal()
+	{
+		var gross = EstimatedOrderGross();
+		var fee = EstimatedOrderFee();
+		return _orderMode == StockOrderMode.Buy ? gross + fee : int.Max( 0, gross - fee );
 	}
 
 	private int OwnedStockShares( string symbol ) => _finance.IsValid() && _finance.StockShares.TryGetValue( symbol ?? "", out var shares ) ? shares : 0;
@@ -456,8 +490,22 @@
 
 	private void ActivatePolledControl( string id )
 	{
+		Log.Info( $"[StockTerminal] Control clicked {id}; stock={_selectedStock}; mode={_orderMode}; timeframe={TimeframeLogLabel( _timeframe )}; sharesText=\"{DigitsOnly( _sharesInput?.Text ?? _sharesText )}\"." );
+
 		switch ( id )
 		{
+			case "close":
+				Close();
+				break;
+			case "mode-buy":
+				SetOrderMode( StockOrderMode.Buy );
+				break;
+			case "mode-sell":
+				SetOrderMode( StockOrderMode.Sell );
+				break;
+			case "submit":
+				SubmitOrder();
+				break;
 			case "timeframe-onehour":
 				SelectTimeframe( StockTimeframe.OneHour );
 				break;
@@ -563,6 +611,12 @@
 		};
 	}
 
+	private string TradeFeeLabel()
+	{
+		var percent = ServerVaultSystem.Current?.StockTradeFeePercent ?? ServerVaultSystem.DefaultStockTradeFeePercent;
+		return $"{percent:0.##}% Fee";
+	}
+
 	private static bool TryParseAmount( string text, out int amount )
 	{
 		return int.TryParse( DigitsOnly( text ), out amount ) && amount > 0;
@@ -590,6 +644,11 @@
 
 	private static string SignedPercent( decimal value ) => $"{(value >= 0 ? "+" : "")}{value:0.##}%";
 
+	private static string PriceLog( decimal price )
+	{
+		return price.ToString( "N2", System.Globalization.CultureInfo.InvariantCulture );
+	}
+
 	protected override int BuildHash()
 	{
 		var hc = new System.HashCode();
@@ -606,6 +665,7 @@
 		hc.Add( _hoveredStock );
 		hc.Add( _hoveredControl );
 		hc.Add( _controlPressed );
+		hc.Add( TradeFeeLabel() );
 		hc.Add( HasMessage );
 		hc.Add( _messageVersion );
 		return hc.ToHashCode();

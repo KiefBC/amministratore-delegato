@@ -87,28 +87,31 @@ public sealed class PlayerFinanceComponent : Component
 		return true;
 	}
 
-	public bool TryBuyStock( string symbol, int amount, decimal price, FinanceAccountSource source )
+	public bool TryBuyStock( string symbol, int amount, decimal price, FinanceAccountSource source, int transactionFee = 0 )
 	{
 		if ( !Networking.IsHost ) return false;
 		if ( amount <= 0 || price <= 0m ) return false;
+		if ( transactionFee < 0 ) return false;
 
 		var offer = FinanceCatalog.Stock( symbol );
 		if ( offer is null ) return false;
 
 		var shares = decimal.ToInt32( decimal.Floor( amount / price ) );
-		return TryBuyStockShares( symbol, shares, price, source );
+		return TryBuyStockShares( symbol, shares, price, source, transactionFee );
 	}
 
-	public bool TryBuyStockShares( string symbol, int shares, decimal price, FinanceAccountSource source )
+	public bool TryBuyStockShares( string symbol, int shares, decimal price, FinanceAccountSource source, int transactionFee = 0 )
 	{
 		if ( !Networking.IsHost ) return false;
 		if ( shares <= 0 || price <= 0m ) return false;
+		if ( transactionFee < 0 ) return false;
 
 		var offer = FinanceCatalog.Stock( symbol );
 		if ( offer is null ) return false;
 
 		var cost = decimal.ToInt32( decimal.Ceiling( shares * price ) );
-		if ( !TrySpend( source, cost ) ) return false;
+		if ( cost > int.MaxValue - transactionFee ) return false;
+		if ( !TrySpend( source, cost + transactionFee ) ) return false;
 
 		StockShares[offer.Symbol] = StockShares.TryGetValue( offer.Symbol, out var existing ) ? existing + shares : shares;
 		StockCostBasis[offer.Symbol] = StockCostBasis.TryGetValue( offer.Symbol, out var existingBasis ) ? existingBasis + cost : cost;
@@ -116,14 +119,18 @@ public sealed class PlayerFinanceComponent : Component
 		return true;
 	}
 
-	public bool TrySellStock( string symbol, int shares, decimal price )
+	public bool TrySellStock( string symbol, int shares, decimal price, int transactionFee = 0 )
 	{
 		if ( !Networking.IsHost ) return false;
 		if ( shares <= 0 || price <= 0m ) return false;
+		if ( transactionFee < 0 ) return false;
 
 		var offer = FinanceCatalog.Stock( symbol );
 		if ( offer is null ) return false;
 		if ( !StockShares.TryGetValue( offer.Symbol, out var owned ) || owned < shares ) return false;
+
+		var proceeds = decimal.ToInt32( decimal.Floor( shares * price ) );
+		if ( transactionFee > proceeds ) return false;
 
 		var remaining = owned - shares;
 		var basis = StockCostBasis.TryGetValue( offer.Symbol, out var existingBasis ) ? existingBasis : 0;
@@ -136,7 +143,7 @@ public sealed class PlayerFinanceComponent : Component
 		if ( remaining > 0 && remainingBasis > 0 ) StockCostBasis[offer.Symbol] = remainingBasis;
 		else StockCostBasis.Remove( offer.Symbol );
 
-		Backpack()?.AddMoney( decimal.ToInt32( decimal.Floor( shares * price ) ) );
+		Backpack()?.AddMoney( proceeds - transactionFee );
 		Touch();
 		return true;
 	}

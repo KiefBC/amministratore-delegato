@@ -222,6 +222,16 @@ ComputerTerminalPanel {
 		font-size: 18px;
 	}
 
+	.estimate-row.fee-row b {
+		color: #ffb56a;
+	}
+
+	.estimate-row.total-row {
+		border-top: 1px solid rgba( 92, 136, 168, 0.2 );
+		padding-top: 6px;
+		font-weight: 900;
+	}
+
 	.submit-button {
 		height: 48px;
 		background-color: #0aa34d;
@@ -265,6 +275,12 @@ ComputerTerminalPanel {
 		gap: 14px;
 		border-bottom: 1px solid rgba( 92, 136, 168, 0.22 );
 		padding-bottom: 12px;
+	}
+
+	.selected-stock-row {
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
 	}
 
 	.selected-stock {
