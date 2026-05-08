@@ -1,7 +1,7 @@
 @using Sandbox;
 @using Sandbox.UI;
 @using System.Linq;
-@namespace Sandbox
+@namespace Sandbox.Systems.UI
 @inherits PanelComponent
 
 <root>
@@ -74,7 +74,7 @@
 
 	protected override void OnUpdate()
 	{
-		if ( Player is null || !Sandbox.LocalPlayer.Owns( Player.GameObject ) )
+		if ( Player is null || !Sandbox.Systems.Movement.LocalPlayer.Owns( Player.GameObject ) )
 		{
 			Player = null;
 			FindLocalPlayer();
@@ -105,7 +105,7 @@
 
 	private void FindLocalPlayer()
 	{
-		Player ??= Sandbox.LocalPlayer.Component<UnitComponent>( Scene );
+		Player ??= Sandbox.Systems.Movement.LocalPlayer.Component<UnitComponent>( Scene );
 
 		if ( Player is not null )
 		{

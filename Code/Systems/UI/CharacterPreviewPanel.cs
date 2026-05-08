@@ -1,6 +1,6 @@
 using Sandbox.UI;
 
-namespace Sandbox;
+namespace Sandbox.Systems.UI;
 
 /// <summary>
 /// UI-only 3D preview for the inventory screen. ScenePanel now expects an actual

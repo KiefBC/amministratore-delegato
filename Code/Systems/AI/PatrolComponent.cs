@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.AI;
+
 public sealed class PatrolComponent : Component
 {
 	/// <summary>
@@ -47,7 +49,7 @@ public sealed class PatrolComponent : Component
 
 	protected override void OnUpdate()
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( !PointA.IsValid() || !PointB.IsValid() ) return;
 		if ( !_target.IsValid() ) _target = PointA;
 

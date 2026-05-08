@@ -477,7 +477,7 @@
               "WorkshopItems": []
             },
             {
-              "__type": "PlayerComponent",
+              "__type": "Sandbox.Systems.Movement.PlayerComponent",
               "__guid": "0773cf9b-944c-4df6-8221-7e56c42a26f7",
               "__enabled": true,
               "Flags": 0,
@@ -489,7 +489,7 @@
               "OnComponentUpdate": null
             },
             {
-              "__type": "UIStateManager",
+              "__type": "Sandbox.Systems.UI.UIStateManager",
               "__guid": "a2c5e1f0-1101-4f01-9e34-8a8c4f1e1a01",
               "__enabled": true,
               "Flags": 0,
@@ -508,7 +508,7 @@
               }
             },
             {
-              "__type": "RarityConfig",
+              "__type": "Sandbox.Systems.Inventory.RarityConfig",
               "__guid": "a2c5e1f0-1101-4f02-9e34-8a8c4f1e1a02",
               "__enabled": true,
               "Flags": 0,
@@ -620,7 +620,7 @@
                   }
                 },
                 {
-                  "__type": "Equipment",
+                  "__type": "Sandbox.Systems.Inventory.Equipment",
                   "__guid": "967c839c-7655-4c7f-adb1-96d6edfe7c5d",
                   "__enabled": true,
                   "Flags": 0,
@@ -639,7 +639,7 @@
                   "OnComponentUpdate": null
                 },
                 {
-                  "__type": "UnitComponent",
+                  "__type": "Sandbox.Systems.AI.UnitComponent",
                   "__guid": "7495be4a-cc9f-4431-aff8-db77fd967100",
                   "__enabled": true,
                   "Flags": 0,
@@ -669,7 +669,7 @@
                   "Team": "Player"
                 },
                 {
-                  "__type": "WeaponBehavior",
+                  "__type": "Sandbox.Systems.Combat.WeaponBehavior",
                   "__guid": "8242a54a-5bc2-46e9-8cda-5f8818a51326",
                   "__enabled": true,
                   "Flags": 0,
@@ -705,7 +705,7 @@
                   "OnComponentUpdate": null
                 },
                 {
-                  "__type": "Backpack",
+                  "__type": "Sandbox.Systems.Inventory.Backpack",
                   "__guid": "b2c5e1f0-1101-4f03-9e34-8a8c4f1e1a03",
                   "__enabled": true,
                   "Flags": 0,
@@ -3271,7 +3271,7 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.Crosshair",
+              "__type": "Sandbox.Systems.UI.Crosshair",
               "__guid": "0b13b61d-b81b-43f1-a1c3-012c74cf0827",
               "__enabled": true,
               "Flags": 0,
@@ -3283,7 +3283,7 @@
               "OnComponentUpdate": null
             },
             {
-              "__type": "Sandbox.HitMarker",
+              "__type": "Sandbox.Systems.UI.HitMarker",
               "__guid": "2d73ca0c-0cef-4dde-97d5-2fa61fde132a",
               "__enabled": true,
               "Flags": 0,
@@ -3333,7 +3333,7 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.InteractPrompt",
+              "__type": "Sandbox.Systems.Interaction.InteractPrompt",
               "__guid": "314d79e6-317d-4353-97d0-c5e3f793e6bc",
               "__enabled": true,
               "Flags": 0,
@@ -3382,7 +3382,7 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.HealthBar",
+              "__type": "Sandbox.Systems.UI.HealthBar",
               "__guid": "248f220e-1e4a-422f-8746-2e79dc57a41d",
               "__enabled": true,
               "Flags": 0,
@@ -3432,7 +3432,7 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.WeaponIndicator",
+              "__type": "Sandbox.Systems.UI.WeaponIndicator",
               "__guid": "4aece710-9c8e-46aa-80cd-972e5a47c617",
               "__enabled": true,
               "Flags": 0,
@@ -3481,7 +3481,7 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.MoneyDisplay",
+              "__type": "Sandbox.Systems.UI.MoneyDisplay",
               "__guid": "7395051b-e855-475c-850e-f19574d01a4f",
               "__enabled": true,
               "Flags": 0,
@@ -3530,7 +3530,7 @@
               "ZIndex": 200
             },
             {
-              "__type": "Sandbox.InventoryPanel",
+              "__type": "Sandbox.Systems.UI.InventoryPanel",
               "__guid": "c2c5e1f0-1101-4f06-9e34-8a8c4f1e1a06",
               "__enabled": true,
               "Flags": 0,
@@ -3659,7 +3659,7 @@
               "StartAsleep": false
             },
             {
-              "__type": "WeaponPickup",
+              "__type": "Sandbox.Systems.Interaction.WeaponPickup",
               "__guid": "ec154d7f-4b2d-4997-93b6-a840f43a5cfb",
               "__enabled": true,
               "Flags": 0,
@@ -3671,7 +3671,7 @@
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
               "OnComponentUpdate": null,
-              "PickupRange": 50,
+              "PickupRange": 75,
               "StartingAmmo": -1
             }
           ],
@@ -3801,7 +3801,7 @@
               "StartAsleep": false
             },
             {
-              "__type": "FoodPickup",
+              "__type": "Sandbox.Systems.Interaction.FoodPickup",
               "__guid": "b74c015a-1ac3-4cc5-8868-cb43b1c9e621",
               "__enabled": true,
               "Flags": 0,
@@ -3943,7 +3943,7 @@
               "StartAsleep": false
             },
             {
-              "__type": "FoodPickup",
+              "__type": "Sandbox.Systems.Interaction.FoodPickup",
               "__guid": "7c99a84d-6837-4f55-b077-9e6403f80225",
               "__enabled": true,
               "Flags": 0,
@@ -4085,7 +4085,7 @@
               "StartAsleep": false
             },
             {
-              "__type": "FoodPickup",
+              "__type": "Sandbox.Systems.Interaction.FoodPickup",
               "__guid": "643f8a09-9cfe-4c66-93ae-15adee8abbfa",
               "__enabled": true,
               "Flags": 0,
@@ -4426,7 +4426,7 @@
               "SurfaceVelocity": "0,0,0"
             },
             {
-              "__type": "UnitComponent",
+              "__type": "Sandbox.Systems.AI.UnitComponent",
               "__guid": "d73ec7e2-d076-481b-8e2d-d0f00a6b66fc",
               "__enabled": true,
               "Flags": 0,
@@ -5107,7 +5107,7 @@
                     "go": "ac1c806a-70ab-47be-9e85-249b14e8e53b"
                   },
                   "SitHeight": 0.32142854,
-                  "SitPose": "ChairCrossed",
+                  "SitPose": "ChairForward",
                   "TooltipDescription": "Lets the Citizen sit on the chair",
                   "TooltipIcon": "airline_seat_recline_normal",
                   "TooltipTitle": "Sit",
@@ -5200,7 +5200,7 @@
                   "StartAsleep": false
                 },
                 {
-                  "__type": "DeskDeviceInteractable",
+                  "__type": "Sandbox.Systems.Interaction.DeskDeviceInteractable",
                   "__guid": "1ec537f6-b1f6-485b-a618-f9f8b8b58e6f",
                   "__enabled": true,
                   "Flags": 0,
@@ -5457,7 +5457,7 @@
           "OwnerTransfer": 1,
           "Components": [
             {
-              "__type": "GameNetworkManager",
+              "__type": "Sandbox.Systems.Networking.GameNetworkManager",
               "__guid": "2f370e97-4f9d-42bf-8912-0666384fbf54",
               "__enabled": true,
               "Flags": 0,
@@ -5513,7 +5513,7 @@
               "ZIndex": 120
             },
             {
-              "__type": "Sandbox.ChatPanel",
+              "__type": "Sandbox.Systems.UI.ChatPanel",
               "__guid": "4e94221d-9ca2-44df-9a85-2cc21c90510b",
               "__enabled": true,
               "Flags": 0,
@@ -5562,7 +5562,7 @@
               "ZIndex": 110
             },
             {
-              "__type": "Sandbox.NotificationDisplay",
+              "__type": "Sandbox.Systems.UI.NotificationDisplay",
               "__guid": "b2a8b842-9a02-4836-8c3c-4ae290a8636b",
               "__enabled": true,
               "Flags": 0,
@@ -5631,7 +5631,7 @@
           "ZIndex": 260
         },
         {
-          "__type": "Sandbox.ComputerTerminalPanel",
+          "__type": "Sandbox.Systems.UI.ComputerTerminalPanel",
           "__guid": "eaddd042-eedb-47a1-aad2-4835f4810152",
           "__enabled": true,
           "Flags": 0,
@@ -5720,7 +5720,7 @@
           "ZIndex": 255
         },
         {
-          "__type": "Sandbox.PhoneBookPanel",
+          "__type": "Sandbox.Systems.UI.PhoneBookPanel",
           "__guid": "21cadad6-3084-42a9-be1c-fe76ea3bd5ef",
           "__enabled": true,
           "Flags": 0,
@@ -5886,13 +5886,13 @@
           "SelectionSets": []
         }
       },
-      "Sandbox.MovieMaker.MovieRecorderSystem": {
-        "DisableClientRecording": false
-      },
       "Sandbox.Clutter.ClutterGridSystem": {
         "Storage": {
           "$blob": "c7e0731d-eb2b-4b7c-be24-5301459ae2d2"
         }
+      },
+      "Sandbox.MovieMaker.MovieRecorderSystem": {
+        "DisableClientRecording": false
       }
     }
   },

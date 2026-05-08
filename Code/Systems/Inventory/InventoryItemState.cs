@@ -1,3 +1,5 @@
+namespace Sandbox.Systems.Inventory;
+
 public struct InventoryItemState
 {
 	public int InstanceId { get; set; }

@@ -1,3 +1,5 @@
+namespace Sandbox.Systems.UI;
+
 public enum UiModeKind
 {
 	None = 0,

@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Inventory;
+
 /// <summary>
 /// Builds the local equipped-item view from synced inventory state. The object in
 /// the player's hand is cosmetic only; <see cref="Backpack"/> is the source of

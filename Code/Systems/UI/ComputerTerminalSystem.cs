@@ -1,6 +1,8 @@
 using Sandbox;
 using System.Linq;
 
+namespace Sandbox.Systems.UI;
+
 public sealed class ComputerTerminalSystem : GameObjectSystem<ComputerTerminalSystem>
 {
 	private GameObject _displayObject;

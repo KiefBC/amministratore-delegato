@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Inventory;
+
 /// <summary>
 /// Holds the rarity → color palette used by the inventory UI to draw each slot's
 /// always-on rarity glow. Lives on the player root so designers tweak the whole

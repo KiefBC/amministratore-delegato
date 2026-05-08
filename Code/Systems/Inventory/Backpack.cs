@@ -2,6 +2,8 @@ using Sandbox;
 using System.Collections.Generic;
 using System.Linq;
 
+namespace Sandbox.Systems.Inventory;
+
 /// <summary>
 /// Host-authoritative per-player inventory and wallet. Persistent state is synced
 /// as item records; world/equipped GameObjects are views derived from definitions.
@@ -51,7 +53,7 @@ public sealed class Backpack : Component
 
 	protected override void OnStart()
 	{
-		if ( Networking.IsHost )
+		if ( Sandbox.Networking.IsHost )
 		{
 			EnsureNextInstanceId();
 			ApplyEquipmentSlotState( EquippedInstanceId );
@@ -60,7 +62,7 @@ public sealed class Backpack : Component
 
 	protected override void OnUpdate()
 	{
-		if ( Networking.IsHost )
+		if ( Sandbox.Networking.IsHost )
 		{
 			CompleteReloadIfDue();
 		}
@@ -125,7 +127,7 @@ public sealed class Backpack : Component
 
 	public bool TryAddDefinition( string definitionPath, int stackCount = 1, int ammo = -1, bool autoEquipFirstWeapon = true )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( stackCount <= 0 ) return false;
 
 		var definition = ItemDefinition.Resolve( definitionPath );
@@ -202,7 +204,7 @@ public sealed class Backpack : Component
 	public void AddMoney( int amount )
 	{
 		if ( amount <= 0 ) return;
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		Wallet += amount;
 		Touch();
@@ -211,7 +213,7 @@ public sealed class Backpack : Component
 	public bool TrySpend( int amount )
 	{
 		if ( amount <= 0 ) return false;
-		if ( !Networking.IsHost )
+		if ( !Sandbox.Networking.IsHost )
 		{
 			GameNetworkRpc.RequestSpendMoney( GameObject.Root, amount );
 			return false;
@@ -225,7 +227,7 @@ public sealed class Backpack : Component
 
 	public bool TryUseSlot( int slot )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( !TryGetItemAt( slot, out var item ) ) return false;
 
 		var definition = GetDefinition( item );
@@ -305,7 +307,7 @@ public sealed class Backpack : Component
 
 	public bool TryMoveSlot( int fromSlot, int toSlot )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 
 		var previousEquipped = EquippedInstanceId;
 		if ( !TryMoveSlotState( fromSlot, toSlot ) ) return false;
@@ -358,7 +360,7 @@ public sealed class Backpack : Component
 
 	public bool TryDropSlot( int slot )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( !TryGetItemAt( slot, out var item ) ) return false;
 
 		var definition = GetDefinition( item );
@@ -380,7 +382,7 @@ public sealed class Backpack : Component
 
 	public bool TrySort( SortMode mode )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 
 		var sorted = Items.Values.Where( x => x.IsValid && IsGridSlot( x.SlotIndex ) ).ToList();
 		sorted.Sort( ( a, b ) =>
@@ -412,7 +414,7 @@ public sealed class Backpack : Component
 
 	public bool TryToggleHolster()
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( !TryGetEquipped( out var item, out var definition ) ) return false;
 		if ( !definition.IsWeapon ) return false;
 
@@ -431,7 +433,7 @@ public sealed class Backpack : Component
 
 	public bool TryStartReload()
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( !TryGetEquipped( out var item, out var definition ) ) return false;
 		if ( !definition.IsWeapon ) return false;
 		var weapon = definition.Weapon;
@@ -449,7 +451,7 @@ public sealed class Backpack : Component
 
 	public bool TrySetWeaponAiming( bool aiming )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 
 		if ( aiming )
 		{
@@ -468,7 +470,7 @@ public sealed class Backpack : Component
 
 	public bool TryFire( Vector3 origin, Rotation aim )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( !TryGetEquipped( out var item, out var definition ) ) return false;
 		if ( !definition.IsWeapon ) return false;
 		var weapon = definition.Weapon;

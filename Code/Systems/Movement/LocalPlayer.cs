@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Sandbox;
+namespace Sandbox.Systems.Movement;
 
 public static class LocalPlayer
 {

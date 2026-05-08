@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Economy;
+
 /// <summary>
 /// Scene-scoped economy service. It does not own player money; each player's
 /// synced <see cref="Backpack.Wallet"/> is the authoritative balance.
@@ -23,7 +25,7 @@ public sealed class EconomySystem : GameObjectSystem<EconomySystem>
 	public void Add( GameObject player, int amount )
 	{
 		if ( amount <= 0 ) return;
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		var backpack = player?.Components.GetInDescendantsOrSelf<Backpack>();
 		backpack?.AddMoney( amount );
@@ -36,7 +38,7 @@ public sealed class EconomySystem : GameObjectSystem<EconomySystem>
 	public bool TrySpend( GameObject player, int amount )
 	{
 		if ( amount <= 0 ) return false;
-		if ( !Networking.IsHost )
+		if ( !Sandbox.Networking.IsHost )
 		{
 			GameNetworkRpc.RequestSpendMoney( player, amount );
 			return false;

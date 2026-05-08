@@ -205,7 +205,7 @@
         "WorkshopItems": []
       },
       {
-        "__type": "PlayerComponent",
+        "__type": "Sandbox.Systems.Movement.PlayerComponent",
         "__guid": "6cc7919b-6a57-4fe5-9a06-b99be006c4bc",
         "__enabled": true,
         "Flags": 0,
@@ -217,7 +217,7 @@
         "OnComponentUpdate": null
       },
       {
-        "__type": "UIStateManager",
+        "__type": "Sandbox.Systems.UI.UIStateManager",
         "__guid": "a36b5ad9-7972-4cb0-b872-a4e2ee0e992d",
         "__enabled": true,
         "Flags": 0,
@@ -235,7 +235,7 @@
         }
       },
       {
-        "__type": "RarityConfig",
+        "__type": "Sandbox.Systems.Inventory.RarityConfig",
         "__guid": "eb74d11d-33a6-496e-ae08-0a2de0bbd34d",
         "__enabled": true,
         "Flags": 0,
@@ -347,7 +347,7 @@
             }
           },
           {
-            "__type": "Equipment",
+            "__type": "Sandbox.Systems.Inventory.Equipment",
             "__guid": "f3f2c40c-0558-432a-b07a-cf536141784a",
             "__enabled": true,
             "Flags": 0,
@@ -366,7 +366,7 @@
             "OnComponentUpdate": null
           },
           {
-            "__type": "UnitComponent",
+            "__type": "Sandbox.Systems.AI.UnitComponent",
             "__guid": "7997d2c2-3670-4d01-9bc9-f79b5879a8b0",
             "__enabled": true,
             "Flags": 0,
@@ -390,7 +390,7 @@
             "Team": "Player"
           },
           {
-            "__type": "WeaponBehavior",
+            "__type": "Sandbox.Systems.Combat.WeaponBehavior",
             "__guid": "e9f0254a-22b5-4dd0-b5f7-b38c87f00e09",
             "__enabled": true,
             "Flags": 0,
@@ -404,7 +404,7 @@
               "_type": "component",
               "component_id": "ce991283-8ce7-4e0a-a6dc-f567468a594c",
               "go": "5359de12-4fcc-459a-a12f-314e2dccfb08",
-              "component_type": "Backpack"
+              "component_type": "Sandbox.Systems.Inventory.Backpack"
             },
             "BodyRenderer": {
               "_type": "component",
@@ -416,7 +416,7 @@
               "_type": "component",
               "component_id": "f3f2c40c-0558-432a-b07a-cf536141784a",
               "go": "5359de12-4fcc-459a-a12f-314e2dccfb08",
-              "component_type": "Equipment"
+              "component_type": "Sandbox.Systems.Inventory.Equipment"
             },
             "OnComponentDestroy": null,
             "OnComponentDisabled": null,
@@ -426,7 +426,7 @@
             "OnComponentUpdate": null
           },
           {
-            "__type": "Backpack",
+            "__type": "Sandbox.Systems.Inventory.Backpack",
             "__guid": "ce991283-8ce7-4e0a-a6dc-f567468a594c",
             "__enabled": true,
             "Flags": 0,

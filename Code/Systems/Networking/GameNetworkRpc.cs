@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Networking;
+
 /// <summary>
 /// RPC entry points for gameplay systems. Keep network transport here so scene
 /// systems can stay focused on gameplay rules and local scene queries.
@@ -591,7 +593,7 @@ public static class GameNetworkRpc
 	private static bool CallerOwns( GameObject gameObject )
 	{
 		if ( !gameObject.IsValid() ) return false;
-		if ( Rpc.Caller is null ) return Networking.IsHost && LocalPlayer.Owns( gameObject );
+		if ( Rpc.Caller is null ) return Sandbox.Networking.IsHost && LocalPlayer.Owns( gameObject );
 
 		var owner = gameObject.Network.Owner;
 		if ( owner is not null ) return owner == Rpc.Caller;
@@ -603,11 +605,11 @@ public static class GameNetworkRpc
 			if ( owner is not null ) return owner == Rpc.Caller;
 		}
 
-		return Rpc.Caller.IsHost && Networking.IsHost && LocalPlayer.Owns( gameObject );
+		return Rpc.Caller.IsHost && Sandbox.Networking.IsHost && LocalPlayer.Owns( gameObject );
 	}
 
 	private static bool CallerIsHost()
 	{
-		return Rpc.Caller is null ? Networking.IsHost : Rpc.Caller.IsHost;
+		return Rpc.Caller is null ? Sandbox.Networking.IsHost : Rpc.Caller.IsHost;
 	}
 }

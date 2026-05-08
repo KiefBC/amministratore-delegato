@@ -1,3 +1,5 @@
+namespace Sandbox.Systems.Interaction;
+
 /// <summary>
 /// Implement on any component the player can interact with via E (chairs, weapon
 /// pickups, computers, ATMs, dropped items). The <see cref="InteractionSystem"/>

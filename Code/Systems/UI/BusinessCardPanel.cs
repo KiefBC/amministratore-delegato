@@ -1,6 +1,6 @@
 using Sandbox.UI;
 
-namespace Sandbox;
+namespace Sandbox.Systems.UI;
 
 public sealed class BusinessCardPanel : Panel
 {

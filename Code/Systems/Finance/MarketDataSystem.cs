@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 
+namespace Sandbox.Systems.Finance;
+
 public enum StockTimeframe
 {
 	OneHour,

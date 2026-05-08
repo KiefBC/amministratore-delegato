@@ -207,7 +207,7 @@
           "WorkshopItems": []
         },
         {
-          "__type": "PlayerComponent",
+          "__type": "Sandbox.Systems.Movement.PlayerComponent",
           "__guid": "0773cf9b-944c-4df6-8221-7e56c42a26f7",
           "__enabled": true,
           "Flags": 0,
@@ -314,7 +314,7 @@
               }
             },
             {
-              "__type": "Equipment",
+              "__type": "Sandbox.Systems.Inventory.Equipment",
               "__guid": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
               "__enabled": true,
               "Flags": 0,
@@ -333,7 +333,7 @@
               "OnComponentUpdate": null
             },
             {
-              "__type": "UnitComponent",
+              "__type": "Sandbox.Systems.AI.UnitComponent",
               "__guid": "7495be4a-cc9f-4431-aff8-db77fd967100",
               "__enabled": true,
               "Flags": 0,
@@ -356,7 +356,7 @@
               "Team": "Player"
             },
             {
-              "__type": "WeaponBehavior",
+              "__type": "Sandbox.Systems.Combat.WeaponBehavior",
               "__guid": "8242a54a-5bc2-46e9-8cda-5f8818a51326",
               "__enabled": true,
               "Flags": 0,
@@ -370,7 +370,7 @@
                 "_type": "component",
                 "component_id": "b2c5e1f0-1101-4f03-9e34-8a8c4f1e1a03",
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "Backpack"
+                "component_type": "Sandbox.Systems.Inventory.Backpack"
               },
               "BodyRenderer": {
                 "_type": "component",
@@ -382,7 +382,7 @@
                 "_type": "component",
                 "component_id": "0a1b32de-afdb-4ed2-ba02-4edac77222e9",
                 "go": "52a3fcee-b465-480e-b2c2-1e93aed73686",
-                "component_type": "Equipment"
+                "component_type": "Sandbox.Systems.Inventory.Equipment"
               },
               "OnComponentDestroy": null,
               "OnComponentDisabled": null,
@@ -392,7 +392,7 @@
               "OnComponentUpdate": null
             },
             {
-              "__type": "Backpack",
+              "__type": "Sandbox.Systems.Inventory.Backpack",
               "__guid": "b2c5e1f0-1101-4f03-9e34-8a8c4f1e1a03",
               "__enabled": true,
               "Flags": 0,
@@ -8313,7 +8313,7 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.Crosshair",
+              "__type": "Sandbox.Systems.UI.Crosshair",
               "__guid": "0b13b61d-b81b-43f1-a1c3-012c74cf0827",
               "__enabled": true,
               "Flags": 0,
@@ -8362,7 +8362,7 @@
               "ZIndex": 100
             },
             {
-              "__type": "Sandbox.InteractPrompt",
+              "__type": "Sandbox.Systems.Interaction.InteractPrompt",
               "__guid": "314d79e6-317d-4353-97d0-c5e3f793e6bc",
               "__enabled": true,
               "Flags": 0,
@@ -8491,7 +8491,7 @@
               "StartAsleep": false
             },
             {
-              "__type": "WeaponPickup",
+              "__type": "Sandbox.Systems.Interaction.WeaponPickup",
               "__guid": "ec154d7f-4b2d-4997-93b6-a840f43a5cfb",
               "__enabled": true,
               "Flags": 0,

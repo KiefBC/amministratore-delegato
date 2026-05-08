@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Movement;
+
 public sealed class PlayerComponent : Component
 {
 	private PlayerController _controller;
@@ -58,7 +60,7 @@ public sealed class PlayerComponent : Component
 		var player = GameObject.Root;
 		if ( !player.IsValid() ) return;
 
-		if ( Networking.IsHost )
+		if ( Sandbox.Networking.IsHost )
 		{
 			player.Components.GetInDescendantsOrSelf<UnitComponent>()?.SetRunStaminaDrain( running );
 			return;

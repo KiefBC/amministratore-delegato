@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.UI;
+
 public enum NotificationKind
 {
 	Info,
@@ -79,7 +81,7 @@ public sealed class NotificationSystem : GameObjectSystem<NotificationSystem>
 	public void NotifyKill( GameObject target, GameObject attacker )
 	{
 		if ( !attacker.IsValid() ) return;
-		if ( !Sandbox.LocalPlayer.Owns( attacker ) ) return;
+		if ( !Sandbox.Systems.Movement.LocalPlayer.Owns( attacker ) ) return;
 		if ( IsSamePlayer( target, attacker ) ) return;
 
 		Notify( NotificationKind.Kill, "Killed", ResolveKillTargetName( target ) );
@@ -134,7 +136,7 @@ public sealed class NotificationSystem : GameObjectSystem<NotificationSystem>
 
 	private void PollLevelUps()
 	{
-		var stats = Sandbox.LocalPlayer.Component<PlayerStatsComponent>( Scene );
+		var stats = Sandbox.Systems.Movement.LocalPlayer.Component<PlayerStatsComponent>( Scene );
 		if ( !ReferenceEquals( _stats, stats ) )
 		{
 			_stats = stats;

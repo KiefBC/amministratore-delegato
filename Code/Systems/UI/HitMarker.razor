@@ -1,7 +1,7 @@
 @using Sandbox;
 @using Sandbox.UI;
 @using System.Linq;
-@namespace Sandbox
+@namespace Sandbox.Systems.UI
 @inherits PanelComponent
 @implements IDamagedListener
 
@@ -32,12 +32,12 @@
 
 	public void OnDamaged( Component.IDamageable target, DamageInfo info, bool wasKill )
 	{
-		if ( !Sandbox.LocalPlayer.Owns( PlayerRoot ) )
+		if ( !Sandbox.Systems.Movement.LocalPlayer.Owns( PlayerRoot ) )
 		{
 			PlayerRoot = null;
 		}
 
-		PlayerRoot ??= Sandbox.LocalPlayer.GameObject( Scene );
+		PlayerRoot ??= Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
 		if ( PlayerRoot is null ) return;
 		if ( !SameRoot( info.Attacker, PlayerRoot ) ) return;
 
@@ -47,7 +47,7 @@
 
 	protected override void OnStart()
 	{
-		PlayerRoot ??= Sandbox.LocalPlayer.GameObject( Scene );
+		PlayerRoot ??= Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
 	}
 
 	protected override void OnUpdate()

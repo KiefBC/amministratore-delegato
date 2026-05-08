@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems;
+
 [AssetType( Name = "Stats Config", Extension = "statcfg", Category = "Amministratore" )]
 public partial class StatsConfig : GameResource
 {

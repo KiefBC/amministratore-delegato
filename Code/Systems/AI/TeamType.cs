@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.AI;
+
 public enum TeamType
 {
 	[Icon( "account_circle" )]

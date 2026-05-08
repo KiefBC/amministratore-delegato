@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Finance;
+
 /// <summary>
 /// Host-owned, session-only banking and portfolio state for one player.
 /// Values are intentionally simple integers: stocks are whole shares, crypto is milli-units.
@@ -27,7 +29,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TryDeposit( int amount )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( amount <= 0 ) return false;
 
 		var backpack = Backpack();
@@ -40,7 +42,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TryWithdraw( int amount )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( amount <= 0 || BankBalance < amount ) return false;
 
 		var backpack = Backpack();
@@ -54,7 +56,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TrySpend( FinanceAccountSource source, int amount )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( amount <= 0 ) return false;
 
 		if ( source == FinanceAccountSource.Bank )
@@ -70,7 +72,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public void AddMoney( FinanceAccountSource source, int amount )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( amount <= 0 ) return;
 
 		if ( source == FinanceAccountSource.Bank )
@@ -85,7 +87,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TryBuyBusiness( string businessId )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 
 		var offer = FinanceCatalog.Business( businessId );
 		if ( offer is null ) return false;
@@ -99,7 +101,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TryBuyStock( string symbol, int amount, decimal price, FinanceAccountSource source, int transactionFee = 0 )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( amount <= 0 || price <= 0m ) return false;
 		if ( transactionFee < 0 ) return false;
 
@@ -112,7 +114,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TryBuyStockShares( string symbol, int shares, decimal price, FinanceAccountSource source, int transactionFee = 0 )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( shares <= 0 || price <= 0m ) return false;
 		if ( transactionFee < 0 ) return false;
 
@@ -131,7 +133,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TrySellStock( string symbol, int shares, decimal price, int transactionFee = 0 )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( shares <= 0 || price <= 0m ) return false;
 		if ( transactionFee < 0 ) return false;
 
@@ -160,7 +162,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TryTakeLoan( int amount, FinanceAccountSource destination )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( amount <= 0 ) return false;
 		if ( DebtBalance > int.MaxValue - amount ) return false;
 
@@ -194,7 +196,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TryRepayDebt( int amount, FinanceAccountSource source )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( amount <= 0 || DebtBalance <= 0 ) return false;
 
 		var payment = int.Min( amount, DebtBalance );
@@ -218,7 +220,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public void AccrueDebtIfDue()
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		if ( DebtBalance <= 0 )
 		{
@@ -267,7 +269,7 @@ public sealed class PlayerFinanceComponent : Component
 
 	public bool TryBuyCrypto( string coinId, int amount, decimal price, FinanceAccountSource source )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( amount <= 0 || price <= 0m ) return false;
 
 		var offer = FinanceCatalog.Coin( coinId );

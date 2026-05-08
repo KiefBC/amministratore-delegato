@@ -1,6 +1,6 @@
 @using Sandbox;
 @using Sandbox.UI;
-@namespace Sandbox
+@namespace Sandbox.Systems.UI
 @inherits PanelComponent
 
 <root>
@@ -57,7 +57,7 @@
 
 	private void FindLocalBackpack()
 	{
-		_backpack = Sandbox.LocalPlayer.Component<Backpack>( Scene );
+		_backpack = Sandbox.Systems.Movement.LocalPlayer.Component<Backpack>( Scene );
 	}
 
 	protected override int BuildHash() => System.HashCode.Combine( _displayAmount, _flashTimer > 0f, System.Math.Sign( _lastDelta ), UiModeSystem.Current?.HidesHud == true );

@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems;
+
 public sealed class PlayerProfileComponent : Component
 {
 	public const string IndependentAffiliationId = "independent";
@@ -12,14 +14,14 @@ public sealed class PlayerProfileComponent : Component
 
 	protected override void OnStart()
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		AffiliationId = NormalizeAffiliationId( AffiliationId );
 	}
 
 	public bool TrySetAffiliation( string affiliationId )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 
 		var normalized = NormalizeAffiliationId( affiliationId );
 		if ( AffiliationId == normalized ) return false;

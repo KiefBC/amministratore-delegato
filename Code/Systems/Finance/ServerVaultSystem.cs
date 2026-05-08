@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Finance;
+
 /// <summary>
 /// Host-only scene vault for server-owned economy sinks. Stock trade fees go here
 /// now so a later lotto system can consume the accumulated total.
@@ -32,7 +34,7 @@ public sealed class ServerVaultSystem : GameObjectSystem<ServerVaultSystem>
 
 	public bool AddStockTradeFee( GameObject player, string symbol, int grossAmount, int fee, string side )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( fee <= 0 ) return false;
 
 		StockTradeFeeVaultTotal += fee;

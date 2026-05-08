@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.UI;
+
 public sealed class ChatMessageEntry
 {
 	public int Id { get; set; }
@@ -39,7 +41,7 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 
 	public bool TrySendMessage( GameObject player, string rawMessage, Connection caller )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( !player.IsValid() )
 		{
 			GameLogSystem.Current?.Warning( "chat", "Chat rejected because player was invalid", connection: caller );

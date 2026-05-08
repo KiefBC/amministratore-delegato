@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Combat;
+
 public sealed class DebugMarker : Component
 {
 	/// <summary>

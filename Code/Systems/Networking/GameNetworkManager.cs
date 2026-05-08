@@ -3,6 +3,8 @@ using Sandbox.Network;
 using System.Collections.Generic;
 using System.Linq;
 
+namespace Sandbox.Systems.Networking;
+
 /// <summary>
 /// Starts the lobby and spawns one owned player object per active connection.
 /// The existing scene player is used as a disabled template for now; once the
@@ -32,9 +34,9 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 			_template.Enabled = false;
 		}
 
-		if ( StartLobbyOnLoad && !Networking.IsActive && !Networking.IsConnecting )
+		if ( StartLobbyOnLoad && !Sandbox.Networking.IsActive && !Sandbox.Networking.IsConnecting )
 		{
-			Networking.CreateLobby( new LobbyConfig
+			Sandbox.Networking.CreateLobby( new LobbyConfig
 			{
 				MaxPlayers = MaxPlayers,
 				Name = LobbyName,
@@ -46,7 +48,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 
 	public void OnActive( Connection connection )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( connection is null ) return;
 
 		var key = ConnectionKey( connection );
@@ -90,7 +92,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 
 	public void OnDisconnected( Connection connection )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( connection is null ) return;
 
 		var key = ConnectionKey( connection );

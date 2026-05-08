@@ -1,7 +1,7 @@
 @using Sandbox;
 @using Sandbox.UI;
 @using System.Linq;
-@namespace Sandbox
+@namespace Sandbox.Systems.UI
 @inherits PanelComponent
 
 <root>
@@ -80,7 +80,7 @@
 
 	private void FindLocalWeapon()
 	{
-		_weapon = Sandbox.LocalPlayer.Component<WeaponBehavior>( Scene );
+		_weapon = Sandbox.Systems.Movement.LocalPlayer.Component<WeaponBehavior>( Scene );
 		if ( _weapon is null )
 		{
 			_weaponName = null;

@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Interaction;
+
 /// <summary>
 /// Routes desk device use from the player's crosshair to the correct local UI.
 /// Each device has its own access rule: computer use requires sitting in the
@@ -41,14 +43,14 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 	[Step( 10f )]
 	public float FocusMaxDistance { get; set; } = 300f;
 
-	Vector3 IInteractable.InteractPosition => InteractPositionFor( ResolveFocusedDevice( Sandbox.LocalPlayer.GameObject( Scene ) ) );
+	Vector3 IInteractable.InteractPosition => InteractPositionFor( ResolveFocusedDevice( Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene ) ) );
 	float IInteractable.InteractRange => float.Max( Range, float.Max( PhoneRange, ComputerRange ) );
-	string IInteractable.Prompt => PromptFor( ResolveFocusedDevice( Sandbox.LocalPlayer.GameObject( Scene ) ) );
+	string IInteractable.Prompt => PromptFor( ResolveFocusedDevice( Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene ) ) );
 	bool IInteractable.CanInteract( GameObject player ) => ResolveFocusedDevice( player ) != DeskDeviceType.None;
 
 	void IInteractable.Interact( GameObject player )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		var device = ResolveFocusedDevice( player );
 		if ( device == DeskDeviceType.None )
@@ -75,7 +77,7 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 
 	public void TryUseDeviceOnHost( GameObject player, DeskDeviceType device )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( !player.IsValid() || device == DeskDeviceType.None ) return;
 
 		if ( !ResolveDeviceTarget( device ).IsValid() )
@@ -92,7 +94,7 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 
 		Log.Info( $"[DeskDevice] {PlayerLogName( player )} interacted with {device}." );
 
-		if ( Sandbox.LocalPlayer.Owns( player ) )
+		if ( Sandbox.Systems.Movement.LocalPlayer.Owns( player ) )
 		{
 			OpenLocalDevice( player.Scene, device );
 			return;

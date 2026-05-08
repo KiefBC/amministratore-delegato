@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Interaction;
+
 /// <summary>
 /// Scene-scoped: every frame, finds the nearest valid <see cref="IInteractable"/>
 /// to the local player and dispatches the Use press. Replaces the per-component
@@ -33,7 +35,7 @@ public sealed class InteractionSystem : GameObjectSystem<InteractionSystem>
 		CurrentTarget = null;
 		if ( UiModeSystem.Current?.BlocksWorldInput == true ) return;
 
-		if ( !Sandbox.LocalPlayer.Owns( LocalPlayer ) )
+		if ( !Sandbox.Systems.Movement.LocalPlayer.Owns( LocalPlayer ) )
 		{
 			LocalPlayer = FindLocalPlayer();
 			if ( !LocalPlayer.IsValid() ) return;
@@ -73,7 +75,7 @@ public sealed class InteractionSystem : GameObjectSystem<InteractionSystem>
 	{
 		if ( interactable is not Component component ) return;
 
-		if ( !Networking.IsHost )
+		if ( !Sandbox.Networking.IsHost )
 		{
 			if ( interactable is IClientInteractable clientInteractable && clientInteractable.TryClientInteract( player ) ) return;
 
@@ -103,7 +105,7 @@ public sealed class InteractionSystem : GameObjectSystem<InteractionSystem>
 
 	private GameObject FindLocalPlayer()
 	{
-		return Sandbox.LocalPlayer.GameObject( Scene );
+		return Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
 	}
 
 	/// <summary>

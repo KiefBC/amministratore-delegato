@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems;
+
 public enum PlayerStatType
 {
 	Health,
@@ -104,7 +106,7 @@ public sealed class PlayerStatsComponent : Component
 	protected override void OnUpdate()
 	{
 		ResolveDependencies();
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		TickHostProgression();
 	}
@@ -148,7 +150,7 @@ public sealed class PlayerStatsComponent : Component
 
 	public void AwardRangedShot( bool hitDamageableTarget )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		var amount = StatConfig.RangedShotXp;
 		if ( hitDamageableTarget ) amount += StatConfig.RangedHitXp;
@@ -157,21 +159,21 @@ public sealed class PlayerStatsComponent : Component
 
 	public void AwardHealthFoodXp( float amount )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		QueueXp( PlayerStatType.Health, amount );
 	}
 
 	public void AwardPunchingXp( float amount )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		QueueXp( PlayerStatType.Punching, amount );
 	}
 
 	public void AwardBusinessXp( float amount )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		QueueXp( PlayerStatType.Business, amount );
 	}

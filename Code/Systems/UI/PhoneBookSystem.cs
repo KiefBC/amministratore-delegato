@@ -1,6 +1,8 @@
 using Sandbox;
 using System.Linq;
 
+namespace Sandbox.Systems.UI;
+
 public sealed class PhoneBookSystem : GameObjectSystem<PhoneBookSystem>
 {
 	private GameObject _displayObject;

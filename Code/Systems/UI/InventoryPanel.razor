@@ -1,6 +1,6 @@
 @using Sandbox;
 @using Sandbox.UI;
-@namespace Sandbox
+@namespace Sandbox.Systems.UI
 @inherits PanelComponent
 
 <root class="@(IsOpen ? "open" : "")">
@@ -323,7 +323,7 @@
 
 	protected override void OnUpdate()
 	{
-		if ( !Sandbox.LocalPlayer.Owns( _player ) )
+		if ( !Sandbox.Systems.Movement.LocalPlayer.Owns( _player ) )
 		{
 			FindLocalPlayer();
 		}
@@ -369,7 +369,7 @@
 
 	private void FindLocalPlayer()
 	{
-		_player = Sandbox.LocalPlayer.GameObject( Scene );
+		_player = Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
 		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
 		_unit = _player?.Components.GetInDescendantsOrSelf<UnitComponent>();
 		_stats = _player?.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();

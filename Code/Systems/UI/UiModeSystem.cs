@@ -1,6 +1,8 @@
 using Sandbox;
 using System.Collections.Generic;
 
+namespace Sandbox.Systems.UI;
+
 /// <summary>
 /// Scene-wide local UI mode state. This is the single place that decides whether
 /// an interface is open, whether shortcuts/world input are blocked, whether HUD
@@ -155,9 +157,9 @@ public sealed class UiModeSystem : GameObjectSystem<UiModeSystem>
 
 	private void EnsureLocalController()
 	{
-		if ( Sandbox.LocalPlayer.Owns( _player ) && _controller.IsValid() ) return;
+		if ( Sandbox.Systems.Movement.LocalPlayer.Owns( _player ) && _controller.IsValid() ) return;
 
-		_player = Sandbox.LocalPlayer.GameObject( Scene );
+		_player = Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
 		_controller = _player?.Components.GetInDescendantsOrSelf<PlayerController>();
 	}
 }

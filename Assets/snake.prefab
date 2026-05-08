@@ -122,7 +122,7 @@
         "SurfaceVelocity": "0,0,0"
       },
       {
-        "__type": "PatrolComponent",
+        "__type": "Sandbox.Systems.AI.PatrolComponent",
         "__guid": "33e4ba41-2bd3-417c-8cbe-2d5ac8286e65",
         "__enabled": true,
         "Flags": 0,
@@ -145,7 +145,7 @@
         "TurnSpeed": 5
       },
       {
-        "__type": "UnitComponent",
+        "__type": "Sandbox.Systems.AI.UnitComponent",
         "__guid": "e18aee90-d3c4-4b35-8842-39dcc7c5a80e",
         "__enabled": true,
         "Flags": 0,
@@ -168,7 +168,7 @@
           "_type": "component",
           "component_id": "33e4ba41-2bd3-417c-8cbe-2d5ac8286e65",
           "go": "6d213e92-0d2c-4090-9a91-c6fc6be917fe",
-          "component_type": "PatrolComponent"
+          "component_type": "Sandbox.Systems.AI.PatrolComponent"
         },
         "Physics": {
           "_type": "component",

@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
+namespace Sandbox.Systems.Logging;
+
 public enum GameLogSeverity
 {
 	Info,
@@ -97,7 +99,7 @@ public sealed class GameLogSystem : GameObjectSystem<GameLogSystem>
 
 	public void Record( GameLogSeverity severity, string category, string message, GameObject actor = null, Connection connection = null, Dictionary<string, string> data = null, bool flush = false )
 	{
-		if ( Networking.IsActive && !Networking.IsHost ) return;
+		if ( Sandbox.Networking.IsActive && !Sandbox.Networking.IsHost ) return;
 
 		var entry = new GameLogEntry
 		{

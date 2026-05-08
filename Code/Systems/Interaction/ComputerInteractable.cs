@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Interaction;
+
 /// <summary>
 /// Computer terminal entry point. Interaction is host-validated, then the owning
 /// client opens a local-only finance UI.
@@ -18,9 +20,9 @@ public sealed class ComputerInteractable : Component, IInteractable
 
 	void IInteractable.Interact( GameObject player )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
-		if ( Sandbox.LocalPlayer.Owns( player ) )
+		if ( Sandbox.Systems.Movement.LocalPlayer.Owns( player ) )
 		{
 			ComputerTerminalSystem.OpenForScene( Scene );
 			return;

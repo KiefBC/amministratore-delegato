@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Combat;
+
 /// <summary>
 /// Scene-scoped damage dispatcher. Routes <see cref="DamageInfo"/> to a target's
 /// <see cref="Component.IDamageable"/> on the host, then asks the networking
@@ -21,7 +23,7 @@ public sealed class CombatSystem : GameObjectSystem<CombatSystem>
 	public void DealDamage( Component.IDamageable target, in DamageInfo info )
 	{
 		if ( target is null ) return;
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		var targetGo = (target as Component)?.GameObject;
 		var beforeUnit = target as UnitComponent;

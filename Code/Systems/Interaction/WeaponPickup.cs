@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Interaction;
+
 /// <summary>
 /// Networked world pickup for a weapon. Inventory state is stored as synced item
 /// records on <see cref="Backpack"/>; this component only represents the physical
@@ -27,7 +29,7 @@ public sealed class WeaponPickup : Component, IInteractable
 	void IInteractable.Interact( GameObject player )
 	{
 		if ( !player.IsValid() ) return;
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
 		if ( !backpack.IsValid() ) return;

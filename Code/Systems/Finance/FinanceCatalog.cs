@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Finance;
+
 public enum FinanceAccountSource
 {
 	Wallet,

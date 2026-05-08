@@ -2,6 +2,8 @@ using Sandbox;
 using Sandbox.Citizen;
 using System.Collections.Generic;
 
+namespace Sandbox.Systems.Inventory;
+
 [AssetType( Name = "Item Definition", Extension = "item", Category = "Amministratore" )]
 public partial class ItemDefinition : GameResource
 {

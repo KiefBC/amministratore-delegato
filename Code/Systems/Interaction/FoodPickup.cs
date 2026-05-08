@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Interaction;
+
 /// <summary>
 /// Networked world pickup for food and drink items. Interacting adds the item to
 /// the player's synced backpack; effects are applied later through inventory use.
@@ -35,7 +37,7 @@ public sealed class FoodPickup : Component, IInteractable
 	void IInteractable.Interact( GameObject player )
 	{
 		if ( !player.IsValid() ) return;
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( Amount <= 0 ) return;
 
 		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();

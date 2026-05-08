@@ -1,12 +1,14 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Interaction;
+
 public static class PickupNotification
 {
 	private const float PickupDuration = 3f;
 
 	public static void NotifyPickedUp( GameObject player, string displayName, int amount = 1 )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( !player.IsValid() ) return;
 
 		displayName = string.IsNullOrWhiteSpace( displayName ) ? "Item" : displayName.Trim();

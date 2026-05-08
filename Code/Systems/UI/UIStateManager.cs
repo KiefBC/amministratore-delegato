@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.UI;
+
 /// <summary>
 /// Compatibility wrapper for older player prefabs. New UI code should use
 /// <see cref="UiModeSystem"/> so modal state, cursor visibility, and control locks

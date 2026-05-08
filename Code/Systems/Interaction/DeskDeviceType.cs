@@ -1,3 +1,5 @@
+namespace Sandbox.Systems.Interaction;
+
 public enum DeskDeviceType
 {
 	None = 0,

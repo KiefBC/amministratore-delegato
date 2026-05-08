@@ -1,6 +1,8 @@
 using Sandbox;
 using Sandbox.Citizen;
 
+namespace Sandbox.Systems.Combat;
+
 /// <summary>
 /// Local weapon input and animation for the owned player. Authoritative state
 /// changes live in <see cref="Backpack"/> on the host and are requested through
@@ -45,7 +47,7 @@ public sealed class WeaponBehavior : Component
 	private InventoryItemState EquippedState { get; set; }
 	private WeaponStats Weapon => Definition?.Weapon;
 	private bool HasWeapon => Definition is not null && Definition.IsWeapon;
-	private bool IsLocalOwner => Sandbox.LocalPlayer.Owns( GameObject.Root );
+	private bool IsLocalOwner => Sandbox.Systems.Movement.LocalPlayer.Owns( GameObject.Root );
 
 	protected override void OnStart()
 	{

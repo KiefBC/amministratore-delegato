@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems.Economy;
+
 /// <summary>
 /// Networked world pickup for cash. The host deposits it into the interacting
 /// player's synced <see cref="Backpack.Wallet"/>, then destroys this world object.
@@ -21,7 +23,7 @@ public sealed class MoneyPickup : Component, IInteractable
 	void IInteractable.Interact( GameObject player )
 	{
 		if ( !player.IsValid() ) return;
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( Amount <= 0 ) return;
 
 		EconomySystem.Current?.Add( player, Amount );

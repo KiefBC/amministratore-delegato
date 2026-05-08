@@ -1,3 +1,5 @@
+namespace Sandbox.Systems.Combat;
+
 /// <summary>
 /// Implement on any component that wants to react to damage events scene-wide
 /// (HUD hit-markers, sound, kill feed, future score). Broadcast via

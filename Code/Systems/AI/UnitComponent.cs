@@ -1,6 +1,8 @@
 using Sandbox;
 using Sandbox.Network;
 
+namespace Sandbox.Systems.AI;
+
 public sealed class UnitComponent : Component, Component.IDamageable
 {
 	private const float DeathPresentationDelay = 0.25f;
@@ -183,7 +185,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			return;
 		}
 
-		if ( !Networking.IsHost )
+		if ( !Sandbox.Networking.IsHost )
 		{
 			Log.Warning( $"{target.Name}: Make Thirsty ignored - needs are host-authoritative." );
 			return;
@@ -203,7 +205,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			return;
 		}
 
-		if ( !Networking.IsHost )
+		if ( !Sandbox.Networking.IsHost )
 		{
 			Log.Warning( $"{target.Name}: Make Hungry ignored - needs are host-authoritative." );
 			return;
@@ -223,7 +225,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			return;
 		}
 
-		if ( !Networking.IsHost )
+		if ( !Sandbox.Networking.IsHost )
 		{
 			Log.Warning( $"{target.Name}: Drink ignored - needs are host-authoritative." );
 			return;
@@ -243,7 +245,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			return;
 		}
 
-		if ( !Networking.IsHost )
+		if ( !Sandbox.Networking.IsHost )
 		{
 			Log.Warning( $"{target.Name}: Eat ignored - needs are host-authoritative." );
 			return;
@@ -258,7 +260,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	/// </summary>
 	public void OnDamage( in DamageInfo info )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( IsDead ) return;
 
 		var incoming = info.Damage;
@@ -284,7 +286,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	{
 		ResolvePlayerStats();
 
-		if ( Networking.IsHost )
+		if ( Sandbox.Networking.IsHost )
 		{
 			Health = EffectiveMaxHealth;
 			Stamina = EffectiveMaxStamina;
@@ -305,7 +307,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	protected override void OnUpdate()
 	{
-		if ( Networking.IsHost && !IsDead )
+		if ( Sandbox.Networking.IsHost && !IsDead )
 		{
 			TickNeeds();
 			ApplyStatDerivedPools();
@@ -329,7 +331,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	public bool TrySpendStamina( float amount )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( amount <= 0f ) return true;
 		if ( Stamina < amount ) return false;
 
@@ -340,7 +342,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	public void RestoreStamina( float amount )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( amount <= 0f ) return;
 
 		Stamina = float.Clamp( Stamina + amount, 0f, EffectiveMaxStamina );
@@ -348,14 +350,14 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	public void SetArmor( float amount )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		Armor = float.Clamp( amount, 0f, MaxArmor );
 	}
 
 	public void RestoreHydration( float amount )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( amount <= 0f ) return;
 
 		Hydration = float.Clamp( Hydration + amount, 0f, EffectiveMaxHydration );
@@ -364,7 +366,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	public void RestoreNutrition( float amount )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( amount <= 0f ) return;
 
 		Nutrition = float.Clamp( Nutrition + amount, 0f, EffectiveMaxNutrition );
@@ -373,7 +375,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	public bool TryApplyConsumable( ItemDefinition definition )
 	{
-		if ( !Networking.IsHost ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 		if ( IsDead ) return false;
 		if ( definition?.IsConsumable != true ) return false;
 
@@ -523,9 +525,9 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	private UnitComponent DebugTargetUnit()
 	{
-		if ( GameObject.Enabled && Sandbox.LocalPlayer.Owns( GameObject ) ) return this;
+		if ( GameObject.Enabled && Sandbox.Systems.Movement.LocalPlayer.Owns( GameObject ) ) return this;
 
-		var localUnit = Sandbox.LocalPlayer.Component<UnitComponent>( Scene );
+		var localUnit = Sandbox.Systems.Movement.LocalPlayer.Component<UnitComponent>( Scene );
 		if ( localUnit.IsValid() ) return localUnit;
 
 		return GameObject.Enabled ? this : null;
@@ -563,7 +565,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	public void SetRunStaminaDrain( bool running )
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 
 		if ( running && !CanStartRunStaminaDrain() )
 		{
@@ -803,7 +805,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	private void TryCreateNetworkedPlayerCorpse()
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( Team != TeamType.Player ) return;
 		if ( _networkedCorpse.IsValid() ) return;
 
@@ -821,7 +823,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 			return;
 		}
 
-		if ( Networking.IsActive && !corpse.NetworkSpawn() )
+		if ( Sandbox.Networking.IsActive && !corpse.NetworkSpawn() )
 		{
 			corpse.Destroy();
 			WarnNetworkedCorpseFailed( "NetworkSpawn failed" );
@@ -979,7 +981,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	private void TryPayBounty()
 	{
-		if ( !Networking.IsHost ) return;
+		if ( !Sandbox.Networking.IsHost ) return;
 		if ( _bountyAttempted ) return;
 		if ( _bountyPaid ) return;
 

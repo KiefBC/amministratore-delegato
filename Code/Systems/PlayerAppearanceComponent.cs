@@ -1,5 +1,7 @@
 using Sandbox;
 
+namespace Sandbox.Systems;
+
 /// <summary>
 /// Keeps avatar clothing stable across editor host and New Instance clients.
 /// Networked players use the owning connection's avatar data; non-networked
