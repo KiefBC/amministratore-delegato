@@ -8,7 +8,8 @@ namespace Sandbox;
 /// </summary>
 public sealed class CharacterPreviewPanel : ScenePanel
 {
-	private const float PreviewScale = 1.8f;
+	private const float PreviewScale = 2.15f;
+	private const float PreviewVerticalOffset = -24f;
 	private const float RotationSensitivity = 0.35f;
 	private const float InitialYaw = -68f;
 
@@ -83,13 +84,13 @@ public sealed class CharacterPreviewPanel : ScenePanel
 	{
 		var cameraObject = _previewScene.CreateObject( true );
 		cameraObject.Name = "Preview Camera";
-		cameraObject.WorldPosition = new Vector3( 118f, -214f, 82f );
+		cameraObject.WorldPosition = new Vector3( 104f, -190f, 84f );
 		cameraObject.WorldRotation = Rotation.LookAt( new Vector3( 0f, 0f, 54f ) - cameraObject.WorldPosition );
 
 		var camera = cameraObject.Components.Create<CameraComponent>();
 		camera.IsMainCamera = true;
 		camera.Priority = 1000;
-		camera.FieldOfView = 34f;
+		camera.FieldOfView = 31f;
 		camera.ZNear = 2f;
 		camera.ZFar = 512f;
 		camera.ClearFlags = ClearFlags.All;
@@ -102,7 +103,7 @@ public sealed class CharacterPreviewPanel : ScenePanel
 	{
 		var modelObject = _previewScene.CreateObject( true );
 		modelObject.Name = "Preview Character";
-		modelObject.WorldPosition = Vector3.Zero;
+		modelObject.WorldPosition = Vector3.Up * PreviewVerticalOffset;
 		modelObject.WorldRotation = Rotation.FromYaw( InitialYaw );
 		modelObject.WorldScale = Vector3.One * PreviewScale;
 		return modelObject;

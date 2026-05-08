@@ -72,8 +72,8 @@
 					</div>
 				</div>
 
-				<div class="character-column">
-					<div class="character-stage">
+				<div class="character-column" style="@CharacterColumnStyle()">
+					<div class="character-stage" style="@CharacterStageStyle()">
 						<CharacterPreviewPanel SourcePlayer=@_player class="character-preview-panel" />
 						<div class="preview-floor"></div>
 					</div>
@@ -677,6 +677,16 @@
 	}
 
 	private string DropZoneStyle()
+	{
+		return $"height: {InventoryCardHeight}px;";
+	}
+
+	private string CharacterColumnStyle()
+	{
+		return $"height: {InventoryCardHeight}px;";
+	}
+
+	private string CharacterStageStyle()
 	{
 		return $"height: {InventoryCardHeight}px;";
 	}
