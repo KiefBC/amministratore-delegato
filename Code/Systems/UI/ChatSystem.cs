@@ -2,26 +2,11 @@ using Sandbox;
 
 public sealed class ChatMessageEntry
 {
-	private const float ClosedShownDuration = 10f;
-	private const float ClosedFadeDuration = 3f;
-
 	public int Id { get; set; }
+	public GameObject Sender { get; set; }
 	public string SenderName { get; set; } = "Player";
 	public string Message { get; set; } = "";
 	public float Age { get; set; }
-
-	public bool IsVisibleWhenClosed => Age <= ClosedShownDuration + ClosedFadeDuration;
-
-	public float ClosedOpacity
-	{
-		get
-		{
-			if ( Age <= ClosedShownDuration ) return 1f;
-
-			var remaining = ClosedShownDuration + ClosedFadeDuration - Age;
-			return float.Clamp( remaining / ClosedFadeDuration, 0f, 1f );
-		}
-	}
 }
 
 public sealed class ChatSystem : GameObjectSystem<ChatSystem>
@@ -29,6 +14,13 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 	private const int MaxMessageLength = 240;
 	private const int MaxHistory = 100;
 	private const float SendCooldown = 0.75f;
+	private static readonly (string Sender, string Message)[] DefaultMessages =
+	{
+		("Reception", "Welcome to the floor. Keep your ledger close."),
+		("Broker", "Rumor says the next contract is already overpriced."),
+		("Compliance", "All workplace incidents must be reported in triplicate."),
+		("Courier", "Someone left a Glock by the loading bay again."),
+	};
 
 	private readonly List<ChatMessageEntry> _messages = new();
 	private readonly Dictionary<string, float> _nextAllowedSendTime = new();
@@ -37,9 +29,11 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 
 	public IReadOnlyList<ChatMessageEntry> Messages => _messages;
 	public int ChatVersion { get; private set; }
+	public float SecondsSinceLastMessage => _messages.Count == 0 ? 0f : _messages[^1].Age;
 
 	public ChatSystem( Scene scene ) : base( scene )
 	{
+		SeedDefaultMessages();
 		Listen( Stage.StartUpdate, 60, OnTick, nameof( OnTick ) );
 	}
 
@@ -69,6 +63,7 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 		_messages.Add( new ChatMessageEntry
 		{
 			Id = _nextId++,
+			Sender = sender,
 			SenderName = senderName,
 			Message = message,
 			Age = 0f,
@@ -77,6 +72,22 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 		while ( _messages.Count > MaxHistory )
 		{
 			_messages.RemoveAt( 0 );
+		}
+
+		ChatVersion++;
+	}
+
+	private void SeedDefaultMessages()
+	{
+		foreach ( var (sender, message) in DefaultMessages )
+		{
+			_messages.Add( new ChatMessageEntry
+			{
+				Id = _nextId++,
+				SenderName = sender,
+				Message = message,
+				Age = 0f,
+			} );
 		}
 
 		ChatVersion++;

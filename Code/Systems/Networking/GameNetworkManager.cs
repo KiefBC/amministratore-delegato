@@ -136,7 +136,13 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( !player.IsValid() ) return;
 
 		ConfigureNetworkObject( player );
+		EnsurePlayerProfile( player );
 		EnsurePlayerStats( player );
+
+		foreach ( var profile in player.Components.GetAll<PlayerProfileComponent>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			ConfigureNetworkObject( profile.GameObject );
+		}
 
 		foreach ( var stats in player.Components.GetAll<PlayerStatsComponent>( FindMode.EverythingInSelfAndDescendants ) )
 		{
@@ -162,6 +168,16 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( stats.IsValid() ) return;
 
 		player.Components.Create<PlayerStatsComponent>();
+	}
+
+	private static void EnsurePlayerProfile( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+
+		var profile = player.Components.GetInDescendantsOrSelf<PlayerProfileComponent>();
+		if ( profile.IsValid() ) return;
+
+		player.Components.Create<PlayerProfileComponent>();
 	}
 
 	private static void ConfigureNetworkObject( GameObject gameObject )
