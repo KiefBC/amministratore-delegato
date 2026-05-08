@@ -1,0 +1,64 @@
+@using Sandbox;
+@using Sandbox.UI;
+@namespace Sandbox.Systems.UI
+@inherits PanelComponent
+
+<root>
+	@if ( UiModeSystem.Current?.HidesHud != true )
+	{
+		<div class="money @FlashClass">
+			<span class="amount">$@Amount.ToString( "N0" )</span>
+			@if ( _flashTimer > 0f && _lastDelta != 0 )
+			{
+				<span class="delta @(_lastDelta > 0 ? "positive" : "negative")">
+					@(_lastDelta > 0 ? "+" : "")@_lastDelta.ToString( "N0" )
+				</span>
+			}
+		</div>
+	}
+</root>
+
+@code {
+	private const float FlashDuration = 1.8f;
+
+	private int _displayAmount;
+	private float _flashTimer;
+	private int _lastDelta;
+	private Backpack _backpack;
+
+	private int Amount => _displayAmount;
+	private string FlashClass => _flashTimer > 0f
+		? (_lastDelta > 0 ? "flash-positive" : "flash-negative")
+		: "";
+
+	protected override void OnStart()
+	{
+		FindLocalBackpack();
+		_displayAmount = _backpack?.Wallet ?? 0;
+	}
+
+	protected override void OnUpdate()
+	{
+		FindLocalBackpack();
+
+		var amount = _backpack?.Wallet ?? 0;
+		if ( amount != _displayAmount )
+		{
+			_lastDelta = amount - _displayAmount;
+			_displayAmount = amount;
+			_flashTimer = FlashDuration;
+		}
+
+		if ( _flashTimer > 0f )
+		{
+			_flashTimer -= Time.Delta;
+		}
+	}
+
+	private void FindLocalBackpack()
+	{
+		_backpack = Sandbox.Systems.Movement.LocalPlayer.Component<Backpack>( Scene );
+	}
+
+	protected override int BuildHash() => System.HashCode.Combine( _displayAmount, _flashTimer > 0f, System.Math.Sign( _lastDelta ), UiModeSystem.Current?.HidesHud == true );
+}

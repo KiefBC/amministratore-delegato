@@ -1,0 +1,527 @@
+@using Sandbox;
+@using Sandbox.UI;
+@namespace Sandbox.Systems.UI
+@inherits PanelComponent
+
+<root class="@RootClass">
+	@if ( UiModeSystem.Current?.HidesHud != true && !IsIdleCollapsed && HasBusinessCard )
+	{
+		<BusinessCardPanel class="business-card" style="@BusinessCardStyle()" PlayerName="@BusinessCardName()" NetWorthText="@BusinessCardWorthText()" Affiliation="@BusinessCardAffiliation()" CloseClicked=@HideBusinessCard DragStarted=@StartBusinessCardDrag Dragged=@DragBusinessCard DragStopped=@StopBusinessCardDrag />
+	}
+
+	@if ( UiModeSystem.Current?.HidesHud != true )
+	{
+		<div class="chat-window">
+			<div class="chat-title">Placeholder Chat Title</div>
+
+			@if ( !IsIdleCollapsed )
+			{
+				<div class="chat-messages">
+					@foreach ( var message in VisibleMessages() )
+					{
+						<div class="chat-message">
+							@if ( CanOpenBusinessCard( message ) )
+							{
+								<span class="chat-sender interactive" onclick="@(() => ShowBusinessCard( message ))">@message.SenderName</span>
+							}
+							else
+							{
+								<span class="chat-sender">@message.SenderName</span>
+							}
+							<span class="chat-separator">:</span>
+							<span class="chat-text">@message.Message</span>
+						</div>
+					}
+				</div>
+
+				@if ( _isOpen )
+				{
+					<div class="chat-input-row">
+						<span class="chat-prompt">&gt;</span>
+						<TextEntry @ref="_input" class="chat-input" Value:bind=@_draft onsubmit="@SubmitMessage" placeholder="Type global message..." />
+					</div>
+				}
+				else
+				{
+					<div class="chat-input-row inactive">
+						<span class="chat-prompt">&gt;</span>
+						<span class="chat-input-placeholder">Press Enter to chat...</span>
+					</div>
+				}
+			}
+		</div>
+	}
+</root>
+
+@code {
+	private const int OpenMessageCount = 10;
+	private const int ClosedMessageCount = OpenMessageCount;
+	private const float IdleCollapseDelay = 300f;
+	private const float BusinessCardWidth = 320f;
+	private const float BusinessCardHeight = 180f;
+	private const float ChatWindowWidth = 420f;
+	private const float ChatWindowExpandedHeight = 292f;
+	private const float ChatCornerMargin = 32f;
+	private const float BusinessCardGap = 10f;
+
+	private TextEntry _input = null;
+	private ChatSystem _chat;
+	private GameObject _player;
+	private Sandbox.UI.Panel _messagesPanel;
+	private ChatMessageEntry _businessCardMessage;
+	private GameObject _businessCardPlayer;
+	private Vector2 _businessCardPosition;
+	private Vector2 _businessCardDragOffset;
+	private string _draft = "";
+	private int _historyScrollOffset;
+	private bool _isOpen;
+	private bool _pendingFocus;
+	private bool _suppressOpenUntilChatReleased;
+	private bool _hasBusinessCardPosition;
+	private bool _draggingBusinessCard;
+
+	private string RootClass => _isOpen ? "open" : (IsIdleCollapsed ? "closed collapsed" : (IsCursorUsable ? "closed cursor" : "closed"));
+	private IReadOnlyList<ChatMessageEntry> Messages => _chat?.Messages ?? System.Array.Empty<ChatMessageEntry>();
+	private bool HasBusinessCard => IsCursorUsable && _businessCardMessage is not null && _businessCardPlayer.IsValid();
+	private bool IsIdleCollapsed => !_isOpen && (_chat?.SecondsSinceLastMessage ?? 0f) >= IdleCollapseDelay;
+	private bool IsCursorUsable => _isOpen || (UiModeSystem.Current?.IsCursorVisible == true);
+
+	private Vector2 CursorCss
+	{
+		get
+		{
+			var sh = Screen.Height;
+			if ( sh <= 1 ) return Mouse.Position;
+
+			var scale = 1080f / sh;
+			return new Vector2( Mouse.Position.x * scale, Mouse.Position.y * scale );
+		}
+	}
+
+	protected override void OnUpdate()
+	{
+		_chat = ChatSystem.Current;
+		FindLocalPlayer();
+
+		if ( UiModeSystem.Current?.IsOpenByOther( this ) == true && UiModeSystem.Current?.HidesHud == true )
+		{
+			if ( _isOpen ) Close( clearDraft: true );
+			else HideBusinessCard();
+			return;
+		}
+
+		if ( _suppressOpenUntilChatReleased && !Input.Down( "Chat" ) )
+		{
+			_suppressOpenUntilChatReleased = false;
+		}
+
+		if ( !_isOpen && !_suppressOpenUntilChatReleased && Input.Pressed( "Chat" ) )
+		{
+			Open();
+		}
+
+		if ( _businessCardMessage is not null && !_businessCardPlayer.IsValid() ) HideBusinessCard();
+		if ( !_isOpen ) return;
+
+		if ( _pendingFocus && _input is not null )
+		{
+			_input.Focus();
+			_pendingFocus = false;
+		}
+
+		if ( Input.EscapePressed )
+		{
+			Input.EscapePressed = false;
+			Close( clearDraft: true );
+		}
+
+		PollHistoryScroll();
+	}
+
+	private void Open()
+	{
+		if ( _isOpen ) return;
+		if ( UiModeSystem.Current?.TryOpen( this, UiModeKind.Chat ) != true ) return;
+
+		_isOpen = true;
+		_historyScrollOffset = 0;
+		_pendingFocus = true;
+		_messagesPanel = null;
+	}
+
+	private void Close( bool clearDraft )
+	{
+		if ( !_isOpen ) return;
+
+		_isOpen = false;
+		_pendingFocus = false;
+		_suppressOpenUntilChatReleased = true;
+		_historyScrollOffset = 0;
+		_messagesPanel = null;
+		_draggingBusinessCard = false;
+		HideBusinessCard();
+		UiModeSystem.Current?.Close( this );
+		_input?.Blur();
+
+		if ( clearDraft ) _draft = "";
+	}
+
+	private void SubmitMessage()
+	{
+		var text = _input?.Text ?? _draft ?? "";
+		_draft = "";
+		if ( _input is not null ) _input.Text = "";
+
+		Close( clearDraft: true );
+
+		if ( string.IsNullOrWhiteSpace( text ) ) return;
+		if ( !_player.IsValid() ) return;
+
+		GameNetworkRpc.RequestSendChatMessage( _player, text );
+	}
+
+	private void FindLocalPlayer()
+	{
+		if ( Sandbox.Systems.Movement.LocalPlayer.Owns( _player ) ) return;
+
+		_player = Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
+	}
+
+	private IEnumerable<ChatMessageEntry> VisibleMessages()
+	{
+		var count = _isOpen ? OpenMessageCount : ClosedMessageCount;
+		var offset = _isOpen ? int.Clamp( _historyScrollOffset, 0, MaxHistoryScrollOffset() ) : 0;
+		var start = int.Max( 0, Messages.Count - count - offset );
+		return Messages.Skip( start ).Take( count );
+	}
+
+	private void PollHistoryScroll()
+	{
+		if ( Panel is null ) return;
+
+		_messagesPanel = FindByClass( Panel, "chat-messages" );
+		if ( _messagesPanel is null || !_messagesPanel.IsInside( Mouse.Position ) ) return;
+
+		var wheel = Input.MouseWheel.y;
+		if ( wheel == 0f ) return;
+
+		var direction = wheel > 0f ? 1 : -1;
+		_historyScrollOffset = int.Clamp( _historyScrollOffset + direction, 0, MaxHistoryScrollOffset() );
+	}
+
+	private int MaxHistoryScrollOffset()
+	{
+		return int.Max( 0, Messages.Count - OpenMessageCount );
+	}
+
+	private void StartBusinessCardDrag()
+	{
+		if ( !HasBusinessCard ) return;
+
+		EnsureBusinessCardPosition();
+		_businessCardDragOffset = CursorCss - _businessCardPosition;
+		_draggingBusinessCard = true;
+	}
+
+	private void DragBusinessCard()
+	{
+		if ( !HasBusinessCard ) return;
+
+		_businessCardPosition = ClampBusinessCardPosition( CursorCss - _businessCardDragOffset );
+	}
+
+	private void StopBusinessCardDrag()
+	{
+		_draggingBusinessCard = false;
+	}
+
+	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
+	{
+		if ( root is null ) return null;
+		if ( root.HasClass( className ) ) return root;
+
+		foreach ( var child in root.Children )
+		{
+			var found = FindByClass( child, className );
+			if ( found is not null ) return found;
+		}
+
+		return null;
+	}
+
+	private bool CanOpenBusinessCard( ChatMessageEntry message )
+	{
+		return IsCursorUsable && message?.Sender.IsValid() == true;
+	}
+
+	private void ShowBusinessCard( ChatMessageEntry message )
+	{
+		if ( !CanOpenBusinessCard( message ) ) return;
+
+		_businessCardMessage = message;
+		_businessCardPlayer = message.Sender;
+		_hasBusinessCardPosition = false;
+		EnsureBusinessCardPosition();
+	}
+
+	private void HideBusinessCard()
+	{
+		_businessCardMessage = null;
+		_businessCardPlayer = null;
+		_draggingBusinessCard = false;
+	}
+
+	private void EnsureBusinessCardPosition()
+	{
+		if ( _hasBusinessCardPosition )
+		{
+			_businessCardPosition = ClampBusinessCardPosition( _businessCardPosition );
+			return;
+		}
+
+		_businessCardPosition = ClampBusinessCardPosition( DefaultBusinessCardPosition() );
+		_hasBusinessCardPosition = true;
+	}
+
+	private Vector2 DefaultBusinessCardPosition()
+	{
+		var viewport = CssViewportSize();
+		var chatLeft = viewport.x - ChatCornerMargin - ChatWindowWidth;
+		var chatTop = viewport.y - ChatCornerMargin - ChatWindowExpandedHeight;
+		var centeredX = chatLeft + ((ChatWindowWidth - BusinessCardWidth) * 0.5f);
+		var aboveChatY = chatTop - BusinessCardGap - BusinessCardHeight;
+
+		return new Vector2( centeredX, aboveChatY );
+	}
+
+	private string BusinessCardStyle()
+	{
+		EnsureBusinessCardPosition();
+		return $"left: {CssFloat( _businessCardPosition.x )}px; top: {CssFloat( _businessCardPosition.y )}px;";
+	}
+
+	private Vector2 ClampBusinessCardPosition( Vector2 position )
+	{
+		var viewport = CssViewportSize();
+		var maxX = float.Max( 0f, viewport.x - BusinessCardWidth );
+		var maxY = float.Max( 0f, viewport.y - BusinessCardHeight );
+
+		return new Vector2(
+			float.Clamp( position.x, 0f, maxX ),
+			float.Clamp( position.y, 0f, maxY ) );
+	}
+
+	private static Vector2 CssViewportSize()
+	{
+		var sh = Screen.Height;
+		if ( sh <= 1 ) return new Vector2( Screen.Width, Screen.Height );
+
+		var scale = 1080f / sh;
+		return new Vector2( Screen.Width * scale, Screen.Height * scale );
+	}
+
+	private static string CssFloat( float value )
+	{
+		return value.ToString( "0.###", System.Globalization.CultureInfo.InvariantCulture );
+	}
+
+	private string BusinessCardName()
+	{
+		if ( !string.IsNullOrWhiteSpace( _businessCardMessage?.SenderName ) ) return _businessCardMessage.SenderName;
+
+		var owner = OwnerFor( _businessCardPlayer );
+		if ( owner is not null && !string.IsNullOrWhiteSpace( owner.DisplayName ) ) return owner.DisplayName;
+
+		return _businessCardPlayer.IsValid() && !string.IsNullOrWhiteSpace( _businessCardPlayer.Name )
+			? TrimSpawnedPlayerPrefix( _businessCardPlayer.Name )
+			: "Player";
+	}
+
+	private long BusinessCardWorth()
+	{
+		var backpack = BusinessCardBackpack();
+		var finance = BusinessCardFinance();
+		long total = 0;
+
+		if ( backpack.IsValid() )
+		{
+			total += backpack.Wallet;
+			foreach ( var item in backpack.Items.Values )
+			{
+				if ( !item.IsValid ) continue;
+
+				var definition = backpack.GetDefinition( item );
+				if ( definition is null ) continue;
+
+				total += (long)definition.Value * item.StackCount;
+			}
+		}
+
+		if ( finance.IsValid() )
+		{
+			total += finance.BankBalance;
+			total += BusinessCardStockValue( finance );
+			total += BusinessCardCryptoValue( finance );
+			total += BusinessCardBusinessValue( finance );
+			total -= finance.DebtBalance;
+		}
+
+		return total;
+	}
+
+	private string BusinessCardWorthText()
+	{
+		return $"${BusinessCardWorth():N0}";
+	}
+
+	private string BusinessCardAffiliation()
+	{
+		var profile = BusinessCardProfile();
+		return profile.IsValid()
+			? profile.AffiliationDisplayName
+			: PlayerProfileComponent.DisplayNameForAffiliation( PlayerProfileComponent.IndependentAffiliationId );
+	}
+
+	private Backpack BusinessCardBackpack()
+	{
+		if ( !_businessCardPlayer.IsValid() ) return null;
+
+		var backpack = _businessCardPlayer.Components.GetInDescendantsOrSelf<Backpack>();
+		if ( backpack.IsValid() ) return backpack;
+
+		var root = _businessCardPlayer.Root;
+		return root.IsValid() && root != _businessCardPlayer
+			? root.Components.GetInDescendantsOrSelf<Backpack>()
+			: null;
+	}
+
+	private PlayerFinanceComponent BusinessCardFinance()
+	{
+		if ( !_businessCardPlayer.IsValid() ) return null;
+
+		var finance = _businessCardPlayer.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+		if ( finance.IsValid() ) return finance;
+
+		var root = _businessCardPlayer.Root;
+		return root.IsValid() && root != _businessCardPlayer
+			? root.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>()
+			: null;
+	}
+
+	private static long BusinessCardStockValue( PlayerFinanceComponent finance )
+	{
+		if ( !finance.IsValid() ) return 0;
+
+		decimal total = 0m;
+		foreach ( var pair in finance.StockShares )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var price = MarketDataSystem.Current?.StockPrice( pair.Key ) ?? FinanceCatalog.Stock( pair.Key )?.FallbackPrice ?? 0m;
+			total += pair.Value * price;
+		}
+
+		return decimal.ToInt64( decimal.Round( total ) );
+	}
+
+	private static long BusinessCardCryptoValue( PlayerFinanceComponent finance )
+	{
+		if ( !finance.IsValid() ) return 0;
+
+		decimal total = 0m;
+		foreach ( var pair in finance.CryptoMilliUnits )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var price = MarketDataSystem.Current?.CryptoPrice( pair.Key ) ?? FinanceCatalog.Coin( pair.Key )?.FallbackPrice ?? 0m;
+			total += (pair.Value / 1000m) * price;
+		}
+
+		return decimal.ToInt64( decimal.Round( total ) );
+	}
+
+	private static long BusinessCardBusinessValue( PlayerFinanceComponent finance )
+	{
+		if ( !finance.IsValid() ) return 0;
+
+		long total = 0;
+		foreach ( var pair in finance.OwnedBusinesses )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var offer = FinanceCatalog.Business( pair.Key );
+			if ( offer is null ) continue;
+
+			total += (long)offer.Cost * pair.Value;
+		}
+
+		return total;
+	}
+
+	private PlayerProfileComponent BusinessCardProfile()
+	{
+		if ( !_businessCardPlayer.IsValid() ) return null;
+
+		var profile = _businessCardPlayer.Components.GetInDescendantsOrSelf<PlayerProfileComponent>();
+		if ( profile.IsValid() ) return profile;
+
+		var root = _businessCardPlayer.Root;
+		return root.IsValid() && root != _businessCardPlayer
+			? root.Components.GetInDescendantsOrSelf<PlayerProfileComponent>()
+			: null;
+	}
+
+	private static Connection OwnerFor( GameObject player )
+	{
+		if ( !player.IsValid() ) return null;
+
+		var owner = player.Network.Owner;
+		if ( owner is not null ) return owner;
+
+		var root = player.Root;
+		return root.IsValid() && root != player ? root.Network.Owner : null;
+	}
+
+	private static string TrimSpawnedPlayerPrefix( string name )
+	{
+		const string spawnedPlayerPrefix = "Player - ";
+		if ( name.StartsWith( spawnedPlayerPrefix, System.StringComparison.OrdinalIgnoreCase ) )
+		{
+			name = name[spawnedPlayerPrefix.Length..];
+		}
+
+		return string.IsNullOrWhiteSpace( name ) ? "Player" : name.Trim();
+	}
+
+	protected override int BuildHash()
+	{
+		var hc = new System.HashCode();
+		hc.Add( _isOpen );
+		hc.Add( _chat?.ChatVersion ?? 0 );
+		hc.Add( _suppressOpenUntilChatReleased );
+		hc.Add( _historyScrollOffset );
+		hc.Add( _businessCardMessage?.Id ?? -1 );
+		hc.Add( IsIdleCollapsed );
+		hc.Add( IsCursorUsable );
+		hc.Add( _draggingBusinessCard );
+		hc.Add( UiModeSystem.Current?.HidesHud == true );
+		hc.Add( (int)_businessCardPosition.x );
+		hc.Add( (int)_businessCardPosition.y );
+
+		if ( HasBusinessCard )
+		{
+			var backpack = BusinessCardBackpack();
+			var finance = BusinessCardFinance();
+			var profile = BusinessCardProfile();
+			hc.Add( backpack?.Wallet ?? 0 );
+			hc.Add( backpack?.InventoryVersion ?? 0 );
+			hc.Add( finance?.FinanceVersion ?? 0 );
+			hc.Add( MarketDataSystem.Current?.PriceVersion ?? 0 );
+			hc.Add( profile?.AffiliationId ?? "" );
+		}
+
+		foreach ( var message in VisibleMessages() )
+		{
+			hc.Add( message.Id );
+		}
+
+		return hc.ToHashCode();
+	}
+}

@@ -1,0 +1,15 @@
+@using Sandbox;
+@using Sandbox.UI;
+@namespace Sandbox.Systems.UI
+@inherits PanelComponent
+
+<root>
+	@if ( UiModeSystem.Current?.HidesHud != true )
+	{
+		<div class="dot"></div>
+	}
+</root>
+
+@code {
+	protected override int BuildHash() => System.HashCode.Combine( UiModeSystem.Current?.HidesHud == true );
+}

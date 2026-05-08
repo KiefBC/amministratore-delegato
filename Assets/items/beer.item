@@ -1,0 +1,22 @@
+{
+  "DisplayName": "Beer",
+  "Kind": "Consumable",
+  "Icon": "",
+  "Rarity": "Common",
+  "Value": 6,
+  "Weight": 1,
+  "MaxStack": 50,
+  "WorldModel": "",
+  "Consumable": {
+    "Category": "Drink",
+    "Tier": "Basic",
+    "Health": 0,
+    "Stamina": 3,
+    "Hydration": -15,
+    "Nutrition": 0,
+    "HealthRegenPerSecond": 0,
+    "StaminaRegenPerSecond": -0.5,
+    "EffectDuration": 30,
+    "HealthXp": 0
+  }
+}

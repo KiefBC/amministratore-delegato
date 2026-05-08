@@ -1,0 +1,120 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Linq;
+@namespace Sandbox.Systems.UI
+@inherits PanelComponent
+
+<root>
+	@if ( Player is not null && UiModeSystem.Current?.HidesHud != true )
+	{
+		<div class="hud-cluster">
+			<div class="health @FlashClass">
+				<div class="stat-row health-row">
+					<div class="stat-label">Health</div>
+					<div class="bar-bg">
+						<div class="bar-fill @HealthFillClass" style="width: @(HealthPct * 100)%;"></div>
+					</div>
+					<div class="numbers">@_displayHealth.ToString( "F0" ) / @_maxHealth.ToString( "F0" )</div>
+				</div>
+				<div class="stat-row stamina-row">
+					<div class="stat-label">Stamina</div>
+					<div class="bar-bg stamina-bg">
+						<div class="bar-fill stamina-fill" style="width: @(StaminaPct * 100)%;"></div>
+					</div>
+					<div class="numbers">@_displayStamina.ToString( "F0" ) / @_maxStamina.ToString( "F0" )</div>
+				</div>
+			</div>
+
+			@if ( Player.IsHungry || Player.IsThirsty )
+			{
+				<div class="need-icons">
+					@if ( Player.IsHungry )
+					{
+						<div class="need-icon hunger" title="Hungry">H</div>
+					}
+					@if ( Player.IsThirsty )
+					{
+						<div class="need-icon thirst" title="Thirsty">T</div>
+					}
+				</div>
+			}
+		</div>
+	}
+</root>
+
+@code {
+	/// <summary>
+	/// The player's UnitComponent. Auto-found in OnStart by Team == Player if not wired.
+	/// </summary>
+	[Property] public UnitComponent Player { get; set; }
+
+	private const float FlashDuration = 0.25f;
+
+	private float _displayHealth;
+	private float _maxHealth = 100f;
+	private float _displayStamina;
+	private float _maxStamina = 100f;
+	private float _flashTimer;
+
+	private float HealthPct => _maxHealth > 0f ? float.Clamp( _displayHealth / _maxHealth, 0f, 1f ) : 0f;
+	private float StaminaPct => _maxStamina > 0f ? float.Clamp( _displayStamina / _maxStamina, 0f, 1f ) : 0f;
+	private string FlashClass => _flashTimer > 0f ? "flash-hit" : "";
+
+	private string HealthFillClass => HealthPct switch
+	{
+		> 0.6f => "fill-good",
+		> 0.3f => "fill-warn",
+		_ => "fill-danger"
+	};
+
+	protected override void OnStart()
+	{
+		FindLocalPlayer();
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( Player is null || !Sandbox.Systems.Movement.LocalPlayer.Owns( Player.GameObject ) )
+		{
+			Player = null;
+			FindLocalPlayer();
+		}
+
+		if ( _flashTimer > 0f )
+		{
+			_flashTimer -= Time.Delta;
+		}
+
+		if ( Player is not null && Player.Health != _displayHealth )
+		{
+			if ( Player.Health < _displayHealth ) _flashTimer = FlashDuration;
+			_displayHealth = Player.Health;
+		}
+
+		if ( Player is not null && Player.Stamina != _displayStamina )
+		{
+			_displayStamina = Player.Stamina;
+		}
+
+		if ( Player is not null )
+		{
+			_maxHealth = Player.EffectiveMaxHealth;
+			_maxStamina = Player.EffectiveMaxStamina;
+		}
+	}
+
+	private void FindLocalPlayer()
+	{
+		Player ??= Sandbox.Systems.Movement.LocalPlayer.Component<UnitComponent>( Scene );
+
+		if ( Player is not null )
+		{
+			_displayHealth = Player.Health;
+			_maxHealth = Player.EffectiveMaxHealth;
+			_displayStamina = Player.Stamina;
+			_maxStamina = Player.EffectiveMaxStamina;
+		}
+	}
+
+	protected override int BuildHash() => System.HashCode.Combine( _displayHealth, _maxHealth, _displayStamina, _maxStamina, Player?.IsHungry ?? false, Player?.IsThirsty ?? false, _flashTimer > 0f, UiModeSystem.Current?.HidesHud == true );
+}

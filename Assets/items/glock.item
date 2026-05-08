@@ -1,0 +1,25 @@
+{
+  "DisplayName": "Glock",
+  "Kind": "Weapon",
+  "Icon": "",
+  "Rarity": "Common",
+  "Value": 200,
+  "Weight": 1,
+  "MaxStack": 1,
+  "WorldModel": "models workshop/glock g20/glockg20.vmdl",
+  "Weapon": {
+    "EquippedModel": "models workshop/glock g20/glockg20.vmdl",
+    "HandBone": "hold_R",
+    "HoldType": "Pistol",
+    "Handedness": "Right",
+    "Damage": 25,
+    "Range": 3000,
+    "ClipSize": 15,
+    "ReloadDuration": 1.5,
+    "FireRate": 5,
+    "TraceSize": 6,
+    "Offset": "3.01600003,-0.864000022,2.12800002",
+    "AngleOffset": "-11.5679998,-8.44799995,0",
+    "Scale": "0.680000007,0.680000007,0.680000007"
+  }
+}

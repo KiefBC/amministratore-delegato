@@ -1,0 +1,29 @@
+@using Sandbox;
+@using Sandbox.UI;
+@namespace Sandbox.Systems.Interaction
+@inherits PanelComponent
+
+<root>
+	@if ( Target is not null && !string.IsNullOrWhiteSpace( Target.Prompt ) && UiModeSystem.Current?.HidesHud != true )
+	{
+		<div class="prompt">Press <span class="key">E</span> to @Verb</div>
+	}
+</root>
+
+@code {
+	private IInteractable Target => InteractionSystem.Current?.CurrentTarget;
+	private string Verb => ExtractVerb( Target?.Prompt );
+
+	/// <summary>
+	/// IInteractable.Prompt convention is "Press E to {verb}". Strip the prefix so we can
+	/// render the E with key styling without HTML-injection in the prompt string itself.
+	/// </summary>
+	private static string ExtractVerb( string prompt )
+	{
+		if ( string.IsNullOrEmpty( prompt ) ) return "";
+		var idx = prompt.LastIndexOf( " to " );
+		return idx < 0 ? prompt : prompt[(idx + 4)..];
+	}
+
+	protected override int BuildHash() => System.HashCode.Combine( Target?.Prompt, UiModeSystem.Current?.HidesHud == true );
+}

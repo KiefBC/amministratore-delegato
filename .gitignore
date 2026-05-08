@@ -27,3 +27,7 @@ code/Properties/*
 
 # Exported / standalone games
 Exports/
+
+# Claude Code
+.claude/
+CLAUDE.md

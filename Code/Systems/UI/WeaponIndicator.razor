@@ -1,0 +1,105 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Linq;
+@namespace Sandbox.Systems.UI
+@inherits PanelComponent
+
+<root>
+	@if ( !string.IsNullOrEmpty( _weaponName ) && UiModeSystem.Current?.HidesHud != true )
+	{
+		<div class="weapon @PanelStateClass">
+			<span class="state">@StateLabel</span>
+			<span class="name">@_weaponName</span>
+			@if ( _state == WeaponBehavior.WeaponState.Reloading )
+			{
+				<div class="reload-bar-bg">
+					<div class="reload-bar-fill" style="width: @(_reloadProgress * 100)%;"></div>
+				</div>
+			}
+			else
+			{
+				<span class="ammo @AmmoClass">@_currentAmmo / @_magazineSize</span>
+			}
+		</div>
+	}
+</root>
+
+@code {
+	private string _weaponName;
+	private bool _holstered;
+	private WeaponBehavior _weapon;
+
+	private WeaponBehavior.WeaponState _state = WeaponBehavior.WeaponState.Idle;
+	private int _currentAmmo;
+	private int _magazineSize = 1;
+	private float _reloadProgress;
+
+	private string PanelStateClass
+	{
+		get
+		{
+			if ( _holstered ) return "holstered";
+			if ( _state == WeaponBehavior.WeaponState.Reloading ) return "reloading";
+			if ( _state == WeaponBehavior.WeaponState.Empty ) return "empty";
+			return "";
+		}
+	}
+
+	private string StateLabel
+	{
+		get
+		{
+			if ( _holstered ) return "Holstered";
+			return _state switch
+			{
+				WeaponBehavior.WeaponState.Reloading => "Reloading",
+				WeaponBehavior.WeaponState.Empty => "Empty",
+				_ => "Equipped",
+			};
+		}
+	}
+
+	private string AmmoClass => _state == WeaponBehavior.WeaponState.Empty ? "ammo-empty" : "";
+
+	protected override void OnStart()
+	{
+		FindLocalWeapon();
+	}
+
+	protected override void OnUpdate()
+	{
+		FindLocalWeapon();
+
+		// Reload progress is continuous — sample it each frame so the bar animates
+		// smoothly.
+		if ( _state == WeaponBehavior.WeaponState.Reloading && _weapon is not null )
+		{
+			_reloadProgress = _weapon.ReloadProgress;
+		}
+	}
+
+	private void FindLocalWeapon()
+	{
+		_weapon = Sandbox.Systems.Movement.LocalPlayer.Component<WeaponBehavior>( Scene );
+		if ( _weapon is null )
+		{
+			_weaponName = null;
+			_holstered = false;
+			_state = WeaponBehavior.WeaponState.Idle;
+			_currentAmmo = 0;
+			_magazineSize = 1;
+			return;
+		}
+
+		_weaponName = _weapon.DisplayName;
+		_holstered = _weapon.IsHolstered;
+		_state = _weapon.State;
+		_currentAmmo = _weapon.CurrentAmmo;
+		_magazineSize = _weapon.MagazineSize;
+	}
+
+	protected override int BuildHash() => System.HashCode.Combine(
+		_weaponName, _holstered, _state, _currentAmmo, _magazineSize,
+		_state == WeaponBehavior.WeaponState.Reloading ? (int)(_reloadProgress * 100) : 0,
+		UiModeSystem.Current?.HidesHud == true );
+}

@@ -1,0 +1,1114 @@
+@using Sandbox;
+@using Sandbox.UI;
+@namespace Sandbox.Systems.UI
+@inherits PanelComponent
+
+<root class="@RootClass">
+	@if ( IsOpen && _backpack.IsValid() )
+	{
+		<div class="inventory-screen">
+			<div class="top-nav">
+				<div class="nav-left">
+					<span class="nav-bumper">LB</span>
+					<span class="nav-tab muted">Crafting</span>
+					<span class="nav-tab active">Inventory</span>
+					<span class="nav-tab muted">Abilities</span>
+					<span class="nav-tab muted">Map</span>
+					<span class="nav-tab muted">Quests</span>
+					<span class="nav-bumper">RB</span>
+				</div>
+
+				<div class="level-block">
+					<span class="level-label">Level</span>
+					<span class="level-number">@Level</span>
+					<div class="xp-track">
+						<div class="xp-fill" style="width: @(ExperiencePercent * 100)%;"></div>
+					</div>
+					<span class="xp-text">@ExperienceText</span>
+				</div>
+			</div>
+
+			<div class="content">
+				<div class="left-rail">
+					<div class="stat-list">
+						@foreach ( var stat in StatRows() )
+						{
+							<div class="stat-row @stat.ClassName">
+								<div class="stat-icon">@stat.Icon</div>
+							<div class="stat-copy">
+								<span class="stat-label">@stat.Label</span>
+								@if ( !string.IsNullOrEmpty( stat.Level ) )
+								{
+									<span class="stat-level">@stat.Level</span>
+								}
+								<span class="stat-benefit">@stat.Benefit</span>
+							</div>
+							</div>
+						}
+					</div>
+
+					<div class="quick-slots">
+						@for ( var i = 0; i < QuickSlotKeys.Length; i++ )
+						{
+							var slotIndex = ConsumableSlotIndex( i );
+							var isHover = _hoveredConsumableSlot == i;
+							var isDragSource = slotIndex.HasValue && _dragging && _dragSourceSlot == slotIndex.Value;
+							var item = slotIndex.HasValue && !isDragSource ? _backpack.GetItemAt( slotIndex.Value ) : default;
+							var definition = DefinitionFor( item );
+							<div class="quick-slot @(item.IsValid ? "filled" : "empty") @(isHover ? "hover" : "")">
+								@if ( !string.IsNullOrEmpty( QuickSlotKeys[i] ) )
+								{
+									<span class="quick-key">@QuickSlotKeys[i]</span>
+								}
+								@if ( item.IsValid && definition is not null )
+								{
+									@if ( !string.IsNullOrEmpty( definition.Icon ) )
+									{
+										<div class="quick-icon" style="background-image: url(@definition.Icon);"></div>
+									}
+									else
+									{
+										<div class="icon-fallback">@FallbackLabel( definition )</div>
+									}
+
+									@if ( item.StackCount > 1 )
+									{
+										<span class="quick-stack">@item.StackCount</span>
+									}
+								}
+							</div>
+						}
+						<span class="quick-title">Consumables</span>
+					</div>
+				</div>
+
+				<div class="character-column" style="@CharacterColumnStyle()">
+					<div class="character-stage" style="@CharacterStageStyle()">
+						<CharacterPreviewPanel SourcePlayer=@_player class="character-preview-panel" />
+						<div class="preview-floor"></div>
+					</div>
+				</div>
+
+				<div class="inventory-main-container">
+					<div class="equipment-component">
+						<div class="equipment-slots">
+							@foreach ( var slot in EquipmentSlots() )
+							{
+								var isHover = _hoveredEquipmentSlot == slot.Key;
+								var isDragSource = _dragging && _dragSourceSlot == slot.SlotIndex;
+								var item = isDragSource ? default : slot.Item;
+								var definition = isDragSource ? null : slot.Definition;
+								<div class="equipment-slot @(item.IsValid ? "filled" : "empty") @(isHover ? "hover" : "") @(slot.Key)">
+									@if ( item.IsValid && definition is not null )
+									{
+										@if ( !string.IsNullOrEmpty( definition.Icon ) )
+										{
+											<div class="equipment-icon" style="background-image: url(@definition.Icon);"></div>
+										}
+										else
+										{
+											<div class="icon-fallback">@FallbackLabel( definition )</div>
+										}
+									}
+									else
+									{
+										<div class="slot-glyph">@slot.Glyph</div>
+									}
+									<span class="equipment-label">@slot.Label</span>
+								</div>
+							}
+						</div>
+					</div>
+
+					<div class="inventory-component">
+						<div class="inventory-card" style="@InventoryCardStyle()">
+							<div class="inventory-meta">
+								<div class="meta-pill">
+									<span class="meta-icon">$</span>
+									<span>@_backpack.Wallet.ToString( "N0" )</span>
+								</div>
+								<div class="meta-pill">
+									<span class="meta-icon">WT</span>
+									<span>@FormatCarryWeight() / @CarryCapacity</span>
+								</div>
+							</div>
+
+							<div class="category-tabs">
+								<span class="category-tab active">Weapons</span>
+								<span class="category-tab">Armor</span>
+								<span class="category-tab">Tools</span>
+								<span class="category-tab">Materials</span>
+							</div>
+
+							<div class="inventory-title">Armor & Weapons</div>
+
+							<div class="grid">
+								@for ( int r = 0; r < InventoryRows; r++ )
+								{
+									<div class="grid-row">
+										@for ( int c = 0; c < InventoryCols; c++ )
+										{
+											var row = r;
+											var col = c;
+											var slotIndex = ToSlot( row, col );
+											var isDragSource = _dragging && _dragSourceSlot == slotIndex;
+											var item = isDragSource ? default : _backpack.GetItemAt( slotIndex );
+											var definition = DefinitionFor( item );
+											var selected = !isDragSource
+												&& _backpack.Selected is var sel && sel.HasValue
+												&& sel.Value.row == row && sel.Value.col == col;
+											<div class="cell @(item.IsValid ? "filled" : "empty") @(selected ? "selected" : "")"
+												 style="@CellStyle( definition, selected, item.IsValid )">
+												@if ( item.IsValid && definition is not null )
+												{
+													@if ( !string.IsNullOrEmpty( definition.Icon ) )
+													{
+														<div class="icon" style="background-image: url(@definition.Icon);"></div>
+													}
+													else
+													{
+														<div class="icon-fallback">@FallbackLabel( definition )</div>
+													}
+												@if ( item.StackCount > 1 )
+												{
+													<div class="stack">@FormatStack( item, definition )</div>
+												}
+											}
+										</div>
+									}
+									</div>
+								}
+							</div>
+
+							<div class="sort-line">
+								<span>Sort by:</span>
+								<div class="sort-buttons">
+									<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Type ? "hover" : "")">Type</div>
+									<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Rarity ? "hover" : "")">Rarity</div>
+									<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Worth ? "hover" : "")">Value</div>
+									<div class="sort-button @(_hoveredSortButton == Backpack.SortMode.Weight ? "hover" : "")">Weight</div>
+								</div>
+							</div>
+
+						</div>
+
+						<div class="drop-zone @(_hoveredDropZone ? "hover" : "")" style="@DropZoneStyle()">
+							<div class="drop-icon"></div>
+							<span>Drop</span>
+						</div>
+					</div>
+
+					<div class="tooltip-component">
+						@if ( !_dragging && HoveredItemSlot() is var hoverSlot && hoverSlot.HasValue )
+						{
+							var hoverItem = _backpack.GetItemAt( hoverSlot.Value );
+							var hoverDefinition = DefinitionFor( hoverItem );
+							if ( hoverItem.IsValid && hoverDefinition is not null )
+							{
+								<div class="tooltip rarity-@hoverDefinition.Rarity.ToString().ToLowerInvariant()">
+									<div class="tooltip-header">
+										<span class="tooltip-name">@TooltipName( hoverDefinition )</span>
+										<span class="tooltip-rarity">@hoverDefinition.Rarity</span>
+									</div>
+									<div class="tooltip-divider"></div>
+									<div class="tooltip-rows">
+										@foreach ( var (label, value) in TooltipRows( hoverItem, hoverDefinition ) )
+										{
+											@if ( label == "-" )
+											{
+												<div class="tooltip-divider"></div>
+											}
+											else
+											{
+												<div class="tooltip-row">
+													<span class="tooltip-label">@label</span>
+													<span class="tooltip-value">@value</span>
+												</div>
+											}
+										}
+									</div>
+								</div>
+							}
+						}
+					</div>
+				</div>
+			</div>
+
+			<div class="bottom-hints">
+				<span><b>Tab</b> Close inventory</span>
+				<span><b>Mouse 1</b> Drag item</span>
+				<span><b>Mouse 2</b> Equip or use</span>
+				<span><b>Drop rail</b> Drop item</span>
+			</div>
+		</div>
+
+		@if ( _dragging && _dragSourceSlot.HasValue )
+		{
+			var ghostItem = _backpack.GetItemAt( _dragSourceSlot.Value );
+			var ghostDefinition = DefinitionFor( ghostItem );
+			if ( ghostItem.IsValid && ghostDefinition is not null )
+			{
+				<div class="drag-ghost"
+					 style="left: @(CursorCss.x - 32)px; top: @(CursorCss.y - 32)px; @GhostBackground( ghostDefinition )">
+					@if ( string.IsNullOrEmpty( ghostDefinition.Icon ) )
+					{
+						<div class="icon-fallback">@FallbackLabel( ghostDefinition )</div>
+					}
+				</div>
+			}
+		}
+	}
+</root>
+
+@code {
+	private const float DragThresholdPx = 6f;
+	private const int CarryCapacity = 300;
+	private const int InventoryCellSize = 68;
+	private const int InventoryCellGap = 6;
+	private const int InventoryCardMinWidth = 500;
+	private const int InventoryCardMinHeight = 552;
+	private const int InventoryCardChromeWidth = 32;
+	private const int InventoryCardChromeHeight = 124;
+	private static readonly string[] QuickSlotKeys = { "Z", "X", "", "" };
+	private static readonly string[] ConsumableHotkeyActions = { "Consumable1", "Consumable2" };
+
+	private Backpack _backpack;
+	private UnitComponent _unit;
+	private PlayerStatsComponent _stats;
+	private GameObject _player;
+
+	private bool _isOpen;
+	private int? _dragSourceSlot;
+	private bool _dragging;
+	private Vector2 _mouseDownPos;
+	private Vector2 _mousePos;
+	private (int row, int col)? _hoveredSlot;
+	private string _hoveredEquipmentSlot;
+	private int? _hoveredConsumableSlot;
+	private bool _hoveredDropZone;
+	private Backpack.SortMode? _hoveredSortButton;
+	private bool _previewDragSuppressingInventoryInput;
+	private Sandbox.UI.Panel _gridPanel;
+	private Sandbox.UI.Panel _sortButtonsPanel;
+	private Sandbox.UI.Panel _equipmentSlotsPanel;
+	private Sandbox.UI.Panel _quickSlotsPanel;
+	private Sandbox.UI.Panel _dropZonePanel;
+	private Sandbox.UI.Panel _characterPreviewPanel;
+	private int _cachedLayoutRows = -1;
+	private int _cachedLayoutCols = -1;
+
+	private int Level => _stats.IsValid() ? _stats.PlayerLevel : 1;
+	private float ExperiencePercent => _stats.IsValid() ? _stats.PlayerLevelProgressPercent : 0f;
+	private string ExperienceText => _stats.IsValid() ? $"Avg: {(ExperiencePercent * 100f):0}%" : "Stats loading";
+	private int InventoryRows => int.Max( 1, _backpack?.Rows ?? 1 );
+	private int InventoryCols => int.Max( 1, _backpack?.Cols ?? 1 );
+	private int InventoryGridWidth => GridSpan( InventoryCols );
+	private int InventoryGridHeight => GridSpan( InventoryRows );
+	private int InventoryCardWidth => int.Max( InventoryCardMinWidth, InventoryGridWidth + InventoryCardChromeWidth );
+	private int InventoryCardHeight => int.Max( InventoryCardMinHeight, InventoryGridHeight + InventoryCardChromeHeight );
+
+	private Vector2 CursorCss
+	{
+		get
+		{
+			var sh = Screen.Height;
+			if ( sh <= 1 ) return Mouse.Position;
+			var scale = 1080f / sh;
+			return new Vector2( Mouse.Position.x * scale, Mouse.Position.y * scale );
+		}
+	}
+
+	public bool IsOpen => _isOpen;
+	private string RootClass => _isOpen ? (_dragging ? "open dragging" : "open") : "";
+
+	protected override void OnStart()
+	{
+		FindLocalPlayer();
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( !Sandbox.Systems.Movement.LocalPlayer.Owns( _player ) )
+		{
+			FindLocalPlayer();
+		}
+
+		_mousePos = Mouse.Position;
+
+		if ( Input.Pressed( "Inventory" ) )
+		{
+			if ( _isOpen ) Close();
+			else if ( UiModeSystem.Current?.BlocksShortcuts != true ) Open();
+		}
+		else if ( _isOpen && Input.EscapePressed )
+		{
+			Input.EscapePressed = false;
+			Close();
+		}
+
+		PollConsumableHotkeys();
+
+		if ( ShouldSuppressInventoryInputForCharacterPreview() )
+		{
+			ClearInventoryInteractionState();
+			return;
+		}
+
+		RefreshInventoryLayoutCache();
+
+		if ( _isOpen && _dragSourceSlot.HasValue && !_dragging )
+		{
+			if ( (_mousePos - _mouseDownPos).Length > DragThresholdPx )
+			{
+				_dragging = true;
+			}
+		}
+
+		PollHoveredSlot();
+		PollHoveredSortButton();
+		PollHoveredEquipmentSlot();
+		PollHoveredConsumableSlot();
+		PollHoveredDropZone();
+		PollMouseInput();
+	}
+
+	private void FindLocalPlayer()
+	{
+		_player = Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
+		_backpack = _player?.Components.GetInDescendantsOrSelf<Backpack>();
+		_unit = _player?.Components.GetInDescendantsOrSelf<UnitComponent>();
+		_stats = _player?.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+	}
+
+	private bool ShouldSuppressInventoryInputForCharacterPreview()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_previewDragSuppressingInventoryInput = false;
+			return false;
+		}
+
+		_characterPreviewPanel ??= FindByClass( Panel, "character-preview-panel" );
+
+		if ( CharacterPreviewPanel.IsRotatingAnyPreview )
+		{
+			_previewDragSuppressingInventoryInput = true;
+		}
+
+		if ( Input.Pressed( "Attack1" ) && _characterPreviewPanel is not null && _characterPreviewPanel.IsInside( _mousePos ) )
+		{
+			_previewDragSuppressingInventoryInput = true;
+		}
+
+		if ( !_previewDragSuppressingInventoryInput )
+			return false;
+
+		if ( Input.Released( "Attack1" ) || !Input.Down( "Attack1" ) )
+		{
+			_previewDragSuppressingInventoryInput = false;
+			return true;
+		}
+
+		return true;
+	}
+
+	private void ClearInventoryInteractionState()
+	{
+		_dragSourceSlot = null;
+		_dragging = false;
+		_hoveredSlot = null;
+		_hoveredEquipmentSlot = null;
+		_hoveredConsumableSlot = null;
+		_hoveredDropZone = false;
+		_hoveredSortButton = null;
+	}
+
+	private void PollConsumableHotkeys()
+	{
+		if ( _isOpen || !_backpack.IsValid() || !_player.IsValid() ) return;
+		if ( UiModeSystem.Current?.BlocksShortcuts == true ) return;
+
+		for ( var i = 0; i < ConsumableHotkeyActions.Length; i++ )
+		{
+			if ( !Input.Pressed( ConsumableHotkeyActions[i] ) ) continue;
+
+			var slot = _backpack.ConsumableSlotIndex( i );
+			if ( !_backpack.GetItemAt( slot ).IsValid ) return;
+
+			GameNetworkRpc.RequestUseInventorySlot( _player, slot );
+			return;
+		}
+	}
+
+	private void RefreshInventoryLayoutCache()
+	{
+		if ( !_isOpen || !_backpack.IsValid() ) return;
+
+		var rows = InventoryRows;
+		var cols = InventoryCols;
+		if ( rows == _cachedLayoutRows && cols == _cachedLayoutCols ) return;
+
+		_gridPanel = null;
+		_sortButtonsPanel = null;
+		_equipmentSlotsPanel = null;
+		_quickSlotsPanel = null;
+		_dropZonePanel = null;
+		_cachedLayoutRows = rows;
+		_cachedLayoutCols = cols;
+	}
+
+	private void PollMouseInput()
+	{
+		if ( !_isOpen || !_backpack.IsValid() || Panel is null ) return;
+
+		if ( Input.Pressed( "Attack1" ) )
+		{
+			if ( _hoveredSortButton.HasValue )
+			{
+				GameNetworkRpc.RequestSortInventory( _player, (int)_hoveredSortButton.Value );
+			}
+			else if ( _hoveredSlot.HasValue )
+			{
+				var (row, col) = _hoveredSlot.Value;
+				var slot = ToSlot( row, col );
+				if ( _backpack.GetItemAt( slot ).IsValid )
+				{
+					_dragSourceSlot = slot;
+					_mouseDownPos = _mousePos;
+					_dragging = false;
+					_backpack.ClearSelection();
+				}
+			}
+			else if ( EquipmentSlotIndex( _hoveredEquipmentSlot ) is var equipmentSlot && equipmentSlot.HasValue )
+			{
+				if ( _backpack.GetItemAt( equipmentSlot.Value ).IsValid )
+				{
+					_dragSourceSlot = equipmentSlot.Value;
+					_mouseDownPos = _mousePos;
+					_dragging = false;
+					_backpack.ClearSelection();
+				}
+			}
+			else if ( ConsumableSlotIndex( _hoveredConsumableSlot ) is var consumableSlot && consumableSlot.HasValue )
+			{
+				if ( _backpack.GetItemAt( consumableSlot.Value ).IsValid )
+				{
+					_dragSourceSlot = consumableSlot.Value;
+					_mouseDownPos = _mousePos;
+					_dragging = false;
+					_backpack.ClearSelection();
+				}
+			}
+		}
+
+		if ( Input.Released( "Attack1" ) && _dragSourceSlot.HasValue )
+		{
+			var fromSlot = _dragSourceSlot.Value;
+			var wasDragging = _dragging;
+			_dragSourceSlot = null;
+			_dragging = false;
+
+			if ( wasDragging )
+			{
+				if ( _hoveredSlot.HasValue )
+				{
+					var toSlot = ToSlot( _hoveredSlot.Value.row, _hoveredSlot.Value.col );
+					if ( toSlot != fromSlot )
+					{
+						GameNetworkRpc.RequestMoveInventorySlot( _player, fromSlot, toSlot );
+					}
+				}
+				else if ( EquipmentSlotIndex( _hoveredEquipmentSlot ) is var toEquipmentSlot && toEquipmentSlot.HasValue )
+				{
+					if ( toEquipmentSlot.Value != fromSlot )
+					{
+						GameNetworkRpc.RequestMoveInventorySlot( _player, fromSlot, toEquipmentSlot.Value );
+					}
+				}
+				else if ( ConsumableSlotIndex( _hoveredConsumableSlot ) is var toConsumableSlot && toConsumableSlot.HasValue )
+				{
+					if ( toConsumableSlot.Value != fromSlot )
+					{
+						GameNetworkRpc.RequestMoveInventorySlot( _player, fromSlot, toConsumableSlot.Value );
+					}
+				}
+				else if ( _hoveredDropZone || (!_hoveredSlot.HasValue && string.IsNullOrEmpty( _hoveredEquipmentSlot )) )
+				{
+					GameNetworkRpc.RequestDropInventorySlot( _player, fromSlot );
+				}
+			}
+			else
+			{
+				if ( _backpack.IsGridSlot( fromSlot ) )
+				{
+					var src = FromSlot( fromSlot );
+					if ( _backpack.Selected is var sel && sel.HasValue && sel.Value == src )
+						_backpack.ClearSelection();
+					else
+						_backpack.Select( src.row, src.col );
+				}
+			}
+		}
+
+		if ( Input.Pressed( "Attack2" ) && _hoveredSlot.HasValue )
+		{
+			var (row, col) = _hoveredSlot.Value;
+			if ( _backpack.GetItemAt( row, col ).IsValid )
+			{
+				GameNetworkRpc.RequestUseInventorySlot( _player, ToSlot( row, col ) );
+			}
+		}
+		else if ( Input.Pressed( "Attack2" ) && ConsumableSlotIndex( _hoveredConsumableSlot ) is var useConsumableSlot && useConsumableSlot.HasValue )
+		{
+			if ( _backpack.GetItemAt( useConsumableSlot.Value ).IsValid )
+			{
+				GameNetworkRpc.RequestUseInventorySlot( _player, useConsumableSlot.Value );
+			}
+		}
+	}
+
+	private void PollHoveredSlot()
+	{
+		if ( !_isOpen || !_backpack.IsValid() || Panel is null )
+		{
+			_hoveredSlot = null;
+			return;
+		}
+
+		_gridPanel ??= FindByClass( Panel, "grid" );
+		if ( _gridPanel is null )
+		{
+			_hoveredSlot = null;
+			return;
+		}
+
+		var screenPos = Mouse.Position;
+		int r = 0;
+		foreach ( var rowPanel in _gridPanel.Children )
+		{
+			int c = 0;
+			foreach ( var cellPanel in rowPanel.Children )
+			{
+				if ( cellPanel.IsInside( screenPos ) )
+				{
+					_hoveredSlot = (r, c);
+					return;
+				}
+				c++;
+			}
+			r++;
+		}
+
+		_hoveredSlot = null;
+	}
+
+	private void PollHoveredSortButton()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_hoveredSortButton = null;
+			return;
+		}
+
+		_sortButtonsPanel ??= FindByClass( Panel, "sort-buttons" );
+		if ( _sortButtonsPanel is null )
+		{
+			_hoveredSortButton = null;
+			return;
+		}
+
+		var screenPos = _mousePos;
+		int i = 0;
+		foreach ( var child in _sortButtonsPanel.Children )
+		{
+			if ( child.IsInside( screenPos ) )
+			{
+				_hoveredSortButton = i switch
+				{
+					0 => Backpack.SortMode.Type,
+					1 => Backpack.SortMode.Rarity,
+					2 => Backpack.SortMode.Worth,
+					3 => Backpack.SortMode.Weight,
+					_ => (Backpack.SortMode?)null,
+				};
+				return;
+			}
+			i++;
+		}
+
+		_hoveredSortButton = null;
+	}
+
+	private void PollHoveredEquipmentSlot()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_hoveredEquipmentSlot = null;
+			return;
+		}
+
+		_equipmentSlotsPanel ??= FindByClass( Panel, "equipment-slots" );
+		if ( _equipmentSlotsPanel is null )
+		{
+			_hoveredEquipmentSlot = null;
+			return;
+		}
+
+		var screenPos = _mousePos;
+		int i = 0;
+		foreach ( var child in _equipmentSlotsPanel.Children )
+		{
+			if ( child.IsInside( screenPos ) )
+			{
+				_hoveredEquipmentSlot = EquipmentSlotKeys( i );
+				return;
+			}
+			i++;
+		}
+
+		_hoveredEquipmentSlot = null;
+	}
+
+	private void PollHoveredConsumableSlot()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_hoveredConsumableSlot = null;
+			return;
+		}
+
+		_quickSlotsPanel ??= FindByClass( Panel, "quick-slots" );
+		if ( _quickSlotsPanel is null )
+		{
+			_hoveredConsumableSlot = null;
+			return;
+		}
+
+		var screenPos = _mousePos;
+		var i = 0;
+		foreach ( var child in _quickSlotsPanel.Children )
+		{
+			if ( i >= Backpack.ConsumableSlotCount ) break;
+
+			if ( child.IsInside( screenPos ) )
+			{
+				_hoveredConsumableSlot = i;
+				return;
+			}
+
+			i++;
+		}
+
+		_hoveredConsumableSlot = null;
+	}
+
+	private void PollHoveredDropZone()
+	{
+		if ( !_isOpen || Panel is null )
+		{
+			_hoveredDropZone = false;
+			return;
+		}
+
+		_dropZonePanel ??= FindByClass( Panel, "drop-zone" );
+		_hoveredDropZone = _dropZonePanel is not null && _dropZonePanel.IsInside( _mousePos );
+	}
+
+	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
+	{
+		if ( root is null ) return null;
+		if ( root.HasClass( className ) ) return root;
+		foreach ( var child in root.Children )
+		{
+			var found = FindByClass( child, className );
+			if ( found is not null ) return found;
+		}
+		return null;
+	}
+
+	private void Toggle()
+	{
+		if ( _isOpen ) Close();
+		else Open();
+	}
+
+	private void Open()
+	{
+		if ( _isOpen ) return;
+		if ( UiModeSystem.Current?.TryOpen( this, UiModeKind.Inventory, hideHud: true ) != true ) return;
+
+		_isOpen = true;
+		_characterPreviewPanel = null;
+	}
+
+	private void Close()
+	{
+		if ( !_isOpen ) return;
+		_isOpen = false;
+		_previewDragSuppressingInventoryInput = false;
+		ClearInventoryInteractionState();
+		_gridPanel = null;
+		_sortButtonsPanel = null;
+		_equipmentSlotsPanel = null;
+		_quickSlotsPanel = null;
+		_dropZonePanel = null;
+		_characterPreviewPanel = null;
+		_cachedLayoutRows = -1;
+		_cachedLayoutCols = -1;
+		UiModeSystem.Current?.Close( this );
+		_backpack?.ClearSelection();
+	}
+
+	private static int GridSpan( int count )
+	{
+		count = int.Max( 1, count );
+		return (count * InventoryCellSize) + ((count - 1) * InventoryCellGap);
+	}
+
+	private string InventoryCardStyle()
+	{
+		return $"width: {InventoryCardWidth}px; height: {InventoryCardHeight}px;";
+	}
+
+	private string DropZoneStyle()
+	{
+		return $"height: {InventoryCardHeight}px;";
+	}
+
+	private string CharacterColumnStyle()
+	{
+		return $"height: {InventoryCardHeight}px;";
+	}
+
+	private string CharacterStageStyle()
+	{
+		return $"height: {InventoryCardHeight}px;";
+	}
+
+	private string CellStyle( ItemDefinition definition, bool selected, bool filled )
+	{
+		var sb = new System.Text.StringBuilder();
+
+		if ( filled && definition is not null )
+		{
+			var rarityCfg = _player?.Components.Get<RarityConfig>();
+			if ( rarityCfg is not null )
+			{
+				var c = rarityCfg.GetColor( definition.Rarity );
+				sb.Append( $"border: 2px solid rgba({(int)(c.r * 255)},{(int)(c.g * 255)},{(int)(c.b * 255)},0.9);" );
+			}
+		}
+		else
+		{
+			sb.Append( "border: 1px solid rgba(255,255,255,0.28);" );
+		}
+
+		sb.Append( selected
+			? "box-shadow: 0 0 14px 2px rgba(240,194,64,0.85);"
+			: "box-shadow: none;" );
+
+		return sb.ToString();
+	}
+
+	private string FallbackLabel( ItemDefinition definition )
+	{
+		if ( definition is null ) return "";
+		var name = string.IsNullOrEmpty( definition.DisplayName ) ? "Item" : definition.DisplayName;
+		return name.Substring( 0, System.Math.Min( 3, name.Length ) ).ToUpperInvariant();
+	}
+
+	private string FormatStack( InventoryItemState item, ItemDefinition definition )
+	{
+		if ( definition is not null && definition.IsCurrency ) return $"${item.StackCount:N0}";
+		return $"{item.StackCount}";
+	}
+
+	private string GhostBackground( ItemDefinition definition )
+	{
+		return definition is null || string.IsNullOrEmpty( definition.Icon )
+			? ""
+			: $"background-image: url({definition.Icon});";
+	}
+
+	private string TooltipName( ItemDefinition definition )
+	{
+		return string.IsNullOrEmpty( definition?.DisplayName ) ? "Item" : definition.DisplayName;
+	}
+
+	private System.Collections.Generic.IEnumerable<(string Label, string Value)> TooltipRows( InventoryItemState item, ItemDefinition definition )
+	{
+		var rows = new System.Collections.Generic.List<(string, string)>();
+
+		if ( definition.IsCurrency )
+		{
+			rows.Add( ("Total", $"${item.StackCount:N0}") );
+			return rows;
+		}
+
+		rows.Add( ("Value", $"${definition.Value * item.StackCount:N0}") );
+		rows.Add( ("Weight", $"{definition.Weight * item.StackCount}") );
+
+		if ( definition.IsConsumable )
+		{
+			rows.Add( ("Amount", $"{item.StackCount} / {definition.MaxStack}") );
+		}
+		else if ( item.StackCount > 1 )
+		{
+			rows.Add( ("Stack", $"{item.StackCount} / {definition.MaxStack}") );
+		}
+
+		if ( definition.IsWeapon )
+		{
+			var weapon = definition.Weapon;
+			rows.Add( ("-", "") );
+			rows.Add( ("Damage", $"{weapon.Damage:0}") );
+			rows.Add( ("Fire Rate", $"{FireRate( definition ):0.0}") );
+			rows.Add( ("Clip", $"{item.Ammo} / {weapon.ClipSize}") );
+			rows.Add( ("Reload", $"{weapon.ReloadDuration:0.0}s") );
+			rows.Add( ("Hold Type", $"{weapon.HoldType}") );
+		}
+
+		if ( definition.IsConsumable )
+		{
+			var consumable = definition.Consumable;
+			rows.Add( ("-", "") );
+			rows.Add( ("Type", $"{consumable.Category}") );
+			rows.Add( ("Tier", $"{consumable.Tier}") );
+			var benefit = ConsumableBenefitText( consumable );
+			if ( !string.IsNullOrEmpty( benefit ) ) rows.Add( ("Benefit", benefit) );
+			AddSignedTooltipRow( rows, "Health", consumable.Health );
+			AddSignedTooltipRow( rows, "Stamina", consumable.Stamina );
+			AddSignedTooltipRow( rows, "Hydration", consumable.Hydration );
+			AddSignedTooltipRow( rows, "Nutrition", consumable.Nutrition );
+			AddSignedTooltipRow( rows, "Health Regen", consumable.HealthRegenPerSecond, "/sec" );
+			AddSignedTooltipRow( rows, "Stamina Regen", consumable.StaminaRegenPerSecond, "/sec" );
+
+			if ( consumable.EffectDuration > 0f ) rows.Add( ("Duration", $"{consumable.EffectDuration:0}s") );
+			if ( consumable.HealthXp > 0f ) rows.Add( ("Health XP", $"{consumable.HealthXp:0.#}") );
+		}
+
+		return rows;
+	}
+
+	private string ConsumableBenefitText( ConsumableStats consumable )
+	{
+		var parts = new System.Collections.Generic.List<string>();
+		AddBenefitPart( parts, "HP", consumable.Health );
+		AddBenefitPart( parts, "STA", consumable.Stamina );
+		AddBenefitPart( parts, "HYD", consumable.Hydration );
+		AddBenefitPart( parts, "FOOD", consumable.Nutrition );
+
+		return string.Join( ", ", parts );
+	}
+
+	private void AddBenefitPart( System.Collections.Generic.List<string> parts, string label, float amount )
+	{
+		if ( System.MathF.Abs( amount ) <= 0.001f ) return;
+		parts.Add( $"{label} {(amount > 0f ? "+" : "")}{amount:0.##}" );
+	}
+
+	private void AddSignedTooltipRow( System.Collections.Generic.List<(string, string)> rows, string label, float amount, string suffix = "" )
+	{
+		if ( System.MathF.Abs( amount ) <= 0.001f ) return;
+
+		rows.Add( (label, $"{(amount > 0f ? "+" : "")}{amount:0.##}{suffix}") );
+	}
+
+	private System.Collections.Generic.IEnumerable<(string ClassName, string Icon, string Label, string Level, string Benefit)> StatRows()
+	{
+		yield return StatRow( "health", "+", "Health", PlayerStatType.Health, FormatStatPool( _unit?.Health ?? 0f, EffectiveMaxHealth() ) );
+		yield return StatRow( "stamina", "EN", "Stamina", PlayerStatType.Stamina, FormatStatPool( _unit?.Stamina ?? 0f, EffectiveMaxStamina() ) );
+		yield return StatRow( "damage", "RG", "Ranged", PlayerStatType.Ranged, $"Spread {(_stats.IsValid() ? _stats.RangedSpreadDegrees : 0f):0.0} deg" );
+		yield return StatRow( "speed", "ME", "Punching", PlayerStatType.Punching, _stats.IsValid() ? $"Damage {_stats.PunchDamage:0.0}" : "Damage 0" );
+		yield return StatRow( "armor", "$", "Business", PlayerStatType.Business, _stats.IsValid() ? $"${_stats.BusinessIncomePerSecond:0.0}/sec" : "$0/sec" );
+		yield return ("armor", "AR", "Armor", "", FormatStatPool( _unit?.Armor ?? 0f, _unit?.MaxArmor ?? 0f ));
+	}
+
+	private (string ClassName, string Icon, string Label, string Level, string Benefit) StatRow( string className, string icon, string label, PlayerStatType stat, string benefit )
+	{
+		return (className, icon, label, StatLevelText( stat ), benefit);
+	}
+
+	private string StatLevelText( PlayerStatType stat )
+	{
+		if ( !_stats.IsValid() ) return "Lv 1";
+
+		return $"Lv {_stats.GetLevel( stat )} ({(_stats.GetLevelProgress( stat ) * 100f):0}%)";
+	}
+
+	private float EffectiveMaxHealth()
+	{
+		return _stats.IsValid() ? _stats.EffectiveMaxHealth : _unit?.MaxHealth ?? 100f;
+	}
+
+	private float EffectiveMaxStamina()
+	{
+		return _stats.IsValid() ? _stats.EffectiveMaxStamina : _unit?.MaxStamina ?? 100f;
+	}
+
+	private string FormatStatPool( float current, float max )
+	{
+		return max > 0f ? $"{current:0} / {max:0}" : $"{current:0}";
+	}
+
+	private System.Collections.Generic.IEnumerable<(string Key, string Label, string Glyph, int SlotIndex, InventoryItemState Item, ItemDefinition Definition)> EquipmentSlots()
+	{
+		yield return EquipmentSlotRow( "head", "Head Armor", "HD", Backpack.EquipmentSlot.Head );
+		yield return EquipmentSlotRow( "chest", "Chest Armor", "CH", Backpack.EquipmentSlot.Chest );
+		yield return EquipmentSlotRow( "neck", "Necklace", "NC", Backpack.EquipmentSlot.Neck );
+		yield return EquipmentSlotRow( "legs", "Trousers", "TR", Backpack.EquipmentSlot.Legs );
+		yield return EquipmentSlotRow( "hands", "Gloves", "GL", Backpack.EquipmentSlot.Hands );
+		yield return EquipmentSlotRow( "feet", "Boots", "BT", Backpack.EquipmentSlot.Feet );
+		yield return EquipmentSlotRow( "weapon", "Weapon", "WP", Backpack.EquipmentSlot.Weapon );
+		yield return EquipmentSlotRow( "offhand", "Off Hand", "OH", Backpack.EquipmentSlot.Offhand );
+	}
+
+	private (string Key, string Label, string Glyph, int SlotIndex, InventoryItemState Item, ItemDefinition Definition) EquipmentSlotRow( string key, string label, string glyph, Backpack.EquipmentSlot slot )
+	{
+		var slotIndex = _backpack.EquipmentSlotIndex( slot );
+		var item = _backpack.GetItemAt( slotIndex );
+		return (key, label, glyph, slotIndex, item, DefinitionFor( item ));
+	}
+
+	private string EquipmentSlotKeys( int index )
+	{
+		return index switch
+		{
+			0 => "head",
+			1 => "chest",
+			2 => "neck",
+			3 => "legs",
+			4 => "hands",
+			5 => "feet",
+			6 => "weapon",
+			7 => "offhand",
+			_ => null,
+		};
+	}
+
+	private int? EquipmentSlotIndex( string key )
+	{
+		if ( !_backpack.IsValid() || string.IsNullOrEmpty( key ) ) return null;
+
+		return key switch
+		{
+			"head" => _backpack.EquipmentSlotIndex( Backpack.EquipmentSlot.Head ),
+			"chest" => _backpack.EquipmentSlotIndex( Backpack.EquipmentSlot.Chest ),
+			"neck" => _backpack.EquipmentSlotIndex( Backpack.EquipmentSlot.Neck ),
+			"legs" => _backpack.EquipmentSlotIndex( Backpack.EquipmentSlot.Legs ),
+			"hands" => _backpack.EquipmentSlotIndex( Backpack.EquipmentSlot.Hands ),
+			"feet" => _backpack.EquipmentSlotIndex( Backpack.EquipmentSlot.Feet ),
+			"weapon" => _backpack.EquipmentSlotIndex( Backpack.EquipmentSlot.Weapon ),
+			"offhand" => _backpack.EquipmentSlotIndex( Backpack.EquipmentSlot.Offhand ),
+			_ => null,
+		};
+	}
+
+	private int? ConsumableSlotIndex( int? index )
+	{
+		if ( !_backpack.IsValid() || !index.HasValue ) return null;
+		if ( index.Value < 0 || index.Value >= Backpack.ConsumableSlotCount ) return null;
+
+		return _backpack.ConsumableSlotIndex( index.Value );
+	}
+
+	private int TotalWeight()
+	{
+		if ( !_backpack.IsValid() ) return 0;
+
+		var total = 0;
+		foreach ( var item in _backpack.Items.Values )
+		{
+			var definition = DefinitionFor( item );
+			if ( definition is null ) continue;
+			total += definition.Weight * item.StackCount;
+		}
+
+		return total;
+	}
+
+	private string FormatCarryWeight()
+	{
+		return TotalWeight().ToString( "N0" );
+	}
+
+	private float EquippedDamage()
+	{
+		return _backpack.IsValid() && _backpack.TryGetEquipped( out _, out var definition ) && definition is not null
+			? definition.Weapon?.Damage ?? 0f
+			: 0f;
+	}
+
+	private float EquippedFireRate()
+	{
+		return _backpack.IsValid() && _backpack.TryGetEquipped( out _, out var definition ) && definition is not null
+			? FireRate( definition )
+			: 0f;
+	}
+
+	private float FireRate( ItemDefinition definition )
+	{
+		return definition?.Weapon?.FireRate ?? 0f;
+	}
+
+	private ItemDefinition DefinitionFor( InventoryItemState item )
+	{
+		return item.IsValid ? _backpack.GetDefinition( item ) : null;
+	}
+
+	private int ToSlot( int row, int col )
+	{
+		return row * InventoryCols + col;
+	}
+
+	private (int row, int col) FromSlot( int slot )
+	{
+		var cols = InventoryCols;
+		return (slot / cols, slot % cols);
+	}
+
+	private int? HoveredItemSlot()
+	{
+		if ( _hoveredSlot.HasValue )
+		{
+			return ToSlot( _hoveredSlot.Value.row, _hoveredSlot.Value.col );
+		}
+
+		return EquipmentSlotIndex( _hoveredEquipmentSlot ) ?? ConsumableSlotIndex( _hoveredConsumableSlot );
+	}
+
+	protected override int BuildHash()
+	{
+		if ( _backpack is null ) return _isOpen ? 1 : 0;
+
+		var pmp = CursorCss;
+		var movingMouseHash = _dragging ? ((int)pmp.x, (int)pmp.y) : (0, 0);
+
+		var hc = new System.HashCode();
+		hc.Add( _isOpen );
+		hc.Add( _backpack.InventoryVersion );
+		hc.Add( _backpack.Rows );
+		hc.Add( _backpack.Cols );
+		hc.Add( _backpack.EquippedInstanceId );
+		hc.Add( _backpack.Wallet );
+		hc.Add( _stats?.StatsVersion ?? 0 );
+		hc.Add( _unit?.Health ?? 0f );
+		hc.Add( EffectiveMaxHealth() );
+		hc.Add( _unit?.Stamina ?? 0f );
+		hc.Add( EffectiveMaxStamina() );
+		hc.Add( _unit?.Armor ?? 0f );
+		hc.Add( _unit?.MaxArmor ?? 0f );
+		hc.Add( _dragging );
+		hc.Add( _dragSourceSlot );
+		hc.Add( _previewDragSuppressingInventoryInput );
+		hc.Add( CharacterPreviewPanel.IsRotatingAnyPreview );
+		hc.Add( _backpack.Selected );
+		hc.Add( _hoveredSlot );
+		hc.Add( _hoveredEquipmentSlot );
+		hc.Add( _hoveredConsumableSlot );
+		hc.Add( _hoveredDropZone );
+		hc.Add( _hoveredSortButton );
+		hc.Add( movingMouseHash );
+		return hc.ToHashCode();
+	}
+}

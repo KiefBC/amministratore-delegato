@@ -1,0 +1,71 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System.Linq;
+@namespace Sandbox.Systems.UI
+@inherits PanelComponent
+@implements IDamagedListener
+
+<root>
+	@if ( _hitTimer > 0f )
+	{
+		<div class="marker @(_wasKill ? "kill" : "hit")">
+			<div class="line top-left"></div>
+			<div class="line top-right"></div>
+			<div class="line bottom-left"></div>
+			<div class="line bottom-right"></div>
+		</div>
+	}
+</root>
+
+@code {
+	/// <summary>
+	/// The player root GameObject. Used to filter damage events to those *we* dealt.
+	/// Auto-found in OnStart by walking from a UnitComponent on Team.Player up to Root.
+	/// </summary>
+	[Property] public GameObject PlayerRoot { get; set; }
+
+	private const float HitDuration = 0.18f;
+	private const float KillDuration = 0.4f;
+
+	private float _hitTimer;
+	private bool _wasKill;
+
+	public void OnDamaged( Component.IDamageable target, DamageInfo info, bool wasKill )
+	{
+		if ( !Sandbox.Systems.Movement.LocalPlayer.Owns( PlayerRoot ) )
+		{
+			PlayerRoot = null;
+		}
+
+		PlayerRoot ??= Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
+		if ( PlayerRoot is null ) return;
+		if ( !SameRoot( info.Attacker, PlayerRoot ) ) return;
+
+		_wasKill = wasKill;
+		_hitTimer = wasKill ? KillDuration : HitDuration;
+	}
+
+	protected override void OnStart()
+	{
+		PlayerRoot ??= Sandbox.Systems.Movement.LocalPlayer.GameObject( Scene );
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( _hitTimer > 0f )
+		{
+			_hitTimer -= Time.Delta;
+		}
+	}
+
+	private static bool SameRoot( GameObject a, GameObject b )
+	{
+		if ( !a.IsValid() || !b.IsValid() ) return false;
+
+		var aRoot = a.Root;
+		var bRoot = b.Root;
+		return (aRoot.IsValid() ? aRoot : a) == (bRoot.IsValid() ? bRoot : b);
+	}
+
+	protected override int BuildHash() => System.HashCode.Combine( _hitTimer > 0f, _wasKill );
+}

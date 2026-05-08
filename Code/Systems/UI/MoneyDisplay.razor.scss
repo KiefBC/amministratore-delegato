@@ -1,0 +1,48 @@
+@import "/Systems/UI/_theme.scss";
+
+MoneyDisplay {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	pointer-events: none;
+
+	.money {
+		position: absolute;
+		top: $prompt-margin-top;
+		right: $corner-margin;
+		flex-direction: row;
+		align-items: center;
+		gap: 12px;
+		padding: $panel-padding-loose;
+		background-color: $panel-bg;
+		border-radius: $panel-radius;
+		font-family: $font-default;
+		transition: $transition-default;
+
+		&.flash-positive {
+			background-color: $flash-bg-positive;
+			box-shadow: $flash-glow-positive;
+		}
+
+		&.flash-negative {
+			background-color: $flash-bg-negative;
+			box-shadow: $flash-glow-negative;
+		}
+	}
+
+	.amount {
+		color: $text-primary;
+		font-size: $text-numeric;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+	}
+
+	.delta {
+		font-size: 18px;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+
+		&.positive { color: $text-positive; }
+		&.negative { color: $text-negative; }
+	}
+}

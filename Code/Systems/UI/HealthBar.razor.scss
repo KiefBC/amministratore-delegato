@@ -1,0 +1,105 @@
+@import "/Systems/UI/_theme.scss";
+
+HealthBar {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	pointer-events: none;
+
+	.hud-cluster {
+		position: absolute;
+		left: $corner-margin;
+		bottom: $corner-margin;
+		align-items: flex-end;
+		gap: 10px;
+	}
+
+	.health {
+		flex-direction: column;
+		gap: 8px;
+		padding: $panel-padding;
+		background-color: $panel-bg;
+		border-radius: $panel-radius;
+		font-family: $font-default;
+		min-width: $bar-min-width;
+		transition: $transition-fast;
+
+		&.flash-hit {
+			background-color: $flash-bg-damage;
+		}
+	}
+
+	.need-icons {
+		flex-direction: column;
+		gap: 6px;
+		padding-bottom: 2px;
+	}
+
+	.need-icon {
+		width: 34px;
+		height: 34px;
+		align-items: center;
+		justify-content: center;
+		border-radius: 8px;
+		border: 1px solid rgba( 255, 255, 255, 0.16 );
+		background-color: rgba( 8, 10, 14, 0.82 );
+		font-family: $font-default;
+		font-size: 15px;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+		box-shadow: 0 2px 8px rgba( 0, 0, 0, 0.35 );
+
+		&.hunger {
+			color: #ffb04a;
+			border-color: rgba( 255, 176, 74, 0.5 );
+		}
+
+		&.thirst {
+			color: #4aa8ff;
+			border-color: rgba( 74, 168, 255, 0.5 );
+		}
+	}
+
+	.stat-row {
+		flex-direction: column;
+		gap: 3px;
+	}
+
+	.stat-label {
+		color: $text-secondary;
+		font-size: $text-eyebrow;
+		font-weight: bold;
+		text-transform: uppercase;
+		text-shadow: $text-shadow-default;
+	}
+
+	.bar-bg {
+		width: 100%;
+		height: $bar-height;
+		background-color: $bar-bg;
+		border-radius: $bar-radius;
+		overflow: hidden;
+	}
+
+	.stamina-bg {
+		height: 10px;
+	}
+
+	.bar-fill {
+		height: 100%;
+		transition: $transition-bar-fill;
+
+		&.fill-good { background-color: $accent-success; }
+		&.fill-warn { background-color: $accent-warning; }
+		&.fill-danger { background-color: $accent-danger; }
+		&.stamina-fill { background-color: #4aa8ff; }
+	}
+
+	.numbers {
+		color: $text-primary;
+		font-size: $text-regular;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+		align-self: flex-end;
+	}
+}

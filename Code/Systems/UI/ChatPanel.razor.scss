@@ -1,0 +1,213 @@
+@import "/Systems/UI/_theme.scss";
+
+ChatPanel {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	pointer-events: none;
+
+	.chat-window {
+		position: absolute;
+		right: 0px;
+		bottom: $corner-margin;
+		width: 420px;
+		flex-direction: column;
+		gap: 8px;
+		padding: 12px 14px;
+		background-color: rgba( 8, 12, 20, 0.66 );
+		border: 1px solid rgba( 240, 192, 64, 0.38 );
+		border-radius: $panel-radius;
+		box-shadow: 0px 0px 18px rgba( 0, 0, 0, 0.35 );
+		font-family: $font-default;
+		opacity: 1;
+		transition: opacity 0.08s linear;
+	}
+
+	&.closed .chat-window {
+		opacity: 0.65;
+	}
+
+	.chat-title {
+		align-self: stretch;
+		padding-bottom: 6px;
+		color: $accent-warning;
+		font-size: $text-small;
+		font-weight: 900;
+		letter-spacing: 1.4px;
+		text-transform: uppercase;
+		text-shadow: $text-shadow-default;
+		border-bottom: 1px solid rgba( 240, 192, 64, 0.24 );
+	}
+
+	.business-card {
+		position: absolute;
+		width: 320px;
+		padding: 14px 16px;
+		flex-direction: column;
+		gap: 8px;
+		background-color: rgba( 10, 12, 18, 0.96 );
+		border: 1px solid rgba( 240, 192, 64, 0.56 );
+		border-radius: $panel-radius;
+		box-shadow: 0px 0px 24px rgba( 0, 0, 0, 0.5 );
+		pointer-events: all;
+		cursor: move;
+		z-index: 2;
+	}
+
+	.business-card.dragging {
+		border-color: rgba( 240, 192, 64, 0.86 );
+		box-shadow: 0px 0px 28px rgba( 240, 192, 64, 0.18 ), 0px 0px 24px rgba( 0, 0, 0, 0.5 );
+	}
+
+	.business-card-topline {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.business-card-kicker {
+		color: $accent-warning;
+		font-size: $text-eyebrow;
+		font-weight: 900;
+		letter-spacing: 1.2px;
+		text-transform: uppercase;
+		text-shadow: $text-shadow-default;
+	}
+
+	.business-card-close {
+		width: 18px;
+		height: 18px;
+		align-items: center;
+		justify-content: center;
+		color: $text-secondary;
+		font-size: $text-small;
+		font-weight: 900;
+		border-radius: 9px;
+		cursor: pointer;
+	}
+
+	.business-card-close:hover {
+		color: $text-primary;
+		background-color: rgba( 255, 255, 255, 0.12 );
+	}
+
+	.business-card-name {
+		padding-bottom: 8px;
+		color: $text-primary;
+		font-size: $text-large;
+		font-weight: 900;
+		text-shadow: $text-shadow-default;
+		border-bottom: 1px solid rgba( 255, 255, 255, 0.12 );
+	}
+
+	.business-card-row {
+		flex-direction: row;
+		justify-content: space-between;
+		gap: 14px;
+		color: $text-secondary;
+		font-size: $text-small;
+		font-weight: 700;
+		text-shadow: $text-shadow-default;
+	}
+
+	.business-card-value {
+		color: $text-primary;
+		font-weight: 900;
+		text-align: right;
+	}
+
+	.chat-messages {
+		flex-direction: column;
+		gap: 4px;
+		min-height: 180px;
+	}
+
+	.chat-message {
+		flex-direction: row;
+		align-items: flex-start;
+		text-shadow: $text-shadow-default;
+	}
+
+	.chat-sender {
+		color: $accent-warning;
+		font-size: $text-small;
+		font-weight: 900;
+		white-space: nowrap;
+	}
+
+	&.open .chat-sender.interactive,
+	&.cursor .chat-sender.interactive {
+		pointer-events: all;
+		cursor: pointer;
+	}
+
+	&.open .chat-sender.interactive:hover,
+	&.cursor .chat-sender.interactive:hover {
+		color: $text-primary;
+		text-decoration: underline;
+	}
+
+	.chat-separator {
+		margin: 0px 5px 0px 1px;
+		color: $text-secondary;
+		font-size: $text-small;
+		font-weight: 700;
+	}
+
+	.chat-text {
+		color: $text-primary;
+		font-size: $text-small;
+		font-weight: 650;
+		flex-grow: 1;
+		white-space: normal;
+	}
+
+	.chat-input-row {
+		margin-top: 4px;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 10px;
+		background-color: rgba( 0, 0, 0, 0.5 );
+		border: 1px solid rgba( 255, 255, 255, 0.08 );
+		border-radius: $panel-radius-small;
+		pointer-events: all;
+	}
+
+	.chat-input-row.inactive {
+		pointer-events: none;
+	}
+
+	.chat-prompt {
+		color: $accent-warning;
+		font-size: $text-regular;
+		font-weight: 900;
+	}
+
+	.chat-input {
+		flex-grow: 1;
+		min-height: 24px;
+		color: $text-primary;
+		font-size: $text-regular;
+		font-weight: 700;
+		background-color: transparent;
+		border: 0px;
+		padding: 0px;
+
+		.content-label {
+			color: $text-primary;
+		}
+
+		.placeholder {
+			color: rgba( 255, 255, 255, 0.35 );
+		}
+	}
+
+	.chat-input-placeholder {
+		flex-grow: 1;
+		min-height: 24px;
+		color: rgba( 255, 255, 255, 0.35 );
+		font-size: $text-regular;
+		font-weight: 700;
+	}
+}
