@@ -8,10 +8,15 @@ InventoryPanel {
 	left: 0;
 	pointer-events: none;
 	font-family: $font-default;
+	cursor: default;
 
 	&.open {
 		pointer-events: auto;
 		background-color: rgba( 37, 40, 8, 0.94 );
+	}
+
+	&.dragging {
+		cursor: move;
 	}
 
 	.inventory-screen {
@@ -254,7 +259,11 @@ InventoryPanel {
 		width: 352px;
 		height: 100%;
 		pointer-events: auto;
-		cursor: pointer;
+		cursor: default;
+
+		&.rotating {
+			cursor: move;
+		}
 	}
 
 	.preview-floor {

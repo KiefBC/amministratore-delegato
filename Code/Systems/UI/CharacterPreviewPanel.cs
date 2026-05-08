@@ -259,6 +259,7 @@ public sealed class CharacterPreviewPanel : ScenePanel
 
 		_isRotating = rotating;
 		IsRotatingAnyPreview = rotating;
+		SetClass( "rotating", rotating );
 		SetMouseCapture( rotating );
 	}
 }
