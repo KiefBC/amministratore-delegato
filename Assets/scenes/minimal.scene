@@ -3147,7 +3147,7 @@
                   ]
                 },
                 {
-                  "__guid": "50df71ce-7159-4a5d-a5f7-f40f0a3c8368",
+                  "__guid": "09d23dc2-d5b3-44d0-97a2-e71799415d67",
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Clothing - bag_v2",
@@ -3164,7 +3164,7 @@
                   "Components": [
                     {
                       "__type": "Sandbox.SkinnedModelRenderer",
-                      "__guid": "3a75a86d-bd37-4275-aa4f-0e000afb70c3",
+                      "__guid": "9e669786-c8c0-44d7-92f1-b564cc28ba81",
                       "__enabled": true,
                       "Flags": 0,
                       "AnimationGraph": null,
@@ -3216,7 +3216,7 @@
                   "Children": []
                 },
                 {
-                  "__guid": "68425860-85b0-4d8e-8ef9-de30c23e7b94",
+                  "__guid": "7887f8ec-8e57-49ab-870b-62d6c25ebd19",
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Clothing - monobrow",
@@ -3233,7 +3233,7 @@
                   "Components": [
                     {
                       "__type": "Sandbox.SkinnedModelRenderer",
-                      "__guid": "6033ba9a-ca38-49fc-95a6-0e77d58a24eb",
+                      "__guid": "1eb32f4a-682b-44ae-ad10-a31fca1645a8",
                       "__enabled": true,
                       "Flags": 0,
                       "AnimationGraph": null,
@@ -3285,7 +3285,7 @@
                   "Children": []
                 },
                 {
-                  "__guid": "eae4cacf-1008-405d-9729-9ffea8c8839b",
+                  "__guid": "7b1d9ca1-76fa-46a8-b5b8-b90055914b86",
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Clothing - eyelashes",
@@ -3302,7 +3302,7 @@
                   "Components": [
                     {
                       "__type": "Sandbox.SkinnedModelRenderer",
-                      "__guid": "a44341f6-f566-4dab-9307-28b533d92239",
+                      "__guid": "9335e360-f620-4982-a750-bbad5c256e65",
                       "__enabled": true,
                       "Flags": 0,
                       "AnimationGraph": null,
@@ -3354,7 +3354,7 @@
                   "Children": []
                 },
                 {
-                  "__guid": "f8c30074-7f9b-45df-932d-8bbdb0817483",
+                  "__guid": "d76c5788-194f-4709-8674-0d6f9ead3b47",
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Clothing - freckles",
@@ -3371,7 +3371,7 @@
                   "Components": [
                     {
                       "__type": "Sandbox.SkinnedModelRenderer",
-                      "__guid": "314d3d14-fb6c-4558-888e-8fa6e7ee8468",
+                      "__guid": "cbbd918e-d6ee-466a-9930-ffc795171adc",
                       "__enabled": true,
                       "Flags": 0,
                       "AnimationGraph": null,
@@ -3423,7 +3423,7 @@
                   "Children": []
                 },
                 {
-                  "__guid": "854689c6-468f-4e1a-b157-6185f8d8c5e3",
+                  "__guid": "a07562c0-b444-4a2e-9594-2d5138cf5c6a",
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Clothing - pearl_necklace",
@@ -3440,7 +3440,7 @@
                   "Components": [
                     {
                       "__type": "Sandbox.SkinnedModelRenderer",
-                      "__guid": "7d535ad3-29d2-44c8-a261-bcf766e98359",
+                      "__guid": "de06852f-5c86-4907-ab02-e0ba98c23bb8",
                       "__enabled": true,
                       "Flags": 0,
                       "AnimationGraph": null,
@@ -3492,7 +3492,7 @@
                   "Children": []
                 },
                 {
-                  "__guid": "4c834c0a-743a-4599-ab6f-b5271673cf78",
+                  "__guid": "857f2705-c1af-4e0a-861e-e566c9c573e4",
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Clothing - boxing_shorts",
@@ -3509,7 +3509,7 @@
                   "Components": [
                     {
                       "__type": "Sandbox.SkinnedModelRenderer",
-                      "__guid": "5e63226d-3a02-4b81-8f6e-af56ce59a961",
+                      "__guid": "0c616c11-95bf-4669-8dce-23d496a84c02",
                       "__enabled": true,
                       "Flags": 0,
                       "AnimationGraph": null,
@@ -3561,7 +3561,7 @@
                   "Children": []
                 },
                 {
-                  "__guid": "d43a239e-7d38-444b-9301-73f11da0c350",
+                  "__guid": "d85a1e71-b149-466b-9eeb-a34f82036b21",
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Clothing - modern_watch",
@@ -3578,7 +3578,7 @@
                   "Components": [
                     {
                       "__type": "Sandbox.SkinnedModelRenderer",
-                      "__guid": "5884e91f-16b5-401b-a3c9-66281f854fa5",
+                      "__guid": "a63a4f86-7d17-484c-938a-aac2ad2c0d01",
                       "__enabled": true,
                       "Flags": 0,
                       "AnimationGraph": null,
@@ -6191,6 +6191,8 @@
               "OnComponentUpdate": null,
               "PlayerPrefab": null,
               "PlayerTemplateName": "Player Controller",
+              "RoleConfig": null,
+              "RoleConfigPath": "config/roles.rolecfg",
               "SpawnPoints": [],
               "StartingWallet": 1000,
               "StartLobbyOnLoad": true
@@ -6622,9 +6624,6 @@
       "CustomBounds": false
     },
     "GameObjectSystems": {
-      "Sandbox.MovieMaker.MovieRecorderSystem": {
-        "DisableClientRecording": false
-      },
       "Sandbox.SelectionSetsSystem": {
         "Data": {
           "SelectionSets": []
@@ -6634,6 +6633,9 @@
         "Storage": {
           "$blob": "c7e0731d-eb2b-4b7c-be24-5301459ae2d2"
         }
+      },
+      "Sandbox.MovieMaker.MovieRecorderSystem": {
+        "DisableClientRecording": false
       }
     }
   },
