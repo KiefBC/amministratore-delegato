@@ -57,6 +57,9 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		{
 			Log.Error( $"[Network] No player prefab or scene template named '{PlayerTemplateName}' was found." );
 			Log.Error( $"[Network] Could not spawn {connection.DisplayName}: no player source is available." );
+			GameLogSystem.Current?.Error( "network", "Player spawn failed because no player source was available", connection: connection, data: GameLogSystem.Fields(
+				("templateName", PlayerTemplateName),
+				("displayName", connection.DisplayName) ) );
 			return;
 		}
 
@@ -72,12 +75,17 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( !spawned )
 		{
 			Log.Error( $"[Network] Failed to NetworkSpawn player for {connection.DisplayName}." );
+			GameLogSystem.Current?.Error( "network", "Player NetworkSpawn failed", player, connection, GameLogSystem.Fields(
+				("displayName", connection.DisplayName) ) );
 			player.Destroy();
 			return;
 		}
 
 		_players[key] = player;
 		Log.Info( $"[Network] Spawned player for {connection.DisplayName}." );
+		GameLogSystem.Current?.Info( "network", "Player spawned", player, connection, GameLogSystem.Fields(
+			("displayName", connection.DisplayName),
+			("startingWallet", StartingWallet) ) );
 	}
 
 	public void OnDisconnected( Connection connection )
@@ -90,6 +98,8 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 
 		if ( player.IsValid() )
 		{
+			GameLogSystem.Current?.Info( "network", "Player disconnected", player, connection, GameLogSystem.Fields(
+				("displayName", connection.DisplayName) ) );
 			player.Destroy();
 		}
 	}

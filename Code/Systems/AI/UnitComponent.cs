@@ -457,6 +457,13 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 		IsDead = true;
 		DeathTime = Time.Now;
+		var attacker = _lastAttacker.IsValid() ? _lastAttacker.Root : null;
+		GameLogSystem.Current?.Info( "combat", "Unit killed", attacker, data: GameLogSystem.Fields(
+			("target", PlayerLogName( GameObject.Root )),
+			("targetComponent", Name),
+			("team", Team),
+			("bounty", Bounty),
+			("attacker", PlayerLogName( attacker )) ) );
 		TryCreateNetworkedPlayerCorpse();
 	}
 
@@ -1008,6 +1015,14 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		_bountyPaid = true;
 		killerBackpack.AddMoney( Bounty );
 		Log.Info( $"{Name}: paid ${Bounty} bounty to {killerBackpack.GameObject.Name}. Wallet {oldWallet} -> {killerBackpack.Wallet}" );
+	}
+
+	private static string PlayerLogName( GameObject player )
+	{
+		if ( !player.IsValid() ) return "unknown";
+		var root = player.Root;
+		if ( root.IsValid() && !string.IsNullOrWhiteSpace( root.Name ) ) return root.Name;
+		return !string.IsNullOrWhiteSpace( player.Name ) ? player.Name : "unknown";
 	}
 
 	private Backpack FindKillerBackpack()

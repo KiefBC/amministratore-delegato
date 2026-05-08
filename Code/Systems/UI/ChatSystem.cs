@@ -40,14 +40,25 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 	public bool TrySendMessage( GameObject player, string rawMessage, Connection caller )
 	{
 		if ( !Networking.IsHost ) return false;
-		if ( !player.IsValid() ) return false;
+		if ( !player.IsValid() )
+		{
+			GameLogSystem.Current?.Warning( "chat", "Chat rejected because player was invalid", connection: caller );
+			return false;
+		}
 
 		var message = SanitizeMessage( rawMessage );
 		if ( string.IsNullOrWhiteSpace( message ) ) return false;
-		if ( IsRateLimited( player, caller ) ) return false;
+		if ( IsRateLimited( player, caller ) )
+		{
+			GameLogSystem.Current?.Warning( "chat", "Chat rejected by cooldown", player, caller );
+			return false;
+		}
 
 		var senderName = ResolveSenderName( player, caller );
 		LogAcceptedMessage( player, caller, senderName, message );
+		GameLogSystem.Current?.Info( "chat", "Chat message accepted", player, caller, GameLogSystem.Fields(
+			("senderName", senderName),
+			("message", message) ) );
 		GameNetworkRpc.BroadcastChatMessage( player, senderName, message );
 		return true;
 	}

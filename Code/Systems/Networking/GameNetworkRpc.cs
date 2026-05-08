@@ -1,4 +1,5 @@
 using Sandbox;
+using System.Collections.Generic;
 
 /// <summary>
 /// RPC entry points for gameplay systems. Keep network transport here so scene
@@ -109,12 +110,14 @@ public static class GameNetworkRpc
 		if ( !CallerOwns( player ) )
 		{
 			Log.Warning( $"[FinanceDebt] Take loan rejected ownership; player={PlayerLogName( player )}; amount=${amount:N0}; destination={destinationAccount}." );
+			AuditSecurity( "Take loan RPC rejected ownership", player, GameLogSystem.Fields( ("amount", amount), ("destination", destinationAccount) ) );
 			return;
 		}
 
 		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), destinationAccount ) )
 		{
 			Log.Warning( $"[FinanceDebt] Take loan rejected invalid destination; player={PlayerLogName( player )}; amount=${amount:N0}; destination={destinationAccount}." );
+			AuditWarning( "debt", "Take loan rejected invalid destination", player, GameLogSystem.Fields( ("amount", amount), ("destination", destinationAccount) ) );
 			return;
 		}
 
@@ -122,6 +125,7 @@ public static class GameNetworkRpc
 		if ( !finance.IsValid() )
 		{
 			Log.Warning( $"[FinanceDebt] Take loan rejected missing finance; player={PlayerLogName( player )}; amount=${amount:N0}." );
+			AuditWarning( "debt", "Take loan rejected missing finance component", player, GameLogSystem.Fields( ("amount", amount) ) );
 			return;
 		}
 
@@ -129,6 +133,7 @@ public static class GameNetworkRpc
 		if ( !finance.TryTakeLoan( amount, destination ) )
 		{
 			Log.Warning( $"[FinanceDebt] Take loan failed; player={PlayerLogName( player )}; amount=${amount:N0}; destination={destination}." );
+			AuditWarning( "debt", "Take loan failed", player, GameLogSystem.Fields( ("amount", amount), ("destination", destination) ) );
 			NotifyTerminal( player, NotificationKind.BadNews, "Loan Failed", "The loan could not be completed.", 3f );
 			return;
 		}
@@ -142,12 +147,14 @@ public static class GameNetworkRpc
 		if ( !CallerOwns( player ) )
 		{
 			Log.Warning( $"[FinanceDebt] Repay debt rejected ownership; player={PlayerLogName( player )}; amount=${amount:N0}; source={sourceAccount}." );
+			AuditSecurity( "Repay debt RPC rejected ownership", player, GameLogSystem.Fields( ("amount", amount), ("source", sourceAccount) ) );
 			return;
 		}
 
 		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), sourceAccount ) )
 		{
 			Log.Warning( $"[FinanceDebt] Repay debt rejected invalid source; player={PlayerLogName( player )}; amount=${amount:N0}; source={sourceAccount}." );
+			AuditWarning( "debt", "Repay debt rejected invalid source", player, GameLogSystem.Fields( ("amount", amount), ("source", sourceAccount) ) );
 			return;
 		}
 
@@ -155,6 +162,7 @@ public static class GameNetworkRpc
 		if ( !finance.IsValid() )
 		{
 			Log.Warning( $"[FinanceDebt] Repay debt rejected missing finance; player={PlayerLogName( player )}; amount=${amount:N0}." );
+			AuditWarning( "debt", "Repay debt rejected missing finance component", player, GameLogSystem.Fields( ("amount", amount) ) );
 			return;
 		}
 
@@ -163,6 +171,7 @@ public static class GameNetworkRpc
 		if ( !finance.TryRepayDebt( amount, source ) )
 		{
 			Log.Warning( $"[FinanceDebt] Repay debt failed; player={PlayerLogName( player )}; amount=${amount:N0}; source={source}; debt=${finance.DebtBalance:N0}." );
+			AuditWarning( "debt", "Repay debt failed", player, GameLogSystem.Fields( ("amount", amount), ("source", source), ("debt", finance.DebtBalance) ) );
 			NotifyTerminal( player, NotificationKind.BadNews, "Repayment Failed", "The debt repayment could not be completed.", 3f );
 			return;
 		}
@@ -253,6 +262,7 @@ public static class GameNetworkRpc
 		if ( !CallerOwns( player ) )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC rejected ownership; player={PlayerLogName( player )}; symbol={symbol}; shares={shares:N0}." );
+			AuditSecurity( "Stock buy RPC rejected ownership", player, GameLogSystem.Fields( ("symbol", symbol), ("shares", shares) ) );
 			return;
 		}
 
@@ -260,6 +270,7 @@ public static class GameNetworkRpc
 		if ( offer is null )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC rejected unknown stock; player={PlayerLogName( player )}; symbol={symbol}; shares={shares:N0}." );
+			AuditWarning( "stock_trade", "Stock buy rejected unknown symbol", player, GameLogSystem.Fields( ("symbol", symbol), ("shares", shares) ) );
 			return;
 		}
 
@@ -268,6 +279,7 @@ public static class GameNetworkRpc
 		if ( !finance.IsValid() || !backpack.IsValid() )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC rejected missing components; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; financeValid={finance.IsValid()}; backpackValid={backpack.IsValid()}." );
+			AuditWarning( "stock_trade", "Stock buy rejected missing components", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("financeValid", finance.IsValid()), ("backpackValid", backpack.IsValid()) ) );
 			return;
 		}
 
@@ -275,6 +287,7 @@ public static class GameNetworkRpc
 		if ( shares <= 0 || price <= 0m )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC rejected invalid amount; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
+			AuditWarning( "stock_trade", "Stock buy rejected invalid amount", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("price", price) ) );
 			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", "Enter a valid share amount.", 2.5f );
 			return;
 		}
@@ -284,6 +297,7 @@ public static class GameNetworkRpc
 		if ( cost > int.MaxValue - fee )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC rejected oversized total; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; cost=${cost:N0}; fee=${fee:N0}." );
+			AuditWarning( "stock_trade", "Stock buy rejected oversized total", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("cost", cost), ("fee", fee) ) );
 			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order total is too large.", 3f );
 			return;
 		}
@@ -293,6 +307,7 @@ public static class GameNetworkRpc
 		if ( backpack.Wallet < total )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC rejected insufficient funds; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; cost=${cost:N0}; fee=${fee:N0}; total=${total:N0}; wallet=${backpack.Wallet:N0}." );
+			AuditWarning( "stock_trade", "Stock buy rejected insufficient funds", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("cost", cost), ("fee", fee), ("total", total), ("wallet", backpack.Wallet) ) );
 			NotifyTerminal( player, NotificationKind.BadNews, "Insufficient Funds", $"Need ${total:N0} cash to buy {shares:N0} {offer.Symbol} share{Plural( shares )} (${cost:N0} + ${fee:N0} fee).", 3.5f );
 			return;
 		}
@@ -300,12 +315,14 @@ public static class GameNetworkRpc
 		if ( !finance.TryBuyStockShares( offer.Symbol, shares, price, FinanceAccountSource.Wallet, fee ) )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC failed during mutation; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; cost=${cost:N0}; fee=${fee:N0}; total=${total:N0}; wallet=${backpack.Wallet:N0}." );
+			AuditWarning( "stock_trade", "Stock buy failed during mutation", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("cost", cost), ("fee", fee), ("total", total), ("wallet", backpack.Wallet) ) );
 			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order could not be completed.", 3f );
 			return;
 		}
 
 		AddStockTradeFeeToVault( player, offer.Symbol, cost, fee, "buy" );
 		Log.Info( $"[StockTerminal] Buy RPC completed; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; cost=${cost:N0}; fee=${fee:N0}; total=${total:N0}; wallet=${backpack.Wallet:N0}." );
+		AuditInfo( "stock_trade", "Stock buy completed", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("price", price), ("cost", cost), ("fee", fee), ("total", total), ("wallet", backpack.Wallet) ) );
 		NotifyTerminal( player, NotificationKind.Success, "Stock Purchased", $"Bought {shares:N0} {offer.Symbol} share{Plural( shares )} for ${cost:N0}. Fee ${fee:N0}; total ${total:N0}.", 3f );
 	}
 
@@ -315,6 +332,7 @@ public static class GameNetworkRpc
 		if ( !CallerOwns( player ) )
 		{
 			Log.Warning( $"[StockTerminal] Sell RPC rejected ownership; player={PlayerLogName( player )}; symbol={symbol}; shares={shares:N0}." );
+			AuditSecurity( "Stock sell RPC rejected ownership", player, GameLogSystem.Fields( ("symbol", symbol), ("shares", shares) ) );
 			return;
 		}
 
@@ -322,6 +340,7 @@ public static class GameNetworkRpc
 		if ( offer is null )
 		{
 			Log.Warning( $"[StockTerminal] Sell RPC rejected unknown stock; player={PlayerLogName( player )}; symbol={symbol}; shares={shares:N0}." );
+			AuditWarning( "stock_trade", "Stock sell rejected unknown symbol", player, GameLogSystem.Fields( ("symbol", symbol), ("shares", shares) ) );
 			return;
 		}
 
@@ -329,6 +348,7 @@ public static class GameNetworkRpc
 		if ( !finance.IsValid() )
 		{
 			Log.Warning( $"[StockTerminal] Sell RPC rejected missing finance; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}." );
+			AuditWarning( "stock_trade", "Stock sell rejected missing finance component", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares) ) );
 			return;
 		}
 
@@ -336,6 +356,7 @@ public static class GameNetworkRpc
 		if ( shares <= 0 || price <= 0m )
 		{
 			Log.Warning( $"[StockTerminal] Sell RPC rejected invalid amount; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
+			AuditWarning( "stock_trade", "Stock sell rejected invalid amount", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("price", price) ) );
 			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", "Enter a valid share amount.", 2.5f );
 			return;
 		}
@@ -345,6 +366,7 @@ public static class GameNetworkRpc
 		if ( owned < shares )
 		{
 			Log.Warning( $"[StockTerminal] Sell RPC rejected insufficient shares; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; owned={owned:N0}." );
+			AuditWarning( "stock_trade", "Stock sell rejected insufficient shares", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("owned", owned) ) );
 			NotifyTerminal( player, NotificationKind.BadNews, "Not Enough Shares", $"You only hold {owned:N0} {offer.Symbol} share{Plural( owned )}.", 3f );
 			return;
 		}
@@ -356,12 +378,14 @@ public static class GameNetworkRpc
 		if ( !finance.TrySellStock( offer.Symbol, shares, price, fee ) )
 		{
 			Log.Warning( $"[StockTerminal] Sell RPC failed during mutation; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; proceeds=${proceeds:N0}; fee=${fee:N0}; net=${netProceeds:N0}." );
+			AuditWarning( "stock_trade", "Stock sell failed during mutation", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("proceeds", proceeds), ("fee", fee), ("net", netProceeds) ) );
 			NotifyTerminal( player, NotificationKind.BadNews, "Sell Order Failed", "The order could not be completed.", 3f );
 			return;
 		}
 
 		AddStockTradeFeeToVault( player, offer.Symbol, proceeds, fee, "sell" );
 		Log.Info( $"[StockTerminal] Sell RPC completed; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; proceeds=${proceeds:N0}; fee=${fee:N0}; net=${netProceeds:N0}." );
+		AuditInfo( "stock_trade", "Stock sell completed", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("price", price), ("proceeds", proceeds), ("fee", fee), ("net", netProceeds) ) );
 		NotifyTerminal( player, NotificationKind.Success, "Stock Sold", $"Sold {shares:N0} {offer.Symbol} share{Plural( shares )} for ${proceeds:N0}. Fee ${fee:N0}; received ${netProceeds:N0}.", 3f );
 	}
 
@@ -537,6 +561,21 @@ public static class GameNetworkRpc
 		}
 
 		vault.AddStockTradeFee( player, symbol, grossAmount, fee, side );
+	}
+
+	private static void AuditInfo( string category, string message, GameObject player, Dictionary<string, string> data = null )
+	{
+		GameLogSystem.Current?.Info( category, message, player, Rpc.Caller, data );
+	}
+
+	private static void AuditWarning( string category, string message, GameObject player, Dictionary<string, string> data = null )
+	{
+		GameLogSystem.Current?.Warning( category, message, player, Rpc.Caller, data );
+	}
+
+	private static void AuditSecurity( string message, GameObject player, Dictionary<string, string> data = null )
+	{
+		GameLogSystem.Current?.Security( "security", message, player, Rpc.Caller, data );
 	}
 
 	private static string PlayerLogName( GameObject player )

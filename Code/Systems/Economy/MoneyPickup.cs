@@ -25,6 +25,8 @@ public sealed class MoneyPickup : Component, IInteractable
 		if ( Amount <= 0 ) return;
 
 		EconomySystem.Current?.Add( player, Amount );
+		GameLogSystem.Current?.Info( "inventory", "Money pickup collected", player, data: GameLogSystem.Fields(
+			("amount", Amount) ) );
 		PickupNotification.NotifyMoneyPickedUp( player, Amount );
 		GameObject.Destroy();
 	}

@@ -3820,6 +3820,148 @@
           "Children": []
         },
         {
+          "__guid": "a7a36c36-d034-47bf-a866-92ba2d979f0c",
+          "__version": 2,
+          "Flags": 0,
+          "Name": "Fruit",
+          "Position": "209.425323,97.8284836,10.9210873",
+          "Rotation": "0,0,0,1",
+          "Scale": "1.35879207,1.35879207,1.35879207",
+          "Tags": "",
+          "Enabled": true,
+          "NetworkMode": 2,
+          "NetworkFlags": 0,
+          "NetworkOrphaned": 0,
+          "NetworkTransmit": true,
+          "OwnerTransfer": 1,
+          "Components": [
+            {
+              "__type": "Sandbox.Prop",
+              "__guid": "e12330ab-d4f3-4600-ae11-8391320077d0",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "Health": 0,
+              "IsStatic": false,
+              "MaterialGroup": null,
+              "Model": "assets/untitled_13.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnPropBreak": null,
+              "OnPropTakeDamage": null,
+              "StartAsleep": false,
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelRenderer",
+              "__guid": "c6ba01ff-3fae-4c20-a295-155e391ed0de",
+              "__enabled": true,
+              "Flags": 0,
+              "BodyGroups": 18446744073709551615,
+              "CreateAttachments": false,
+              "LodOverride": null,
+              "MaterialGroup": null,
+              "MaterialOverride": null,
+              "Materials": null,
+              "Model": "assets/untitled_13.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "RenderOptions": {
+                "GameLayer": true,
+                "OverlayLayer": false,
+                "BloomLayer": false,
+                "AfterUILayer": false
+              },
+              "RenderType": "On",
+              "Tint": "1,1,1,1"
+            },
+            {
+              "__type": "Sandbox.ModelCollider",
+              "__guid": "779a47fe-82a7-4bf3-8c0c-7c16a5a31161",
+              "__enabled": true,
+              "Flags": 0,
+              "ColliderFlags": 0,
+              "Elasticity": null,
+              "Friction": null,
+              "IsTrigger": false,
+              "Model": "assets/untitled_13.vmdl",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OnObjectTriggerEnter": null,
+              "OnObjectTriggerExit": null,
+              "OnTriggerEnter": null,
+              "OnTriggerExit": null,
+              "RollingResistance": null,
+              "Static": false,
+              "Surface": null,
+              "SurfaceVelocity": "0,0,0"
+            },
+            {
+              "__type": "Sandbox.Rigidbody",
+              "__guid": "14aa9334-9d6d-454d-a6d5-22b85e44f57b",
+              "__enabled": true,
+              "Flags": 0,
+              "AngularDamping": 0,
+              "EnableImpactDamage": true,
+              "EnhancedCcd": false,
+              "Gravity": true,
+              "GravityScale": 1,
+              "ImpactDamage": 0,
+              "LinearDamping": 0,
+              "Locking": {
+                "X": false,
+                "Y": false,
+                "Z": false,
+                "Pitch": false,
+                "Yaw": false,
+                "Roll": false
+              },
+              "MassCenterOverride": "0,0,0",
+              "MassOverride": 0,
+              "MinImpactDamageSpeed": 500,
+              "MotionEnabled": true,
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "OverrideMassCenter": false,
+              "RigidbodyFlags": 0,
+              "StartAsleep": false
+            },
+            {
+              "__type": "FoodPickup",
+              "__guid": "7c99a84d-6837-4f55-b077-9e6403f80225",
+              "__enabled": true,
+              "Flags": 0,
+              "Amount": 1,
+              "Definition": "items/fast_food.item",
+              "DefinitionPath": "items/water.item",
+              "OnComponentDestroy": null,
+              "OnComponentDisabled": null,
+              "OnComponentEnabled": null,
+              "OnComponentFixedUpdate": null,
+              "OnComponentStart": null,
+              "OnComponentUpdate": null,
+              "PickupRange": 75
+            }
+          ],
+          "Children": []
+        },
+        {
           "__guid": "73ef71bb-4ce7-479b-ac8e-094eacce2c34",
           "__version": 2,
           "Flags": 0,
@@ -5744,13 +5886,13 @@
           "SelectionSets": []
         }
       },
+      "Sandbox.MovieMaker.MovieRecorderSystem": {
+        "DisableClientRecording": false
+      },
       "Sandbox.Clutter.ClutterGridSystem": {
         "Storage": {
           "$blob": "c7e0731d-eb2b-4b7c-be24-5301459ae2d2"
         }
-      },
-      "Sandbox.MovieMaker.MovieRecorderSystem": {
-        "DisableClientRecording": false
       }
     }
   },

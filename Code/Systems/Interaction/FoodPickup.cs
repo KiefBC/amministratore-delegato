@@ -52,6 +52,10 @@ public sealed class FoodPickup : Component, IInteractable
 		}
 
 		Log.Info( $"[FoodPickup] {PlayerLogName( player )} picked up {definition.DisplayName} x{Amount:N0}." );
+		GameLogSystem.Current?.Info( "inventory", "Food pickup collected", player, data: GameLogSystem.Fields(
+			("definition", definitionPath),
+			("displayName", definition.DisplayName),
+			("amount", Amount) ) );
 		PickupNotification.NotifyPickedUp( player, definition, Amount );
 		GameObject.Destroy();
 	}

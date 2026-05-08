@@ -183,6 +183,12 @@ public sealed class PlayerFinanceComponent : Component
 		Touch();
 
 		Log.Info( $"[FinanceDebt] Loan taken; player={PlayerLogName()}; amount=${amount:N0}; destination={destination}; debt=${oldDebt:N0}->${DebtBalance:N0}; nextAccrual={NextDebtAccrualTime:0.##}." );
+		GameLogSystem.Current?.Info( "debt", "Loan taken", GameObject.Root, data: GameLogSystem.Fields(
+			("amount", amount),
+			("destination", destination),
+			("oldDebt", oldDebt),
+			("newDebt", DebtBalance),
+			("nextAccrual", NextDebtAccrualTime) ) );
 		return true;
 	}
 
@@ -201,6 +207,12 @@ public sealed class PlayerFinanceComponent : Component
 		Touch();
 
 		Log.Info( $"[FinanceDebt] Debt repaid; player={PlayerLogName()}; source={source}; paid=${payment:N0}; debt=${oldDebt:N0}->${DebtBalance:N0}; nextAccrual={NextDebtAccrualTime:0.##}." );
+		GameLogSystem.Current?.Info( "debt", "Debt repaid", GameObject.Root, data: GameLogSystem.Fields(
+			("source", source),
+			("paid", payment),
+			("oldDebt", oldDebt),
+			("newDebt", DebtBalance),
+			("nextAccrual", NextDebtAccrualTime) ) );
 		return true;
 	}
 
@@ -237,6 +249,12 @@ public sealed class PlayerFinanceComponent : Component
 		Touch();
 
 		Log.Info( $"[FinanceDebt] Debt interest accrued; player={PlayerLogName()}; rate={DebtHourlyInterestPercent:0.##}%; interest=${interest:N0}; debt=${oldDebt:N0}->${DebtBalance:N0}; nextAccrual={NextDebtAccrualTime:0.##}." );
+		GameLogSystem.Current?.Info( "debt", "Debt interest accrued", GameObject.Root, data: GameLogSystem.Fields(
+			("ratePercent", DebtHourlyInterestPercent),
+			("interest", interest),
+			("oldDebt", oldDebt),
+			("newDebt", DebtBalance),
+			("nextAccrual", NextDebtAccrualTime) ) );
 	}
 
 	public static int CalculateDebtInterest( int debtBalance, float hourlyInterestPercent )

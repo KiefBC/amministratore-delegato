@@ -40,6 +40,10 @@ public sealed class WeaponPickup : Component, IInteractable
 			return;
 		}
 
+		GameLogSystem.Current?.Info( "inventory", "Weapon pickup collected", player, data: GameLogSystem.Fields(
+			("definition", definitionPath),
+			("displayName", definition.DisplayName),
+			("startingAmmo", StartingAmmo) ) );
 		PickupNotification.NotifyPickedUp( player, definition, 1 );
 		GameObject.Destroy();
 	}

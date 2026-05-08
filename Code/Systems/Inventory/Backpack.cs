@@ -264,6 +264,7 @@ public sealed class Backpack : Component
 		var consumable = definition.Consumable;
 		if ( consumable?.HealthXp > 0f ) PlayerStats()?.AwardHealthFoodXp( consumable.HealthXp );
 
+		var previousStackCount = item.StackCount;
 		if ( item.StackCount > 1 )
 		{
 			item.StackCount--;
@@ -275,6 +276,14 @@ public sealed class Backpack : Component
 		}
 
 		Log.Info( $"[Consumable] {PlayerLogName()} consumed {definition.DisplayName}." );
+		GameLogSystem.Current?.Info( "inventory", "Consumable used", GameObject.Root, data: GameLogSystem.Fields(
+			("definition", item.DefinitionPath),
+			("displayName", definition.DisplayName),
+			("remaining", int.Max( 0, previousStackCount - 1 )),
+			("health", definition.Consumable?.Health ?? 0f),
+			("stamina", definition.Consumable?.Stamina ?? 0f),
+			("hydration", definition.Consumable?.Hydration ?? 0f),
+			("nutrition", definition.Consumable?.Nutrition ?? 0f) ) );
 
 		GameNetworkRpc.BroadcastPlayerNotification(
 			GameObject.Root,
@@ -360,6 +369,11 @@ public sealed class Backpack : Component
 		RemoveItem( item.InstanceId );
 		ApplyEquipmentSlotState( previousEquipped );
 		SpawnWorldPickup( item, definition, GameObject.Root.WorldPosition );
+		GameLogSystem.Current?.Info( "inventory", "Inventory item dropped", GameObject.Root, data: GameLogSystem.Fields(
+			("definition", item.DefinitionPath),
+			("displayName", definition.DisplayName),
+			("stackCount", item.StackCount),
+			("slot", slot) ) );
 		Touch();
 		return true;
 	}

@@ -163,6 +163,10 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 			if ( IsRateLimited( e ) )
 			{
 				Log.Warning( $"[MarketData] Candle refresh rate-limited for {symbol}; using cached/fallback data for {backoff / 60:N0} minutes." );
+				GameLogSystem.Current?.Warning( "system", "Stock candle refresh rate-limited", data: GameLogSystem.Fields(
+					("symbol", symbol),
+					("timeframe", TimeframeLogLabel( timeframe )),
+					("backoffSeconds", backoff) ) );
 			}
 			else
 			{
@@ -221,6 +225,8 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 			if ( IsRateLimited( e ) )
 			{
 				Log.Warning( $"[MarketData] Crypto refresh rate-limited; using cached/fallback data for {backoff / 60:N0} minutes." );
+				GameLogSystem.Current?.Warning( "system", "Crypto refresh rate-limited", data: GameLogSystem.Fields(
+					("backoffSeconds", backoff) ) );
 			}
 			else
 			{
@@ -354,6 +360,11 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 
 		if ( HasLiveCrypto || HasLiveStocks ) StatusText = "Cached market data";
 		Log.Info( $"[MarketData] Cache loaded from {CacheFileName}; stockCandleSets={loadedStockCandleSets:N0}; cryptoPrices={loadedCryptoPrices:N0}; nextCryptoRefresh={FormatUnixTime( _cache.NextCryptoRefreshUnix )}." );
+		GameLogSystem.Current?.Info( "system", "Market data cache loaded", data: GameLogSystem.Fields(
+			("file", CacheFileName),
+			("stockCandleSets", loadedStockCandleSets),
+			("cryptoPrices", loadedCryptoPrices),
+			("nextCryptoRefresh", FormatUnixTime( _cache.NextCryptoRefreshUnix )) ) );
 	}
 
 	private void SaveMarketCache()
