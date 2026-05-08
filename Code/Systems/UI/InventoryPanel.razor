@@ -642,7 +642,7 @@
 	private void Open()
 	{
 		if ( _isOpen ) return;
-		if ( UiModeSystem.Current?.TryOpen( this, UiModeKind.Inventory ) != true ) return;
+		if ( UiModeSystem.Current?.TryOpen( this, UiModeKind.Inventory, hideHud: true ) != true ) return;
 
 		_isOpen = true;
 		_characterPreviewPanel = null;

@@ -3671,7 +3671,7 @@
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
               "OnComponentUpdate": null,
-              "PickupRange": 100,
+              "PickupRange": 50,
               "StartingAmmo": -1
             }
           ],
@@ -3814,7 +3814,7 @@
               "OnComponentFixedUpdate": null,
               "OnComponentStart": null,
               "OnComponentUpdate": null,
-              "PickupRange": 100
+              "PickupRange": 50
             }
           ],
           "Children": []
@@ -4920,8 +4920,16 @@
                   "__guid": "1ec537f6-b1f6-485b-a618-f9f8b8b58e6f",
                   "__enabled": true,
                   "Flags": 0,
+                  "ComputerChair": {
+                    "_type": "component",
+                    "component_id": "89687b00-071a-4923-94aa-45aa96c76465",
+                    "go": "93929331-d6e8-466b-b4ab-3e12183b1b53",
+                    "component_type": "BaseChair"
+                  },
                   "ComputerFocusOffset": "0,0,18",
                   "ComputerObjectName": "Computer",
+                  "ComputerRange": 140,
+                  "ComputerRequiresSitting": true,
                   "ComputerTarget": {
                     "_type": "gameobject",
                     "go": "5803c0a4-220b-4397-94af-3fae0fc1e08b"
@@ -4936,6 +4944,7 @@
                   "OnComponentUpdate": null,
                   "PhoneFocusOffset": "0,0,5",
                   "PhoneObjectName": "Cell Phone",
+                  "PhoneRange": 100,
                   "PhoneTarget": {
                     "_type": "gameobject",
                     "go": "9335d3ac-c40d-45e1-a499-734b9dc83479"
@@ -4967,7 +4976,7 @@
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Sitting",
-                  "Position": "0,0,0.666565895",
+                  "Position": "2.10466027,-1.1920929E-07,0.666565895",
                   "Rotation": "0,0,0,1",
                   "Scale": "1,1,1",
                   "Tags": "",
@@ -4985,7 +4994,7 @@
                   "__version": 2,
                   "Flags": 0,
                   "Name": "Exit",
-                  "Position": "21.119236,0,14.8426962",
+                  "Position": "-51.7798157,-2.86102295E-05,0",
                   "Rotation": "0,0,0,1",
                   "Scale": "1,1,1",
                   "Tags": "",

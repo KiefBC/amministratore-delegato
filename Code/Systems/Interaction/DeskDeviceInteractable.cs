@@ -1,21 +1,31 @@
 using Sandbox;
-using System.Collections.Generic;
-using System.Linq;
 
 /// <summary>
-/// Interaction zone for a desk that contains multiple usable devices. The zone
-/// owns range/trigger gating, while the player's local view decides which device
-/// they intended to use before asking the host to open the local-only UI.
+/// Routes desk device use from the player's crosshair to the correct local UI.
+/// Each device has its own access rule: computer use requires sitting in the
+/// configured chair, while phone use only requires being near the phone target.
 /// </summary>
-public sealed class DeskDeviceInteractable : Component, IInteractable, IClientInteractable, Component.ITriggerListener
+public sealed class DeskDeviceInteractable : Component, IInteractable, IClientInteractable
 {
 	[Property]
 	[Range( 10f, 500f )]
 	[Step( 10f )]
 	public float Range { get; set; } = 100f;
 
+	[Property]
+	[Range( 10f, 500f )]
+	[Step( 10f )]
+	public float PhoneRange { get; set; } = 100f;
+
+	[Property]
+	[Range( 10f, 500f )]
+	[Step( 10f )]
+	public float ComputerRange { get; set; } = 140f;
+
+	[Property] public BaseChair ComputerChair { get; set; }
 	[Property] public GameObject ComputerTarget { get; set; }
 	[Property] public GameObject PhoneTarget { get; set; }
+	[Property] public bool ComputerRequiresSitting { get; set; } = true;
 	[Property] public string ComputerObjectName { get; set; } = "Computer";
 	[Property] public string PhoneObjectName { get; set; } = "Cell Phone";
 	[Property] public Vector3 ComputerFocusOffset { get; set; } = new( 0f, 0f, 18f );
@@ -31,10 +41,8 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 	[Step( 10f )]
 	public float FocusMaxDistance { get; set; } = 300f;
 
-	private readonly Dictionary<GameObject, int> _playersInTrigger = new();
-
-	Vector3 IInteractable.InteractPosition => WorldPosition;
-	float IInteractable.InteractRange => Range;
+	Vector3 IInteractable.InteractPosition => InteractPositionFor( ResolveFocusedDevice( Sandbox.LocalPlayer.GameObject( Scene ) ) );
+	float IInteractable.InteractRange => float.Max( Range, float.Max( PhoneRange, ComputerRange ) );
 	string IInteractable.Prompt => PromptFor( ResolveFocusedDevice( Sandbox.LocalPlayer.GameObject( Scene ) ) );
 	bool IInteractable.CanInteract( GameObject player ) => ResolveFocusedDevice( player ) != DeskDeviceType.None;
 
@@ -69,8 +77,18 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 	{
 		if ( !Networking.IsHost ) return;
 		if ( !player.IsValid() || device == DeskDeviceType.None ) return;
-		if ( !IsPlayerAllowed( player ) ) return;
-		if ( !ResolveDeviceTarget( device ).IsValid() ) return;
+
+		if ( !ResolveDeviceTarget( device ).IsValid() )
+		{
+			Log.Warning( $"[DeskDevice] {PlayerLogName( player )} {device} rejected; target is missing." );
+			return;
+		}
+
+		if ( !CanUseDevice( player, device ) )
+		{
+			Log.Info( $"[DeskDevice] {PlayerLogName( player )} {device} rejected; {DeviceRejectReason( player, device )}." );
+			return;
+		}
 
 		Log.Info( $"[DeskDevice] {PlayerLogName( player )} interacted with {device}." );
 
@@ -91,49 +109,15 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 		}
 	}
 
-	public void OnTriggerEnter( Collider other )
-	{
-		var player = PlayerRootFor( other );
-		if ( !player.IsValid() ) return;
-
-		if ( _playersInTrigger.TryGetValue( player, out var count ) )
-		{
-			_playersInTrigger[player] = count + 1;
-			return;
-		}
-
-		_playersInTrigger[player] = 1;
-		Log.Info( $"[DeskDevice] {PlayerLogName( player )} entered desk trigger." );
-	}
-
-	public void OnTriggerExit( Collider other )
-	{
-		var player = PlayerRootFor( other );
-		if ( !player.IsValid() ) return;
-		if ( !_playersInTrigger.TryGetValue( player, out var count ) ) return;
-
-		if ( count > 1 )
-		{
-			_playersInTrigger[player] = count - 1;
-			return;
-		}
-
-		_playersInTrigger.Remove( player );
-		Log.Info( $"[DeskDevice] {PlayerLogName( player )} exited desk trigger." );
-	}
-
 	private DeskDeviceType ResolveFocusedDevice( GameObject player )
 	{
-		if ( !IsPlayerAllowed( player ) ) return DeskDeviceType.None;
 		if ( !TryGetLookRay( player, out var origin, out var forward ) ) return DeskDeviceType.None;
-		if ( TryResolveTraceFocusedDevice( player, origin, forward, out var tracedDevice ) ) return tracedDevice;
+		if ( TryResolveTraceFocusedDevice( player, origin, forward, out var tracedDevice ) )
+		{
+			return CanUseDevice( player, tracedDevice ) ? tracedDevice : DeskDeviceType.None;
+		}
 
-		var computerScore = FocusScore( origin, forward, FocusPosition( ResolveComputerTarget(), ComputerFocusOffset ) );
-		var phoneScore = FocusScore( origin, forward, FocusPosition( ResolvePhoneTarget(), PhoneFocusOffset ) );
-		var bestScore = float.Max( computerScore, phoneScore );
-
-		if ( bestScore < MinFocusDot ) return DeskDeviceType.None;
-		return phoneScore > computerScore ? DeskDeviceType.Phone : DeskDeviceType.Computer;
+		return DeskDeviceType.None;
 	}
 
 	private bool TryResolveTraceFocusedDevice( GameObject player, Vector3 origin, Vector3 forward, out DeskDeviceType device )
@@ -163,6 +147,59 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 		}
 
 		return false;
+	}
+
+	private bool CanUseDevice( GameObject player, DeskDeviceType device )
+	{
+		if ( !player.IsValid() ) return false;
+		if ( !ResolveDeviceTarget( device ).IsValid() ) return false;
+
+		return device switch
+		{
+			DeskDeviceType.Computer => CanUseComputer( player ),
+			DeskDeviceType.Phone => IsNearPhone( player ),
+			_ => false
+		};
+	}
+
+	private bool CanUseComputer( GameObject player )
+	{
+		if ( !ComputerRequiresSitting ) return IsNearComputer( player );
+		return IsPlayerSittingAtComputer( player );
+	}
+
+	private bool IsPlayerSittingAtComputer( GameObject player )
+	{
+		var chair = ResolveComputerChair();
+		var controller = PlayerControllerFor( player );
+		if ( !chair.IsValid() || !controller.IsValid() ) return false;
+		if ( !chair.IsOccupied ) return false;
+
+		var occupant = chair.GetOccupant();
+		return occupant.IsValid() && occupant == controller;
+	}
+
+	private bool IsNearComputer( GameObject player )
+	{
+		var target = ResolveComputerTarget();
+		return target.IsValid() && player.WorldPosition.DistanceSquared( target.WorldPosition ) <= ComputerRange * ComputerRange;
+	}
+
+	private bool IsNearPhone( GameObject player )
+	{
+		var target = ResolvePhoneTarget();
+		return target.IsValid() && player.WorldPosition.DistanceSquared( target.WorldPosition ) <= PhoneRange * PhoneRange;
+	}
+
+	private string DeviceRejectReason( GameObject player, DeskDeviceType device )
+	{
+		return device switch
+		{
+			DeskDeviceType.Computer when ComputerRequiresSitting && !IsPlayerSittingAtComputer( player ) => "player is not seated at the computer chair",
+			DeskDeviceType.Computer when !IsNearComputer( player ) => $"player is outside computer range ({ComputerRange:0.#})",
+			DeskDeviceType.Phone when !IsNearPhone( player ) => $"player is outside phone range ({PhoneRange:0.#})",
+			_ => "device access rule failed"
+		};
 	}
 
 	private bool TryGetLookRay( GameObject player, out Vector3 origin, out Vector3 forward )
@@ -204,7 +241,7 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 		if ( !TryGetLookRay( player, out var origin, out var forward ) ) return "lookRay=invalid";
 
 		var traceHit = TraceDebug( player, origin, forward );
-		return $"trace=({traceHit}); minDot={MinFocusDot:0.##}; maxDistance={FocusMaxDistance:0.#}; computer=({FocusDebugFor( origin, forward, ResolveComputerTarget(), ComputerFocusOffset )}); phone=({FocusDebugFor( origin, forward, ResolvePhoneTarget(), PhoneFocusOffset )})";
+		return $"trace=({traceHit}); minDot={MinFocusDot:0.##}; maxDistance={FocusMaxDistance:0.#}; computerAccess={CanUseDevice( player, DeskDeviceType.Computer )}; phoneAccess={CanUseDevice( player, DeskDeviceType.Phone )}; computer=({FocusDebugFor( origin, forward, ResolveComputerTarget(), ComputerFocusOffset )}); phone=({FocusDebugFor( origin, forward, ResolvePhoneTarget(), PhoneFocusOffset )})";
 	}
 
 	private string TraceDebug( GameObject player, Vector3 origin, Vector3 forward )
@@ -234,6 +271,16 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 		return target.IsValid() ? target.WorldPosition + offset : default;
 	}
 
+	private Vector3 InteractPositionFor( DeskDeviceType device )
+	{
+		return device switch
+		{
+			DeskDeviceType.Computer => ResolveComputerTarget().IsValid() ? ResolveComputerTarget().WorldPosition : WorldPosition,
+			DeskDeviceType.Phone => ResolvePhoneTarget().IsValid() ? ResolvePhoneTarget().WorldPosition : WorldPosition,
+			_ => WorldPosition
+		};
+	}
+
 	private GameObject ResolveDeviceTarget( DeskDeviceType device )
 	{
 		return device switch
@@ -256,6 +303,17 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 		if ( PhoneTarget.IsValid() ) return PhoneTarget;
 		PhoneTarget = FindDeskChild( PhoneObjectName );
 		return PhoneTarget;
+	}
+
+	private BaseChair ResolveComputerChair()
+	{
+		if ( ComputerChair.IsValid() ) return ComputerChair;
+
+		ComputerChair = Components.Get<BaseChair>();
+		if ( ComputerChair.IsValid() ) return ComputerChair;
+
+		ComputerChair = Components.GetInAncestorsOrSelf<BaseChair>();
+		return ComputerChair;
 	}
 
 	private GameObject FindDeskChild( string objectName )
@@ -295,40 +353,14 @@ public sealed class DeskDeviceInteractable : Component, IInteractable, IClientIn
 		return false;
 	}
 
-	private bool IsPlayerAllowed( GameObject player )
+	private static PlayerController PlayerControllerFor( GameObject player )
 	{
-		if ( !player.IsValid() ) return false;
+		if ( !player.IsValid() ) return null;
 
-		PruneInvalidPlayers();
-		var trackedPlayer = PlayerObjectFor( player );
-		if ( _playersInTrigger.ContainsKey( trackedPlayer ) ) return true;
+		var controller = player.Components.GetInAncestorsOrSelf<PlayerController>();
+		if ( !controller.IsValid() ) controller = player.Components.GetInDescendantsOrSelf<PlayerController>();
 
-		return WorldPosition.DistanceSquared( player.WorldPosition ) <= Range * Range;
-	}
-
-	private void PruneInvalidPlayers()
-	{
-		foreach ( var player in _playersInTrigger.Keys.ToArray() )
-		{
-			if ( !player.IsValid() ) _playersInTrigger.Remove( player );
-		}
-	}
-
-	private static GameObject PlayerRootFor( Collider collider )
-	{
-		if ( collider is null || !collider.GameObject.IsValid() ) return null;
-		return PlayerObjectFor( collider.GameObject );
-	}
-
-	private static GameObject PlayerObjectFor( GameObject gameObject )
-	{
-		if ( !gameObject.IsValid() ) return null;
-
-		var controller = gameObject.Components.GetInAncestorsOrSelf<PlayerController>();
-		if ( !controller.IsValid() ) controller = gameObject.Components.GetInDescendantsOrSelf<PlayerController>();
-		if ( !controller.IsValid() ) return null;
-
-		return controller.GameObject;
+		return controller;
 	}
 
 	private static void OpenLocalDevice( Scene scene, DeskDeviceType device )
