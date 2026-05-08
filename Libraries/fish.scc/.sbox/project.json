@@ -1,0 +1,97 @@
+{
+  "SceneView.Viewport0.Settings": {
+    "Value": "{\u0022CameraPosition\u0022:\u00221451.98633,8.75750446,64.5885696\u0022,\u0022CameraRotation\u0022:\u0022-0.0453738645,-0.0296007898,-0.836303413,0.545583725\u0022,\u0022View\u0022:0,\u0022RenderMode\u0022:0,\u0022WireframeMode\u0022:false,\u0022EnablePostProcessing\u0022:true,\u0022EnablePrefabLighting\u0022:true,\u0022ShowSkyIn2D\u0022:true,\u0022ShowGrid\u0022:true,\u0022GridOpacity\u0022:0.2,\u0022GridAxis\u0022:0,\u0022CameraOrthoHeight\u0022:1000}",
+    "Timeout": 1780434257,
+    "DeleteAt": 0
+  },
+  "Window.SboxSceneEditor.Dock": {
+    "Value": "{\u0022floatingWindows\u0022:[],\u0022mainWrapper\u0022:{\u0022geometry\u0022:\u0022AdnQywADAAAAAAAAAAAAAAAACfcAAAUzAAAAAAAAAAAAAAn3AAAFMwAAAAAAAAAACgAAAAAAAAAAAAAACfcAAAUz\u0022,\u0022splitter\u0022:{\u0022items\u0022:[{\u0022currentIndex\u0022:0,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022SceneTreeWidget\u0022,\u0022name\u0022:\u0022Hierarchy\u0022},{\u0022data\u0022:null,\u0022managedType\u0022:\u0022PanelInspectorWidget\u0022,\u0022name\u0022:\u0022UI Panels\u0022}],\u0022type\u0022:\u0022area\u0022},{\u0022items\u0022:[{\u0022items\u0022:[{\u0022currentIndex\u0022:0,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022SceneDock\u0022,\u0022name\u0022:\u0022SceneDock:scenes/walker_example.scene\u0022}],\u0022type\u0022:\u0022area\u0022},{\u0022currentIndex\u0022:1,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022MainAssetBrowser\u0022,\u0022name\u0022:\u0022Asset Browser\u0022},{\u0022data\u0022:null,\u0022managedType\u0022:\u0022ConsoleWidget\u0022,\u0022name\u0022:\u0022Console\u0022},{\u0022data\u0022:null,\u0022managedType\u0022:\u0022MixerDock\u0022,\u0022name\u0022:\u0022Mixer\u0022},{\u0022data\u0022:null,\u0022managedType\u0022:\u0022LibraryManagerDock\u0022,\u0022name\u0022:\u0022Library Manager\u0022}],\u0022type\u0022:\u0022area\u0022}],\u0022state\u0022:\u0022AAAA/wAAAAEAAAACAAAD0wAAAjMA/////wEAAAACAA==\u0022,\u0022type\u0022:\u0022splitter\u0022},{\u0022currentIndex\u0022:0,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022Inspector\u0022,\u0022name\u0022:\u0022Inspector\u0022}],\u0022type\u0022:\u0022area\u0022}],\u0022state\u0022:\u0022AAAA/wAAAAEAAAACAAAGIgAAAnQA/////wEAAAABAA==\u0022,\u0022type\u0022:\u0022splitter\u0022}],\u0022state\u0022:\u0022AAAA/wAAAAEAAAACAAABmwAACjQA/////wEAAAABAA==\u0022,\u0022type\u0022:\u0022splitter\u0022}},\u0022toolWindowManagerStateFormat\u0022:1}",
+    "Timeout": 1780434256,
+    "DeleteAt": 0
+  },
+  "scenes/walker_example.scene.Viewport0": {
+    "Value": "{\u0022CameraPosition\u0022:\u00221451.98633,8.75750446,64.5885696\u0022,\u0022CameraRotation\u0022:\u0022-0.0453738645,-0.0296007898,-0.836303413,0.545583725\u0022,\u0022CameraOrthoHeight\u0022:1000}",
+    "Timeout": 1780434257,
+    "DeleteAt": 0
+  },
+  "SceneView.Layout": {
+    "Value": "{\u0022Layout\u0022:0,\u0022SplitterState\u0022:[]}",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  ".Viewport0": {
+    "Value": "{\u0022CameraPosition\u0022:\u00221451.96375,8.75850105,64.5885696\u0022,\u0022CameraRotation\u0022:\u0022-0.0453738645,-0.0296007898,-0.836303413,0.545583725\u0022,\u0022CameraOrthoHeight\u0022:1000}",
+    "Timeout": 1780429615,
+    "DeleteAt": 0
+  },
+  "gizmo.settings": {
+    "Value": "{\u0022EditMode\u0022:\u0022position\u0022,\u0022Selection\u0022:true,\u0022ViewMode\u0022:\u00223d\u0022,\u0022GizmosEnabled\u0022:true,\u0022GizmoScale\u0022:1,\u0022GridSpacing\u0022:32,\u0022SnapToGrid\u0022:false,\u0022SnapToAngles\u0022:true,\u0022AngleSpacing\u0022:15,\u0022GlobalSpace\u0022:false,\u0022DebugActionGraphs\u0022:false,\u0022DisabledGizmos\u0022:{}}",
+    "Timeout": 1780433850,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.History": {
+    "Value": "[\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple_character_controller\\\\Assets\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple_character_controller\\\\Assets\\\\scenes\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple_character_controller\\\\Assets\u0022,\u0022C:\\\\program files (x86)\\\\steam\\\\steamapps\\\\common\\\\sbox\\\\addons\\\\citizen\\\\assets\u0022,\u0022C:\\\\Program Files (x86)\\\\Steam\\\\steamapps\\\\common\\\\sbox\\\\editor\\\\ActionGraph\u0022,\u0022C:\\\\Program Files (x86)\\\\Steam\\\\steamapps\\\\common\\\\sbox\\\\editor\\\\ActionGraph\\\\Code\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple_character_controller\\\\Assets\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple_character_controller\\\\Assets\\\\prefabs\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple_character_controller\u0022]",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.HistoryIdx": {
+    "Value": "8",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ViewMode": {
+    "Value": "2",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ShowJunkFiles": {
+    "Value": "false",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.HideNonAssets": {
+    "Value": "false",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ShowRecursiveFiles": {
+    "Value": "false",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Search": {
+    "Value": "\u0022\u0022",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ActiveTags": {
+    "Value": "\u0022\u0022",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ExcludedTags": {
+    "Value": "\u0022\u0022",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "CloudBrowser..ViewMode": {
+    "Value": "3",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "CloudBrowser..ShowJunkFiles": {
+    "Value": "false",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "CloudBrowser..HideNonAssets": {
+    "Value": "false",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  },
+  "CloudBrowser..ShowRecursiveFiles": {
+    "Value": "false",
+    "Timeout": 1780433851,
+    "DeleteAt": 0
+  }
+}
