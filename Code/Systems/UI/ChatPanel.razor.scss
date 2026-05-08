@@ -8,7 +8,7 @@ ChatPanel {
 
 	.chat-window {
 		position: absolute;
-		right: $corner-margin;
+		right: 0px;
 		bottom: $corner-margin;
 		width: 420px;
 		flex-direction: column;

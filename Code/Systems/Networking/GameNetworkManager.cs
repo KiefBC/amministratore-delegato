@@ -30,10 +30,6 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		{
 			_template.Enabled = false;
 		}
-		else if ( !PlayerPrefab.IsValid() )
-		{
-			Log.Error( $"[Network] No player prefab or scene template named '{PlayerTemplateName}' was found." );
-		}
 
 		if ( StartLobbyOnLoad && !Networking.IsActive && !Networking.IsConnecting )
 		{
@@ -58,6 +54,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		var source = PlayerPrefab.IsValid() ? PlayerPrefab : (_template.IsValid() ? _template : FindPlayerTemplate());
 		if ( !source.IsValid() )
 		{
+			Log.Error( $"[Network] No player prefab or scene template named '{PlayerTemplateName}' was found." );
 			Log.Error( $"[Network] Could not spawn {connection.DisplayName}: no player source is available." );
 			return;
 		}
