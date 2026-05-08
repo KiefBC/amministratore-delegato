@@ -1,0 +1,96 @@
+@using Sandbox;
+@using Sandbox.UI;
+@namespace Sandbox.Systems.UI
+@inherits PanelComponent
+
+<root style="opacity: @(Opacity);">
+	@if ( ShouldShow )
+	{
+		<div class="player-title-card" style="min-width: @(CardMinWidth)px; padding: @(CardPaddingY)px @(CardPaddingX)px;">
+			<div class="player-name" style="font-size: @(NameFontSize)px;">@DisplayName</div>
+			<div class="player-level" style="font-size: @(LevelFontSize)px;">Lv @Level</div>
+		</div>
+	}
+</root>
+
+@code {
+	[Property] public GameObject Player { get; set; }
+	[Property] public PlayerTitleComponent Title { get; set; }
+
+	private PlayerStatsComponent _stats;
+
+	private bool ShouldShow => Player.IsValid() && Player.Active && ActiveController.IsValid();
+	private int Level => _stats.IsValid() ? _stats.PlayerLevel : 1;
+	private string DisplayName => ResolvePlayerName( Player );
+	private PlayerController ActiveController
+	{
+		get
+		{
+			var controller = Player.IsValid() ? Player.Components.GetInDescendantsOrSelf<PlayerController>() : null;
+			return controller.IsValid() && controller.GameObject.Active ? controller : null;
+		}
+	}
+	private float CardMinWidth => Title.IsValid() ? Title.CardMinWidth : 1150f;
+	private float NameFontSize => Title.IsValid() ? Title.NameFontSize : 58f;
+	private float LevelFontSize => Title.IsValid() ? Title.LevelFontSize : 36f;
+	private float CardPaddingX => Title.IsValid() ? Title.CardPaddingX : 42f;
+	private float CardPaddingY => Title.IsValid() ? Title.CardPaddingY : 20f;
+	private float Opacity => float.Clamp( Title.IsValid() ? Title.Opacity : 0.75f, 0f, 1f );
+
+	protected override void OnStart()
+	{
+		FindStats();
+	}
+
+	protected override void OnUpdate()
+	{
+		FindStats();
+	}
+
+	private void FindStats()
+	{
+		if ( !Player.IsValid() ) return;
+		if ( _stats.IsValid() ) return;
+
+		_stats = Player.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+	}
+
+	private static string ResolvePlayerName( GameObject player )
+	{
+		if ( !player.IsValid() ) return "Player";
+
+		var controller = player.Components.GetInDescendantsOrSelf<PlayerController>();
+		var owner = controller.IsValid() ? controller.GameObject.Network.Owner : null;
+		owner ??= player.Network.Owner;
+
+		if ( owner is not null && !string.IsNullOrWhiteSpace( owner.DisplayName ) )
+		{
+			return owner.DisplayName.Trim();
+		}
+
+		var name = player.Root.IsValid() ? player.Root.Name : player.Name;
+		const string spawnedPlayerPrefix = "Player - ";
+		if ( name.StartsWith( spawnedPlayerPrefix, System.StringComparison.OrdinalIgnoreCase ) )
+		{
+			name = name[spawnedPlayerPrefix.Length..];
+		}
+
+		return string.IsNullOrWhiteSpace( name ) ? "Player" : name.Trim();
+	}
+
+	protected override int BuildHash()
+	{
+		var hc = new System.HashCode();
+		hc.Add( ShouldShow );
+		hc.Add( DisplayName );
+		hc.Add( Level );
+		hc.Add( _stats?.StatsVersion ?? 0 );
+		hc.Add( CardMinWidth );
+		hc.Add( NameFontSize );
+		hc.Add( LevelFontSize );
+		hc.Add( CardPaddingX );
+		hc.Add( CardPaddingY );
+		hc.Add( Opacity );
+		return hc.ToHashCode();
+	}
+}

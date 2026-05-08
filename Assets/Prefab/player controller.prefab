@@ -217,6 +217,28 @@
         "OnComponentUpdate": null
       },
       {
+        "__type": "Sandbox.Systems.UI.PlayerTitleComponent",
+        "__guid": "dca63d4d-55b9-44bb-81b8-5b97109aee76",
+        "__enabled": true,
+        "CardMinWidth": 1150,
+        "CardPaddingX": 42,
+        "CardPaddingY": 20,
+        "Flags": 0,
+        "HeightOffset": 92,
+        "LevelFontSize": 36,
+        "NameFontSize": 58,
+        "Opacity": 0.75,
+        "OnComponentDestroy": null,
+        "OnComponentDisabled": null,
+        "OnComponentEnabled": null,
+        "OnComponentFixedUpdate": null,
+        "OnComponentStart": null,
+        "OnComponentUpdate": null,
+        "PanelSize": "2400,360",
+        "ShowForLocalPlayer": true,
+        "TitleWorldScale": 0.55
+      },
+      {
         "__type": "Sandbox.Systems.UI.UIStateManager",
         "__guid": "a36b5ad9-7972-4cb0-b872-a4e2ee0e992d",
         "__enabled": true,

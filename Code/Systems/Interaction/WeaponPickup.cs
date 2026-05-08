@@ -20,6 +20,11 @@ public sealed class WeaponPickup : Component, IInteractable
 	float IInteractable.InteractRange => PickupRange;
 	string IInteractable.Prompt => $"Press E to Pick Up {ResolvedDefinition?.DisplayName ?? "Weapon"}";
 
+	protected override void OnStart()
+	{
+		EnsureNetworkObject();
+	}
+
 	bool IInteractable.CanInteract( GameObject player )
 	{
 		var definition = ResolvedDefinition;
@@ -55,4 +60,10 @@ public sealed class WeaponPickup : Component, IInteractable
 		: ItemDefinition.PathFor( Definition );
 
 	private ItemDefinition ResolvedDefinition => ItemDefinition.Resolve( ResolvedDefinitionPath );
+
+	private void EnsureNetworkObject()
+	{
+		GameObject.NetworkMode = NetworkMode.Object;
+		GameObject.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
+	}
 }

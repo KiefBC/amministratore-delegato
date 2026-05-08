@@ -20,6 +20,11 @@ public sealed class MoneyPickup : Component, IInteractable
 	string IInteractable.Prompt => $"Press E to Take ${Amount:N0}";
 	bool IInteractable.CanInteract( GameObject player ) => player.IsValid() && Amount > 0;
 
+	protected override void OnStart()
+	{
+		EnsureNetworkObject();
+	}
+
 	void IInteractable.Interact( GameObject player )
 	{
 		if ( !player.IsValid() ) return;
@@ -57,5 +62,11 @@ public sealed class MoneyPickup : Component, IInteractable
 		var root = player.Root;
 		if ( root.IsValid() && !string.IsNullOrWhiteSpace( root.Name ) ) return root.Name;
 		return "unnamed player";
+	}
+
+	private void EnsureNetworkObject()
+	{
+		GameObject.NetworkMode = NetworkMode.Object;
+		GameObject.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
 	}
 }

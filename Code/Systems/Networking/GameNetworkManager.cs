@@ -71,6 +71,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		player.Name = $"Player - {connection.DisplayName}";
 		player.Enabled = true;
 		PreparePlayerForNetwork( player );
+		CopyPlayerTitleSettings( source, player );
 		InitializeStartingWallet( player );
 
 		var spawned = player.NetworkSpawn( connection );
@@ -151,6 +152,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		EnsurePlayerStats( player );
 		EnsurePlayerFinance( player );
 		EnsurePlayerAppearance( player );
+		EnsurePlayerTitle( player );
 
 		foreach ( var profile in player.Components.GetAll<PlayerProfileComponent>( FindMode.EverythingInSelfAndDescendants ) )
 		{
@@ -214,6 +216,29 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( player.Components.GetInDescendantsOrSelf<PlayerAppearanceComponent>().IsValid() ) return;
 
 		player.Components.Create<PlayerAppearanceComponent>();
+	}
+
+	private static void EnsurePlayerTitle( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+		if ( player.Components.GetInDescendantsOrSelf<Sandbox.Systems.UI.PlayerTitleComponent>().IsValid() ) return;
+
+		player.Components.Create<Sandbox.Systems.UI.PlayerTitleComponent>();
+	}
+
+	private static void CopyPlayerTitleSettings( GameObject source, GameObject player )
+	{
+		if ( !source.IsValid() || !player.IsValid() ) return;
+
+		var sourceTitle = source.Root.Components.Get<Sandbox.Systems.UI.PlayerTitleComponent>();
+		sourceTitle ??= source.Components.GetInAncestorsOrSelf<Sandbox.Systems.UI.PlayerTitleComponent>();
+		sourceTitle ??= source.Components.GetInDescendantsOrSelf<Sandbox.Systems.UI.PlayerTitleComponent>();
+		if ( !sourceTitle.IsValid() ) return;
+
+		var playerTitle = player.Components.GetInDescendantsOrSelf<Sandbox.Systems.UI.PlayerTitleComponent>();
+		if ( !playerTitle.IsValid() ) return;
+
+		playerTitle.CopySettingsFrom( sourceTitle );
 	}
 
 	private void InitializeStartingWallet( GameObject player )

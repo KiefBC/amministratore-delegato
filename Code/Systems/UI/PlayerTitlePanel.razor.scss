@@ -1,0 +1,31 @@
+@import "/Systems/UI/_theme.scss";
+
+PlayerTitlePanel {
+	width: 2400px;
+	height: 360px;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+
+	.player-title-card {
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+		font-family: $font-default;
+	}
+
+	.player-name {
+		color: $text-primary;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+		white-space: nowrap;
+	}
+
+	.player-level {
+		margin-top: 4px;
+		color: $text-secondary;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+		text-transform: uppercase;
+	}
+}
