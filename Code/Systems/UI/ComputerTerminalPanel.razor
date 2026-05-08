@@ -279,13 +279,18 @@
 
 	private void SelectStock( string symbol )
 	{
+		var previousStock = _selectedStock;
 		_selectedStock = symbol;
+		Log.Info( $"[StockTerminal] Stock selected {previousStock} -> {_selectedStock}; timeframe={TimeframeLogLabel( _timeframe )}." );
+		// Keep the current timeframe when switching symbols so chart scale is user-sticky.
 		_market?.RequestStockCandles( _selectedStock, _timeframe );
 	}
 
 	private void SelectTimeframe( StockTimeframe timeframe )
 	{
+		var previousTimeframe = _timeframe;
 		_timeframe = timeframe;
+		Log.Info( $"[StockTerminal] Timeframe selected {TimeframeLogLabel( previousTimeframe )} -> {TimeframeLogLabel( _timeframe )}; stock={_selectedStock}." );
 		_market?.RequestStockCandles( _selectedStock, _timeframe );
 	}
 
@@ -444,7 +449,24 @@
 
 			_hoveredControl = target.Id;
 			_controlPressed = Input.Down( "Attack1" );
+			if ( Input.Pressed( "Attack1" ) ) ActivatePolledControl( target.Id );
 			return;
+		}
+	}
+
+	private void ActivatePolledControl( string id )
+	{
+		switch ( id )
+		{
+			case "timeframe-onehour":
+				SelectTimeframe( StockTimeframe.OneHour );
+				break;
+			case "timeframe-oneday":
+				SelectTimeframe( StockTimeframe.OneDay );
+				break;
+			case "timeframe-sevendays":
+				SelectTimeframe( StockTimeframe.SevenDays );
+				break;
 		}
 	}
 
@@ -527,6 +549,17 @@
 			StockTimeframe.OneDay => "Today / 5 minute candles",
 			StockTimeframe.SevenDays => "Seven days / 1 hour candles",
 			_ => "Chart",
+		};
+	}
+
+	private static string TimeframeLogLabel( StockTimeframe timeframe )
+	{
+		return timeframe switch
+		{
+			StockTimeframe.OneHour => "1H",
+			StockTimeframe.OneDay => "1D",
+			StockTimeframe.SevenDays => "7D",
+			_ => timeframe.ToString(),
 		};
 	}
 
