@@ -46,6 +46,33 @@ public partial class StatsConfig : GameResource
 	[Property, Range( 0f, 100f ), Step( 0.01f )]
 	public float HealthTimeXpPerSecond { get; set; } = 0.03f;
 
+	[Property, Range( 0f, 100f ), Step( 1f )]
+	public float HealthRegenPerMinute { get; set; } = 1f;
+
+	[Property, Range( 0f, 1000f ), Step( 1f )]
+	public float MaxHydration { get; set; } = 100f;
+
+	[Property, Range( 0f, 1000f ), Step( 1f )]
+	public float MaxNutrition { get; set; } = 100f;
+
+	[Property, Range( 0f, 100f ), Step( 0.1f )]
+	public float HydrationDrainPerMinute { get; set; } = 1f;
+
+	[Property, Range( 0f, 100f ), Step( 0.1f )]
+	public float NutritionDrainPerMinute { get; set; } = 0.5f;
+
+	[Property, Range( 0f, 1000f ), Step( 1f )]
+	public float ThirstyThreshold { get; set; } = 0f;
+
+	[Property, Range( 0f, 1000f ), Step( 1f )]
+	public float HungryThreshold { get; set; } = 0f;
+
+	[Property, Range( 0f, 1f ), Step( 0.05f )]
+	public float ThirstyStaminaRegenMultiplier { get; set; } = 0.5f;
+
+	[Property, Range( 0f, 1f ), Step( 0.05f )]
+	public float HungryHealthRegenMultiplier { get; set; } = 0f;
+
 	[Property, Range( 0f, 100f ), Step( 0.1f )]
 	public float StaminaRegenPerSecond { get; set; } = 1f;
 

@@ -52,6 +52,15 @@ public sealed class PlayerStatsComponent : Component
 	[Hide] public int BusinessLevel => GetLevel( PlayerStatType.Business );
 	[Hide] public float EffectiveMaxHealth => StatConfig.HealthMaxForLevel( HealthLevel );
 	[Hide] public float EffectiveMaxStamina => StatConfig.StaminaMaxForLevel( StaminaLevel );
+	[Hide] public float HealthRegenPerMinute => StatConfig.HealthRegenPerMinute;
+	[Hide] public float MaxHydration => StatConfig.MaxHydration;
+	[Hide] public float MaxNutrition => StatConfig.MaxNutrition;
+	[Hide] public float HydrationDrainPerMinute => StatConfig.HydrationDrainPerMinute;
+	[Hide] public float NutritionDrainPerMinute => StatConfig.NutritionDrainPerMinute;
+	[Hide] public float ThirstyThreshold => StatConfig.ThirstyThreshold;
+	[Hide] public float HungryThreshold => StatConfig.HungryThreshold;
+	[Hide] public float ThirstyStaminaRegenMultiplier => StatConfig.ThirstyStaminaRegenMultiplier;
+	[Hide] public float HungryHealthRegenMultiplier => StatConfig.HungryHealthRegenMultiplier;
 	[Hide] public float StaminaRegenPerSecond => StatConfig.StaminaRegenPerSecond;
 	[Hide] public float RunStaminaDrainPerSecond => StatConfig.RunStaminaDrainPerSecond;
 	[Hide] public float SprintResumeStamina => StatConfig.SprintResumeStamina;

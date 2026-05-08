@@ -135,12 +135,14 @@ ChatPanel {
 		white-space: nowrap;
 	}
 
-	&.open .chat-sender.interactive {
+	&.open .chat-sender.interactive,
+	&.cursor .chat-sender.interactive {
 		pointer-events: all;
 		cursor: pointer;
 	}
 
-	&.open .chat-sender.interactive:hover {
+	&.open .chat-sender.interactive:hover,
+	&.cursor .chat-sender.interactive:hover {
 		color: $text-primary;
 		text-decoration: underline;
 	}

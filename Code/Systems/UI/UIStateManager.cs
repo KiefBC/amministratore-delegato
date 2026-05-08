@@ -15,16 +15,37 @@ using System.Collections.Generic;
 public sealed class UIStateManager : Component
 {
 	[Property] public PlayerController PlayerController { get; set; }
+	[Property] public string CursorHoldInput { get; set; } = "Walk";
 
 	private readonly HashSet<object> _focusOwners = new();
+	private readonly object _cursorHoldFocusOwner = new();
 	private bool _cachedUseLookControls;
 	private MouseVisibility _cachedMouseVisibility;
+	private bool _cursorHoldFocusActive;
 
 	public bool IsAnyUIOpen => _focusOwners.Count > 0;
 
 	protected override void OnStart()
 	{
 		PlayerController ??= Components.Get<PlayerController>();
+	}
+
+	protected override void OnUpdate()
+	{
+		PlayerController ??= Components.Get<PlayerController>();
+		if ( IsProxy )
+		{
+			SetCursorHoldFocus( false );
+			return;
+		}
+
+		var wantsCursor = !string.IsNullOrWhiteSpace( CursorHoldInput ) && Input.Down( CursorHoldInput );
+		SetCursorHoldFocus( wantsCursor );
+	}
+
+	protected override void OnDisabled()
+	{
+		SetCursorHoldFocus( false );
 	}
 
 	public void RequestUIFocus( object owner )
@@ -52,5 +73,19 @@ public sealed class UIStateManager : Component
 			PlayerController.UseLookControls = _cachedUseLookControls;
 			Sandbox.Mouse.Visibility = _cachedMouseVisibility;
 		}
+	}
+
+	private void SetCursorHoldFocus( bool active )
+	{
+		if ( _cursorHoldFocusActive == active ) return;
+
+		_cursorHoldFocusActive = active;
+		if ( active )
+		{
+			RequestUIFocus( _cursorHoldFocusOwner );
+			return;
+		}
+
+		ReleaseUIFocus( _cursorHoldFocusOwner );
 	}
 }

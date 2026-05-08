@@ -65,8 +65,6 @@ public sealed class BusinessCardPanel : Panel
 		base.Tick();
 
 		if ( !_dragging ) return;
-		if ( Mouse.Delta == Vector2.Zero ) return;
-
 		Dragged?.Invoke();
 	}
 
@@ -82,7 +80,6 @@ public sealed class BusinessCardPanel : Panel
 
 		_dragging = true;
 		SetClass( "dragging", true );
-		SetMouseCapture( true );
 		DragStarted?.Invoke();
 	}
 
@@ -92,7 +89,6 @@ public sealed class BusinessCardPanel : Panel
 
 		_dragging = false;
 		SetClass( "dragging", false );
-		SetMouseCapture( false );
 		DragStopped?.Invoke();
 	}
 

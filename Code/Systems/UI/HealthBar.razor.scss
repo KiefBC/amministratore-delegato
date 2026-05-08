@@ -6,10 +6,15 @@ HealthBar {
 	position: absolute;
 	pointer-events: none;
 
-	.health {
+	.hud-cluster {
 		position: absolute;
 		left: $corner-margin;
 		bottom: $corner-margin;
+		align-items: flex-end;
+		gap: 10px;
+	}
+
+	.health {
 		flex-direction: column;
 		gap: 8px;
 		padding: $panel-padding;
@@ -21,6 +26,37 @@ HealthBar {
 
 		&.flash-hit {
 			background-color: $flash-bg-damage;
+		}
+	}
+
+	.need-icons {
+		flex-direction: column;
+		gap: 6px;
+		padding-bottom: 2px;
+	}
+
+	.need-icon {
+		width: 34px;
+		height: 34px;
+		align-items: center;
+		justify-content: center;
+		border-radius: 8px;
+		border: 1px solid rgba( 255, 255, 255, 0.16 );
+		background-color: rgba( 8, 10, 14, 0.82 );
+		font-family: $font-default;
+		font-size: 15px;
+		font-weight: bold;
+		text-shadow: $text-shadow-default;
+		box-shadow: 0 2px 8px rgba( 0, 0, 0, 0.35 );
+
+		&.hunger {
+			color: #ffb04a;
+			border-color: rgba( 255, 176, 74, 0.5 );
+		}
+
+		&.thirst {
+			color: #4aa8ff;
+			border-color: rgba( 74, 168, 255, 0.5 );
 		}
 	}
 
