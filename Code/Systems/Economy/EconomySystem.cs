@@ -4,7 +4,7 @@ namespace Sandbox.Systems.Economy;
 
 /// <summary>
 /// Scene-scoped economy service. It does not own player money; each player's
-/// synced <see cref="Backpack.Wallet"/> is the authoritative balance.
+/// physical money stack is the authoritative cash balance.
 /// </summary>
 public sealed class EconomySystem : GameObjectSystem<EconomySystem>
 {
@@ -22,13 +22,13 @@ public sealed class EconomySystem : GameObjectSystem<EconomySystem>
 	/// <summary>
 	/// Add money to one player's wallet. Only the host can mint income/rewards.
 	/// </summary>
-	public void Add( GameObject player, int amount )
+	public bool Add( GameObject player, int amount )
 	{
-		if ( amount <= 0 ) return;
-		if ( !Sandbox.Networking.IsHost ) return;
+		if ( amount <= 0 ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
 
 		var backpack = player?.Components.GetInDescendantsOrSelf<Backpack>();
-		backpack?.AddMoney( amount );
+		return backpack.IsValid() && backpack.AddMoney( amount );
 	}
 
 	/// <summary>

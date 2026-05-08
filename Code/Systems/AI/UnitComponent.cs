@@ -1014,8 +1014,14 @@ public sealed class UnitComponent : Component, Component.IDamageable
 		}
 
 		var oldWallet = killerBackpack.Wallet;
+		if ( !killerBackpack.AddMoney( Bounty ) )
+		{
+			Log.Warning( $"{Name}: no bounty paid because {killerBackpack.GameObject.Name} has no room for ${Bounty:N0}" );
+			GameNetworkRpc.BroadcastPlayerNotification( killerBackpack.GameObject.Root, (int)NotificationKind.Warning, "Inventory Full", $"Free a slot to receive ${Bounty:N0}.", 3f );
+			return;
+		}
+
 		_bountyPaid = true;
-		killerBackpack.AddMoney( Bounty );
 		Log.Info( $"{Name}: paid ${Bounty} bounty to {killerBackpack.GameObject.Name}. Wallet {oldWallet} -> {killerBackpack.Wallet}" );
 	}
 

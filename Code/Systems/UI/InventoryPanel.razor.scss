@@ -113,7 +113,7 @@ InventoryPanel {
 	}
 
 	.left-rail {
-		width: 152px;
+		width: 174px;
 		height: 100%;
 		flex-direction: column;
 		justify-content: space-between;
@@ -134,6 +134,10 @@ InventoryPanel {
 	.stat-icon {
 		width: 42px;
 		height: 42px;
+		min-width: 42px;
+		max-width: 42px;
+		min-height: 42px;
+		max-height: 42px;
 		border-radius: 50%;
 		border: 3px solid rgba( 255, 255, 255, 0.55 );
 		align-items: center;
@@ -151,8 +155,9 @@ InventoryPanel {
 	.stat-row.speed .stat-icon { border-color: #c90025; color: #c90025; }
 
 	.stat-copy {
+		width: 118px;
 		flex-direction: column;
-		gap: 1px;
+		gap: 0px;
 	}
 
 	.stat-label {
@@ -160,10 +165,12 @@ InventoryPanel {
 		color: rgba( 255, 255, 255, 0.76 );
 	}
 
-	.stat-value {
+	.stat-level,
+	.stat-benefit {
 		font-size: 14px;
 		font-weight: bold;
 		color: white;
+		white-space: nowrap;
 	}
 
 	.quick-slots {

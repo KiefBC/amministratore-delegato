@@ -31,7 +31,6 @@ public sealed class Backpack : Component
 
 	[Sync( SyncFlags.FromHost )] public NetDictionary<int, InventoryItemState> Items { get; set; } = new();
 	[Sync( SyncFlags.FromHost )] public int EquippedInstanceId { get; set; }
-	[Sync( SyncFlags.FromHost )] public int Wallet { get; set; }
 	[Sync( SyncFlags.FromHost )] public int InventoryVersion { get; set; }
 	[Sync( SyncFlags.FromHost )] public bool IsWeaponAiming { get; set; }
 
@@ -40,6 +39,7 @@ public sealed class Backpack : Component
 
 	public int SlotCount => Rows * Cols;
 	public int TotalSlotCount => SlotCount + EquipmentSlotCount + ConsumableSlotCount;
+	public int Wallet => CalculateMoneyBalance();
 	public (int row, int col)? Selected => _selected;
 
 	public enum SortMode
@@ -133,12 +133,6 @@ public sealed class Backpack : Component
 		var definition = ItemDefinition.Resolve( definitionPath );
 		if ( definition is null ) return false;
 
-		if ( definition.IsCurrency )
-		{
-			AddMoney( stackCount );
-			return true;
-		}
-
 		EnsureNextInstanceId();
 
 		if ( definition.MaxStack > 1 )
@@ -201,13 +195,19 @@ public sealed class Backpack : Component
 		return true;
 	}
 
-	public void AddMoney( int amount )
+	public bool CanAddMoney( int amount )
 	{
-		if ( amount <= 0 ) return;
-		if ( !Sandbox.Networking.IsHost ) return;
+		if ( amount <= 0 ) return false;
+		return CanFitStack( ItemDefinition.MoneyPath, amount );
+	}
 
-		Wallet += amount;
-		Touch();
+	public bool AddMoney( int amount )
+	{
+		if ( amount <= 0 ) return false;
+		if ( !Sandbox.Networking.IsHost ) return false;
+		if ( !CanAddMoney( amount ) ) return false;
+
+		return TryAddDefinition( ItemDefinition.MoneyPath, amount, autoEquipFirstWeapon: false );
 	}
 
 	public bool TrySpend( int amount )
@@ -220,7 +220,25 @@ public sealed class Backpack : Component
 		}
 
 		if ( Wallet < amount ) return false;
-		Wallet -= amount;
+
+		var remaining = amount;
+		foreach ( var item in Items.Values.Where( IsMoneyItem ).OrderBy( x => x.StackCount ).ToList() )
+		{
+			var spend = int.Min( remaining, item.StackCount );
+			if ( spend <= 0 ) continue;
+
+			remaining -= spend;
+			var updated = item;
+			updated.StackCount -= spend;
+
+			if ( updated.StackCount <= 0 ) RemoveItem( updated.InstanceId );
+			else Items[updated.InstanceId] = updated;
+
+			if ( remaining <= 0 ) break;
+		}
+
+		if ( remaining > 0 ) return false;
+
 		Touch();
 		return true;
 	}
@@ -732,6 +750,57 @@ public sealed class Backpack : Component
 	{
 		Items.Remove( instanceId );
 		if ( EquippedInstanceId == instanceId ) EquippedInstanceId = 0;
+	}
+
+	private int CalculateMoneyBalance()
+	{
+		long total = 0;
+		foreach ( var item in Items.Values )
+		{
+			if ( !IsMoneyItem( item ) ) continue;
+			total += int.Max( 0, item.StackCount );
+			if ( total >= int.MaxValue ) return int.MaxValue;
+		}
+
+		return (int)total;
+	}
+
+	private bool CanFitStack( string definitionPath, int stackCount )
+	{
+		if ( stackCount <= 0 ) return false;
+
+		var definition = ItemDefinition.Resolve( definitionPath );
+		if ( definition is null ) return false;
+
+		var maxStack = int.Max( 1, definition.MaxStack );
+		var remaining = stackCount;
+		foreach ( var existing in Items.Values )
+		{
+			if ( existing.DefinitionPath != definitionPath ) continue;
+			if ( existing.StackCount >= maxStack ) continue;
+
+			remaining -= int.Min( remaining, maxStack - existing.StackCount );
+			if ( remaining <= 0 ) return true;
+		}
+
+		var neededSlots = (int)System.Math.Ceiling( remaining / (double)maxStack );
+		return EmptyGridSlotCount() >= neededSlots;
+	}
+
+	private int EmptyGridSlotCount()
+	{
+		var count = 0;
+		for ( var i = 0; i < SlotCount; i++ )
+		{
+			if ( !TryGetItemAt( i, out _ ) ) count++;
+		}
+
+		return count;
+	}
+
+	private static bool IsMoneyItem( InventoryItemState item )
+	{
+		return item.IsValid && item.DefinitionPath == ItemDefinition.MoneyPath;
 	}
 
 	private int FirstEmptySlot()

@@ -221,8 +221,13 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
 		if ( !backpack.IsValid() ) return;
 
-		backpack.Wallet = int.Max( 0, StartingWallet );
-		backpack.InventoryVersion++;
+		var amount = int.Max( 0, StartingWallet );
+		if ( amount <= 0 ) return;
+
+		if ( !backpack.AddMoney( amount ) )
+		{
+			Log.Warning( $"[Networking] Could not add starting cash; player={player.Name}; amount=${amount:N0}." );
+		}
 	}
 
 	private static void ConfigureNetworkObject( GameObject gameObject )

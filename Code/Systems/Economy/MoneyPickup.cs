@@ -3,8 +3,8 @@ using Sandbox;
 namespace Sandbox.Systems.Economy;
 
 /// <summary>
-/// Networked world pickup for cash. The host deposits it into the interacting
-/// player's synced <see cref="Backpack.Wallet"/>, then destroys this world object.
+/// Networked world pickup for cash. The host adds it as a physical money item
+/// stack in the interacting player's inventory, then destroys this world object.
 /// </summary>
 public sealed class MoneyPickup : Component, IInteractable
 {
@@ -26,10 +26,36 @@ public sealed class MoneyPickup : Component, IInteractable
 		if ( !Sandbox.Networking.IsHost ) return;
 		if ( Amount <= 0 ) return;
 
-		EconomySystem.Current?.Add( player, Amount );
+		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
+		var oldWallet = backpack.IsValid() ? backpack.Wallet : 0;
+		var accepted = DefinitionPath == ItemDefinition.MoneyPath
+			? backpack.IsValid() && backpack.AddMoney( Amount )
+			: backpack.IsValid() && backpack.TryAddDefinition( DefinitionPath, Amount, autoEquipFirstWeapon: false );
+
+		if ( !accepted )
+		{
+			PickupNotification.NotifyMoneyPickupFailed( player, Amount );
+			GameLogSystem.Current?.Warning( "inventory", "Money pickup rejected inventory full", player, data: GameLogSystem.Fields(
+				("amount", Amount) ) );
+			return;
+		}
+
+		Log.Info( $"[MoneyPickup] {PlayerLogName( player )} picked up ${Amount:N0}. Wallet ${oldWallet:N0} -> ${backpack.Wallet:N0}." );
 		GameLogSystem.Current?.Info( "inventory", "Money pickup collected", player, data: GameLogSystem.Fields(
-			("amount", Amount) ) );
+			("amount", Amount),
+			("oldWallet", oldWallet),
+			("newWallet", backpack.Wallet) ) );
 		PickupNotification.NotifyMoneyPickedUp( player, Amount );
 		GameObject.Destroy();
+	}
+
+	private static string PlayerLogName( GameObject player )
+	{
+		if ( !player.IsValid() ) return "unknown player";
+		if ( !string.IsNullOrWhiteSpace( player.Name ) ) return player.Name;
+
+		var root = player.Root;
+		if ( root.IsValid() && !string.IsNullOrWhiteSpace( root.Name ) ) return root.Name;
+		return "unnamed player";
 	}
 }

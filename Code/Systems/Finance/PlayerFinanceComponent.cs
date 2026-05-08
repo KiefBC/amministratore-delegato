@@ -47,9 +47,9 @@ public sealed class PlayerFinanceComponent : Component
 
 		var backpack = Backpack();
 		if ( !backpack.IsValid() ) return false;
+		if ( !backpack.AddMoney( amount ) ) return false;
 
 		BankBalance -= amount;
-		backpack.AddMoney( amount );
 		Touch();
 		return true;
 	}
@@ -70,19 +70,19 @@ public sealed class PlayerFinanceComponent : Component
 		return Backpack()?.TrySpend( amount ) == true;
 	}
 
-	public void AddMoney( FinanceAccountSource source, int amount )
+	public bool AddMoney( FinanceAccountSource source, int amount )
 	{
-		if ( !Sandbox.Networking.IsHost ) return;
-		if ( amount <= 0 ) return;
+		if ( !Sandbox.Networking.IsHost ) return false;
+		if ( amount <= 0 ) return false;
 
 		if ( source == FinanceAccountSource.Bank )
 		{
 			BankBalance += amount;
 			Touch();
-			return;
+			return true;
 		}
 
-		Backpack()?.AddMoney( amount );
+		return Backpack()?.AddMoney( amount ) == true;
 	}
 
 	public bool TryBuyBusiness( string businessId )
@@ -143,6 +143,13 @@ public sealed class PlayerFinanceComponent : Component
 
 		var proceeds = decimal.ToInt32( decimal.Floor( shares * price ) );
 		if ( transactionFee > proceeds ) return false;
+		var netProceeds = proceeds - transactionFee;
+
+		if ( netProceeds > 0 )
+		{
+			var backpack = Backpack();
+			if ( !backpack.IsValid() || !backpack.AddMoney( netProceeds ) ) return false;
+		}
 
 		var remaining = owned - shares;
 		var basis = StockCostBasis.TryGetValue( offer.Symbol, out var existingBasis ) ? existingBasis : 0;
@@ -155,7 +162,6 @@ public sealed class PlayerFinanceComponent : Component
 		if ( remaining > 0 && remainingBasis > 0 ) StockCostBasis[offer.Symbol] = remainingBasis;
 		else StockCostBasis.Remove( offer.Symbol );
 
-		Backpack()?.AddMoney( proceeds - transactionFee );
 		Touch();
 		return true;
 	}
@@ -177,7 +183,7 @@ public sealed class PlayerFinanceComponent : Component
 		else
 		{
 			if ( !backpack.IsValid() ) return false;
-			backpack.AddMoney( amount );
+			if ( !backpack.AddMoney( amount ) ) return false;
 		}
 
 		DebtBalance += amount;

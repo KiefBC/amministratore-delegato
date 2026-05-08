@@ -33,6 +33,20 @@ public static class PickupNotification
 		NotifyPickedUp( player, $"${amount:N0}", 1 );
 	}
 
+	public static void NotifyMoneyPickupFailed( GameObject player, int amount )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( !player.IsValid() ) return;
+		if ( amount <= 0 ) return;
+
+		GameNetworkRpc.BroadcastPlayerNotification(
+			player,
+			(int)NotificationKind.Warning,
+			"Inventory Full",
+			$"Free a slot to pick up ${amount:N0}.",
+			PickupDuration );
+	}
+
 	private static string FormatPickupMessage( string displayName, int amount )
 	{
 		return amount > 1

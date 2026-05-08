@@ -35,10 +35,14 @@
 						{
 							<div class="stat-row @stat.ClassName">
 								<div class="stat-icon">@stat.Icon</div>
-								<div class="stat-copy">
-									<span class="stat-label">@stat.Label</span>
-									<span class="stat-value">@stat.Value</span>
-								</div>
+							<div class="stat-copy">
+								<span class="stat-label">@stat.Label</span>
+								@if ( !string.IsNullOrEmpty( stat.Level ) )
+								{
+									<span class="stat-level">@stat.Level</span>
+								}
+								<span class="stat-benefit">@stat.Benefit</span>
+							</div>
 							</div>
 						}
 					</div>
@@ -910,21 +914,26 @@
 		rows.Add( (label, $"{(amount > 0f ? "+" : "")}{amount:0.##}{suffix}") );
 	}
 
-	private System.Collections.Generic.IEnumerable<(string ClassName, string Icon, string Label, string Value)> StatRows()
+	private System.Collections.Generic.IEnumerable<(string ClassName, string Icon, string Label, string Level, string Benefit)> StatRows()
 	{
-		yield return ("health", "+", "Health", StatLevelText( PlayerStatType.Health, FormatStatPool( _unit?.Health ?? 0f, EffectiveMaxHealth() ) ));
-		yield return ("stamina", "EN", "Stamina", StatLevelText( PlayerStatType.Stamina, FormatStatPool( _unit?.Stamina ?? 0f, EffectiveMaxStamina() ) ));
-		yield return ("damage", "RG", "Ranged", StatLevelText( PlayerStatType.Ranged, $"Spread {(_stats.IsValid() ? _stats.RangedSpreadDegrees : 0f):0.0} deg" ));
-		yield return ("speed", "ME", "Punching", StatLevelText( PlayerStatType.Punching, _stats.IsValid() ? $"Damage {_stats.PunchDamage:0.0}" : "Damage 0" ));
-		yield return ("armor", "$", "Business", StatLevelText( PlayerStatType.Business, _stats.IsValid() ? $"${_stats.BusinessIncomePerSecond:0.0}/sec" : "$0/sec" ));
-		yield return ("armor", "AR", "Armor", FormatStatPool( _unit?.Armor ?? 0f, _unit?.MaxArmor ?? 0f ));
+		yield return StatRow( "health", "+", "Health", PlayerStatType.Health, FormatStatPool( _unit?.Health ?? 0f, EffectiveMaxHealth() ) );
+		yield return StatRow( "stamina", "EN", "Stamina", PlayerStatType.Stamina, FormatStatPool( _unit?.Stamina ?? 0f, EffectiveMaxStamina() ) );
+		yield return StatRow( "damage", "RG", "Ranged", PlayerStatType.Ranged, $"Spread {(_stats.IsValid() ? _stats.RangedSpreadDegrees : 0f):0.0} deg" );
+		yield return StatRow( "speed", "ME", "Punching", PlayerStatType.Punching, _stats.IsValid() ? $"Damage {_stats.PunchDamage:0.0}" : "Damage 0" );
+		yield return StatRow( "armor", "$", "Business", PlayerStatType.Business, _stats.IsValid() ? $"${_stats.BusinessIncomePerSecond:0.0}/sec" : "$0/sec" );
+		yield return ("armor", "AR", "Armor", "", FormatStatPool( _unit?.Armor ?? 0f, _unit?.MaxArmor ?? 0f ));
 	}
 
-	private string StatLevelText( PlayerStatType stat, string detail )
+	private (string ClassName, string Icon, string Label, string Level, string Benefit) StatRow( string className, string icon, string label, PlayerStatType stat, string benefit )
 	{
-		if ( !_stats.IsValid() ) return $"Lv 1 - {detail}";
+		return (className, icon, label, StatLevelText( stat ), benefit);
+	}
 
-		return $"Lv {_stats.GetLevel( stat )} ({(_stats.GetLevelProgress( stat ) * 100f):0}%) - {detail}";
+	private string StatLevelText( PlayerStatType stat )
+	{
+		if ( !_stats.IsValid() ) return "Lv 1";
+
+		return $"Lv {_stats.GetLevel( stat )} ({(_stats.GetLevelProgress( stat ) * 100f):0}%)";
 	}
 
 	private float EffectiveMaxHealth()
