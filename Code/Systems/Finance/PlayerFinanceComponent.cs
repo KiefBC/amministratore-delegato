@@ -8,12 +8,22 @@ public sealed class PlayerFinanceComponent : Component
 {
 	private const int CryptoUnitScale = 1000;
 
+	[Property, Range( 0f, 100f ), Step( 0.25f )] public float DebtHourlyInterestPercent { get; set; } = 2f;
+	[Property, Range( 1f, 86400f ), Step( 60f )] public float DebtAccrualIntervalSeconds { get; set; } = 3600f;
+
 	[Sync( SyncFlags.FromHost )] public int BankBalance { get; set; }
+	[Sync( SyncFlags.FromHost )] public int DebtBalance { get; set; }
+	[Sync( SyncFlags.FromHost )] public float NextDebtAccrualTime { get; set; }
 	[Sync( SyncFlags.FromHost )] public int FinanceVersion { get; set; }
 	[Sync( SyncFlags.FromHost )] public NetDictionary<string, int> StockShares { get; set; } = new();
 	[Sync( SyncFlags.FromHost )] public NetDictionary<string, int> StockCostBasis { get; set; } = new();
 	[Sync( SyncFlags.FromHost )] public NetDictionary<string, int> CryptoMilliUnits { get; set; } = new();
 	[Sync( SyncFlags.FromHost )] public NetDictionary<string, int> OwnedBusinesses { get; set; } = new();
+
+	protected override void OnUpdate()
+	{
+		AccrueDebtIfDue();
+	}
 
 	public bool TryDeposit( int amount )
 	{
@@ -148,6 +158,95 @@ public sealed class PlayerFinanceComponent : Component
 		return true;
 	}
 
+	public bool TryTakeLoan( int amount, FinanceAccountSource destination )
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( amount <= 0 ) return false;
+		if ( DebtBalance > int.MaxValue - amount ) return false;
+
+		var oldDebt = DebtBalance;
+		var backpack = Backpack();
+
+		if ( destination == FinanceAccountSource.Bank )
+		{
+			if ( BankBalance > int.MaxValue - amount ) return false;
+			BankBalance += amount;
+		}
+		else
+		{
+			if ( !backpack.IsValid() ) return false;
+			backpack.AddMoney( amount );
+		}
+
+		DebtBalance += amount;
+		EnsureDebtAccrualScheduled();
+		Touch();
+
+		Log.Info( $"[FinanceDebt] Loan taken; player={PlayerLogName()}; amount=${amount:N0}; destination={destination}; debt=${oldDebt:N0}->${DebtBalance:N0}; nextAccrual={NextDebtAccrualTime:0.##}." );
+		return true;
+	}
+
+	public bool TryRepayDebt( int amount, FinanceAccountSource source )
+	{
+		if ( !Networking.IsHost ) return false;
+		if ( amount <= 0 || DebtBalance <= 0 ) return false;
+
+		var payment = int.Min( amount, DebtBalance );
+		if ( !TrySpend( source, payment ) ) return false;
+
+		var oldDebt = DebtBalance;
+		DebtBalance -= payment;
+		if ( DebtBalance <= 0 ) NextDebtAccrualTime = 0f;
+		else EnsureDebtAccrualScheduled();
+		Touch();
+
+		Log.Info( $"[FinanceDebt] Debt repaid; player={PlayerLogName()}; source={source}; paid=${payment:N0}; debt=${oldDebt:N0}->${DebtBalance:N0}; nextAccrual={NextDebtAccrualTime:0.##}." );
+		return true;
+	}
+
+	public void AccrueDebtIfDue()
+	{
+		if ( !Networking.IsHost ) return;
+
+		if ( DebtBalance <= 0 )
+		{
+			if ( NextDebtAccrualTime > 0f )
+			{
+				NextDebtAccrualTime = 0f;
+				Touch();
+			}
+
+			return;
+		}
+
+		if ( DebtHourlyInterestPercent <= 0f ) return;
+
+		if ( NextDebtAccrualTime <= 0f )
+		{
+			EnsureDebtAccrualScheduled();
+			Touch();
+			return;
+		}
+
+		if ( Time.Now < NextDebtAccrualTime ) return;
+
+		var oldDebt = DebtBalance;
+		var interest = CalculateDebtInterest( DebtBalance, DebtHourlyInterestPercent );
+		DebtBalance = (int)System.Math.Min( int.MaxValue, (long)DebtBalance + interest );
+		EnsureDebtAccrualScheduled();
+		Touch();
+
+		Log.Info( $"[FinanceDebt] Debt interest accrued; player={PlayerLogName()}; rate={DebtHourlyInterestPercent:0.##}%; interest=${interest:N0}; debt=${oldDebt:N0}->${DebtBalance:N0}; nextAccrual={NextDebtAccrualTime:0.##}." );
+	}
+
+	public static int CalculateDebtInterest( int debtBalance, float hourlyInterestPercent )
+	{
+		if ( debtBalance <= 0 || hourlyInterestPercent <= 0f ) return 0;
+
+		var interest = decimal.ToInt32( decimal.Ceiling( debtBalance * ((decimal)hourlyInterestPercent / 100m) ) );
+		return int.Max( 1, interest );
+	}
+
 	public bool TryBuyCrypto( string coinId, int amount, decimal price, FinanceAccountSource source )
 	{
 		if ( !Networking.IsHost ) return false;
@@ -182,6 +281,25 @@ public sealed class PlayerFinanceComponent : Component
 	private Backpack Backpack()
 	{
 		return GameObject.Root.Components.GetInDescendantsOrSelf<Backpack>();
+	}
+
+	private void EnsureDebtAccrualScheduled()
+	{
+		if ( DebtBalance <= 0 )
+		{
+			NextDebtAccrualTime = 0f;
+			return;
+		}
+
+		if ( NextDebtAccrualTime > Time.Now ) return;
+		NextDebtAccrualTime = Time.Now + float.Max( 1f, DebtAccrualIntervalSeconds );
+	}
+
+	private string PlayerLogName()
+	{
+		return GameObject.Root.IsValid() && !string.IsNullOrWhiteSpace( GameObject.Root.Name )
+			? GameObject.Root.Name
+			: GameObject.Name;
 	}
 
 	private void Touch()

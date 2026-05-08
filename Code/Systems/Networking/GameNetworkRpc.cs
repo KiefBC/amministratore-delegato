@@ -89,6 +89,73 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
+	public static void RequestTakeLoan( GameObject player, int amount, int destinationAccount )
+	{
+		if ( !CallerOwns( player ) )
+		{
+			Log.Warning( $"[FinanceDebt] Take loan rejected ownership; player={PlayerLogName( player )}; amount=${amount:N0}; destination={destinationAccount}." );
+			return;
+		}
+
+		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), destinationAccount ) )
+		{
+			Log.Warning( $"[FinanceDebt] Take loan rejected invalid destination; player={PlayerLogName( player )}; amount=${amount:N0}; destination={destinationAccount}." );
+			return;
+		}
+
+		var finance = FinanceFor( player );
+		if ( !finance.IsValid() )
+		{
+			Log.Warning( $"[FinanceDebt] Take loan rejected missing finance; player={PlayerLogName( player )}; amount=${amount:N0}." );
+			return;
+		}
+
+		var destination = (FinanceAccountSource)destinationAccount;
+		if ( !finance.TryTakeLoan( amount, destination ) )
+		{
+			Log.Warning( $"[FinanceDebt] Take loan failed; player={PlayerLogName( player )}; amount=${amount:N0}; destination={destination}." );
+			NotifyTerminal( player, NotificationKind.BadNews, "Loan Failed", "The loan could not be completed.", 3f );
+			return;
+		}
+
+		NotifyTerminal( player, NotificationKind.Success, "Loan Accepted", $"Borrowed ${amount:N0} into {AccountDisplayName( destination )}. Debt is now ${finance.DebtBalance:N0}.", 3f );
+	}
+
+	[Rpc.Host]
+	public static void RequestRepayDebt( GameObject player, int amount, int sourceAccount )
+	{
+		if ( !CallerOwns( player ) )
+		{
+			Log.Warning( $"[FinanceDebt] Repay debt rejected ownership; player={PlayerLogName( player )}; amount=${amount:N0}; source={sourceAccount}." );
+			return;
+		}
+
+		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), sourceAccount ) )
+		{
+			Log.Warning( $"[FinanceDebt] Repay debt rejected invalid source; player={PlayerLogName( player )}; amount=${amount:N0}; source={sourceAccount}." );
+			return;
+		}
+
+		var finance = FinanceFor( player );
+		if ( !finance.IsValid() )
+		{
+			Log.Warning( $"[FinanceDebt] Repay debt rejected missing finance; player={PlayerLogName( player )}; amount=${amount:N0}." );
+			return;
+		}
+
+		var source = (FinanceAccountSource)sourceAccount;
+		var payment = int.Min( int.Max( 0, amount ), finance.DebtBalance );
+		if ( !finance.TryRepayDebt( amount, source ) )
+		{
+			Log.Warning( $"[FinanceDebt] Repay debt failed; player={PlayerLogName( player )}; amount=${amount:N0}; source={source}; debt=${finance.DebtBalance:N0}." );
+			NotifyTerminal( player, NotificationKind.BadNews, "Repayment Failed", "The debt repayment could not be completed.", 3f );
+			return;
+		}
+
+		NotifyTerminal( player, NotificationKind.Success, "Debt Repaid", $"Paid ${payment:N0} from {AccountDisplayName( source )}. Debt is now ${finance.DebtBalance:N0}.", 3f );
+	}
+
+	[Rpc.Host]
 	public static void RequestTransferMoney( GameObject player, GameObject recipient, int amount, int sourceAccount )
 	{
 		if ( !CallerOwns( player ) ) return;

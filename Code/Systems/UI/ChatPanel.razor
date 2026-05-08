@@ -342,17 +342,30 @@
 	private long BusinessCardWorth()
 	{
 		var backpack = BusinessCardBackpack();
-		if ( !backpack.IsValid() ) return 0;
+		var finance = BusinessCardFinance();
+		long total = 0;
 
-		long total = backpack.Wallet;
-		foreach ( var item in backpack.Items.Values )
+		if ( backpack.IsValid() )
 		{
-			if ( !item.IsValid ) continue;
+			total += backpack.Wallet;
+			foreach ( var item in backpack.Items.Values )
+			{
+				if ( !item.IsValid ) continue;
 
-			var definition = backpack.GetDefinition( item );
-			if ( definition is null ) continue;
+				var definition = backpack.GetDefinition( item );
+				if ( definition is null ) continue;
 
-			total += (long)definition.Value * item.StackCount;
+				total += (long)definition.Value * item.StackCount;
+			}
+		}
+
+		if ( finance.IsValid() )
+		{
+			total += finance.BankBalance;
+			total += BusinessCardStockValue( finance );
+			total += BusinessCardCryptoValue( finance );
+			total += BusinessCardBusinessValue( finance );
+			total -= finance.DebtBalance;
 		}
 
 		return total;
@@ -382,6 +395,66 @@
 		return root.IsValid() && root != _businessCardPlayer
 			? root.Components.GetInDescendantsOrSelf<Backpack>()
 			: null;
+	}
+
+	private PlayerFinanceComponent BusinessCardFinance()
+	{
+		if ( !_businessCardPlayer.IsValid() ) return null;
+
+		var finance = _businessCardPlayer.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+		if ( finance.IsValid() ) return finance;
+
+		var root = _businessCardPlayer.Root;
+		return root.IsValid() && root != _businessCardPlayer
+			? root.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>()
+			: null;
+	}
+
+	private static long BusinessCardStockValue( PlayerFinanceComponent finance )
+	{
+		if ( !finance.IsValid() ) return 0;
+
+		decimal total = 0m;
+		foreach ( var pair in finance.StockShares )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var price = MarketDataSystem.Current?.StockPrice( pair.Key ) ?? FinanceCatalog.Stock( pair.Key )?.FallbackPrice ?? 0m;
+			total += pair.Value * price;
+		}
+
+		return decimal.ToInt64( decimal.Round( total ) );
+	}
+
+	private static long BusinessCardCryptoValue( PlayerFinanceComponent finance )
+	{
+		if ( !finance.IsValid() ) return 0;
+
+		decimal total = 0m;
+		foreach ( var pair in finance.CryptoMilliUnits )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var price = MarketDataSystem.Current?.CryptoPrice( pair.Key ) ?? FinanceCatalog.Coin( pair.Key )?.FallbackPrice ?? 0m;
+			total += (pair.Value / 1000m) * price;
+		}
+
+		return decimal.ToInt64( decimal.Round( total ) );
+	}
+
+	private static long BusinessCardBusinessValue( PlayerFinanceComponent finance )
+	{
+		if ( !finance.IsValid() ) return 0;
+
+		long total = 0;
+		foreach ( var pair in finance.OwnedBusinesses )
+		{
+			if ( pair.Value <= 0 ) continue;
+			var offer = FinanceCatalog.Business( pair.Key );
+			if ( offer is null ) continue;
+
+			total += (long)offer.Cost * pair.Value;
+		}
+
+		return total;
 	}
 
 	private PlayerProfileComponent BusinessCardProfile()
@@ -437,9 +510,12 @@
 		if ( HasBusinessCard )
 		{
 			var backpack = BusinessCardBackpack();
+			var finance = BusinessCardFinance();
 			var profile = BusinessCardProfile();
 			hc.Add( backpack?.Wallet ?? 0 );
 			hc.Add( backpack?.InventoryVersion ?? 0 );
+			hc.Add( finance?.FinanceVersion ?? 0 );
+			hc.Add( MarketDataSystem.Current?.PriceVersion ?? 0 );
 			hc.Add( profile?.AffiliationId ?? "" );
 		}
 
