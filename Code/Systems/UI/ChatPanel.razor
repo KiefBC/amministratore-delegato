@@ -1,0 +1,202 @@
+@using Sandbox;
+@using Sandbox.UI;
+@namespace Sandbox
+@inherits PanelComponent
+
+<root class="@RootClass">
+	<div class="chat-window">
+		<div class="chat-title">Placeholder Chat Title</div>
+		<div class="chat-messages">
+			@foreach ( var message in VisibleMessages() )
+			{
+				<div class="chat-message" style="@MessageStyle( message )">
+					<span class="chat-sender">@message.SenderName</span>
+					<span class="chat-separator">:</span>
+					<span class="chat-text">@message.Message</span>
+				</div>
+			}
+		</div>
+
+		@if ( _isOpen )
+		{
+			<div class="chat-input-row">
+				<span class="chat-prompt">&gt;</span>
+				<TextEntry @ref="_input" class="chat-input" Value:bind=@_draft onsubmit="@SubmitMessage" placeholder="Type global message..." />
+			</div>
+		}
+	</div>
+</root>
+
+@code {
+	private const int OpenMessageCount = 12;
+	private const int ClosedMessageCount = 6;
+
+	private TextEntry _input = null;
+	private ChatSystem _chat;
+	private UIStateManager _uiState;
+	private GameObject _player;
+	private Sandbox.UI.Panel _messagesPanel;
+	private string _draft = "";
+	private int _historyScrollOffset;
+	private bool _isOpen;
+	private bool _pendingFocus;
+	private bool _suppressOpenUntilChatReleased;
+
+	private string RootClass => _isOpen ? "open" : "closed";
+	private IReadOnlyList<ChatMessageEntry> Messages => _chat?.Messages ?? System.Array.Empty<ChatMessageEntry>();
+
+	protected override void OnUpdate()
+	{
+		_chat = ChatSystem.Current;
+		FindLocalPlayer();
+
+		if ( _suppressOpenUntilChatReleased && !Input.Down( "Chat" ) )
+		{
+			_suppressOpenUntilChatReleased = false;
+		}
+
+		if ( !_isOpen && !_suppressOpenUntilChatReleased && Input.Pressed( "Chat" ) )
+		{
+			Open();
+		}
+
+		if ( !_isOpen ) return;
+
+		if ( _pendingFocus && _input is not null )
+		{
+			_input.Focus();
+			_pendingFocus = false;
+		}
+
+		if ( Input.EscapePressed )
+		{
+			Input.EscapePressed = false;
+			Close( clearDraft: true );
+		}
+
+		PollHistoryScroll();
+	}
+
+	private void Open()
+	{
+		if ( _isOpen ) return;
+
+		_isOpen = true;
+		_historyScrollOffset = 0;
+		_pendingFocus = true;
+		_messagesPanel = null;
+		_uiState?.RequestUIFocus( this );
+	}
+
+	private void Close( bool clearDraft )
+	{
+		if ( !_isOpen ) return;
+
+		_isOpen = false;
+		_pendingFocus = false;
+		_suppressOpenUntilChatReleased = true;
+		_historyScrollOffset = 0;
+		_messagesPanel = null;
+		_uiState?.ReleaseUIFocus( this );
+		_input?.Blur();
+
+		if ( clearDraft ) _draft = "";
+	}
+
+	private void SubmitMessage()
+	{
+		var text = _input?.Text ?? _draft ?? "";
+		_draft = "";
+		if ( _input is not null ) _input.Text = "";
+
+		Close( clearDraft: true );
+
+		if ( string.IsNullOrWhiteSpace( text ) ) return;
+		if ( !_player.IsValid() ) return;
+
+		GameNetworkRpc.RequestSendChatMessage( _player, text );
+	}
+
+	private void FindLocalPlayer()
+	{
+		if ( Sandbox.LocalPlayer.Owns( _player ) ) return;
+
+		_player = Sandbox.LocalPlayer.GameObject( Scene );
+		_uiState = _player?.Components.Get<UIStateManager>();
+	}
+
+	private IEnumerable<ChatMessageEntry> VisibleMessages()
+	{
+		if ( !_isOpen )
+		{
+			var visible = Messages.Where( x => x.IsVisibleWhenClosed ).ToList();
+			return visible.Skip( int.Max( 0, visible.Count - ClosedMessageCount ) );
+		}
+
+		var maxOffset = MaxHistoryScrollOffset();
+		var offset = int.Clamp( _historyScrollOffset, 0, maxOffset );
+		var start = int.Max( 0, Messages.Count - OpenMessageCount - offset );
+		return Messages.Skip( start ).Take( OpenMessageCount );
+	}
+
+	private void PollHistoryScroll()
+	{
+		if ( Panel is null ) return;
+
+		_messagesPanel = FindByClass( Panel, "chat-messages" );
+		if ( _messagesPanel is null || !_messagesPanel.IsInside( Mouse.Position ) ) return;
+
+		var wheel = Input.MouseWheel.y;
+		if ( wheel == 0f ) return;
+
+		var direction = wheel > 0f ? 1 : -1;
+		_historyScrollOffset = int.Clamp( _historyScrollOffset + direction, 0, MaxHistoryScrollOffset() );
+	}
+
+	private int MaxHistoryScrollOffset()
+	{
+		return int.Max( 0, Messages.Count - OpenMessageCount );
+	}
+
+	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
+	{
+		if ( root is null ) return null;
+		if ( root.HasClass( className ) ) return root;
+
+		foreach ( var child in root.Children )
+		{
+			var found = FindByClass( child, className );
+			if ( found is not null ) return found;
+		}
+
+		return null;
+	}
+
+	private string MessageStyle( ChatMessageEntry message )
+	{
+		var opacity = _isOpen ? 1f : message.ClosedOpacity;
+		return $"opacity: {CssFloat( opacity )};";
+	}
+
+	private static string CssFloat( float value )
+	{
+		return value.ToString( "0.###", System.Globalization.CultureInfo.InvariantCulture );
+	}
+
+	protected override int BuildHash()
+	{
+		var hc = new System.HashCode();
+		hc.Add( _isOpen );
+		hc.Add( _chat?.ChatVersion ?? 0 );
+		hc.Add( _suppressOpenUntilChatReleased );
+		hc.Add( _historyScrollOffset );
+
+		foreach ( var message in VisibleMessages() )
+		{
+			hc.Add( message.Id );
+			hc.Add( (int)(message.ClosedOpacity * 100f) );
+		}
+
+		return hc.ToHashCode();
+	}
+}

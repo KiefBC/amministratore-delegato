@@ -1,0 +1,112 @@
+@import "/Systems/UI/_theme.scss";
+
+ChatPanel {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	pointer-events: none;
+
+	.chat-window {
+		position: absolute;
+		right: $corner-margin;
+		bottom: $corner-margin;
+		width: 420px;
+		flex-direction: column;
+		gap: 8px;
+		padding: 12px 14px;
+		background-color: rgba( 8, 12, 20, 0.66 );
+		border: 1px solid rgba( 240, 192, 64, 0.38 );
+		border-radius: $panel-radius;
+		box-shadow: 0px 0px 18px rgba( 0, 0, 0, 0.35 );
+		font-family: $font-default;
+		opacity: 1;
+		transition: opacity 0.08s linear;
+	}
+
+	&.closed .chat-window {
+		opacity: 0.65;
+	}
+
+	.chat-title {
+		align-self: stretch;
+		padding-bottom: 6px;
+		color: $accent-warning;
+		font-size: $text-small;
+		font-weight: 900;
+		letter-spacing: 1.4px;
+		text-transform: uppercase;
+		text-shadow: $text-shadow-default;
+		border-bottom: 1px solid rgba( 240, 192, 64, 0.24 );
+	}
+
+	.chat-messages {
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.chat-message {
+		flex-direction: row;
+		align-items: flex-start;
+		transition: opacity 0.08s linear;
+		text-shadow: $text-shadow-default;
+	}
+
+	.chat-sender {
+		color: $accent-warning;
+		font-size: $text-small;
+		font-weight: 900;
+		white-space: nowrap;
+	}
+
+	.chat-separator {
+		margin: 0px 5px 0px 1px;
+		color: $text-secondary;
+		font-size: $text-small;
+		font-weight: 700;
+	}
+
+	.chat-text {
+		color: $text-primary;
+		font-size: $text-small;
+		font-weight: 650;
+		flex-grow: 1;
+		white-space: normal;
+	}
+
+	.chat-input-row {
+		margin-top: 4px;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 10px;
+		background-color: rgba( 0, 0, 0, 0.5 );
+		border: 1px solid rgba( 255, 255, 255, 0.08 );
+		border-radius: $panel-radius-small;
+		pointer-events: all;
+	}
+
+	.chat-prompt {
+		color: $accent-warning;
+		font-size: $text-regular;
+		font-weight: 900;
+	}
+
+	.chat-input {
+		flex-grow: 1;
+		min-height: 24px;
+		color: $text-primary;
+		font-size: $text-regular;
+		font-weight: 700;
+		background-color: transparent;
+		border: 0px;
+		padding: 0px;
+
+		.content-label {
+			color: $text-primary;
+		}
+
+		.placeholder {
+			color: rgba( 255, 255, 255, 0.35 );
+		}
+	}
+}

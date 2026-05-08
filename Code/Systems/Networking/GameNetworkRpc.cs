@@ -138,6 +138,22 @@ public static class GameNetworkRpc
 		NotificationSystem.Current?.NotifyFromNetwork( kind, title, message, shownDuration );
 	}
 
+	[Rpc.Host]
+	public static void RequestSendChatMessage( GameObject player, string message )
+	{
+		if ( !CallerOwns( player ) ) return;
+
+		ChatSystem.Current?.TrySendMessage( player, message, Rpc.Caller );
+	}
+
+	[Rpc.Broadcast]
+	public static void BroadcastChatMessage( GameObject sender, string senderName, string message )
+	{
+		if ( !CallerIsHost() ) return;
+
+		ChatSystem.Current?.AddNetworkMessage( sender, senderName, message );
+	}
+
 	private static Backpack BackpackFor( GameObject player )
 	{
 		return player?.Components.GetInDescendantsOrSelf<Backpack>();
