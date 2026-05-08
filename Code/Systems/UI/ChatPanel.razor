@@ -4,27 +4,13 @@
 @inherits PanelComponent
 
 <root class="@RootClass">
+	@if ( !IsIdleCollapsed && HasBusinessCard )
+	{
+		<BusinessCardPanel class="business-card" style="@BusinessCardStyle()" PlayerName="@BusinessCardName()" NetWorthText="@BusinessCardWorthText()" Affiliation="@BusinessCardAffiliation()" CloseClicked=@HideBusinessCard DragStarted=@StartBusinessCardDrag Dragged=@DragBusinessCard DragStopped=@StopBusinessCardDrag />
+	}
+
 	<div class="chat-window">
 		<div class="chat-title">Placeholder Chat Title</div>
-
-		@if ( !IsIdleCollapsed && HasBusinessCard )
-		{
-			<div class="business-card">
-				<div class="business-card-topline">
-					<span class="business-card-kicker">Business Card</span>
-					<span class="business-card-close" onclick="@HideBusinessCard">x</span>
-				</div>
-				<div class="business-card-name">@BusinessCardName()</div>
-				<div class="business-card-row">
-					<span>Net Worth</span>
-					<strong>$@BusinessCardWorth().ToString( "N0" )</strong>
-				</div>
-				<div class="business-card-row">
-					<span>Affiliation</span>
-					<strong>@BusinessCardAffiliation()</strong>
-				</div>
-			</div>
-		}
 
 		@if ( !IsIdleCollapsed )
 		{
@@ -68,6 +54,12 @@
 	private const int OpenMessageCount = 10;
 	private const int ClosedMessageCount = OpenMessageCount;
 	private const float IdleCollapseDelay = 300f;
+	private const float BusinessCardWidth = 320f;
+	private const float BusinessCardHeight = 180f;
+	private const float ChatWindowWidth = 420f;
+	private const float ChatWindowExpandedHeight = 292f;
+	private const float ChatCornerMargin = 32f;
+	private const float BusinessCardGap = 10f;
 
 	private TextEntry _input = null;
 	private ChatSystem _chat;
@@ -76,16 +68,31 @@
 	private Sandbox.UI.Panel _messagesPanel;
 	private ChatMessageEntry _businessCardMessage;
 	private GameObject _businessCardPlayer;
+	private Vector2 _businessCardPosition;
 	private string _draft = "";
 	private int _historyScrollOffset;
 	private bool _isOpen;
 	private bool _pendingFocus;
 	private bool _suppressOpenUntilChatReleased;
+	private bool _hasBusinessCardPosition;
+	private bool _draggingBusinessCard;
 
 	private string RootClass => _isOpen ? "open" : (IsIdleCollapsed ? "closed collapsed" : "closed");
 	private IReadOnlyList<ChatMessageEntry> Messages => _chat?.Messages ?? System.Array.Empty<ChatMessageEntry>();
 	private bool HasBusinessCard => _isOpen && _businessCardMessage is not null && _businessCardPlayer.IsValid();
 	private bool IsIdleCollapsed => !_isOpen && (_chat?.SecondsSinceLastMessage ?? 0f) >= IdleCollapseDelay;
+
+	private Vector2 CursorCss
+	{
+		get
+		{
+			var sh = Screen.Height;
+			if ( sh <= 1 ) return Mouse.Position;
+
+			var scale = 1080f / sh;
+			return new Vector2( Mouse.Position.x * scale, Mouse.Position.y * scale );
+		}
+	}
 
 	protected override void OnUpdate()
 	{
@@ -140,6 +147,7 @@
 		_suppressOpenUntilChatReleased = true;
 		_historyScrollOffset = 0;
 		_messagesPanel = null;
+		_draggingBusinessCard = false;
 		HideBusinessCard();
 		_uiState?.ReleaseUIFocus( this );
 		_input?.Blur();
@@ -196,6 +204,26 @@
 		return int.Max( 0, Messages.Count - OpenMessageCount );
 	}
 
+	private void StartBusinessCardDrag()
+	{
+		if ( !HasBusinessCard ) return;
+
+		EnsureBusinessCardPosition();
+		_draggingBusinessCard = true;
+	}
+
+	private void DragBusinessCard()
+	{
+		if ( !HasBusinessCard ) return;
+
+		_businessCardPosition = ClampBusinessCardPosition( _businessCardPosition + ScreenDeltaToCssDelta( Mouse.Delta ) );
+	}
+
+	private void StopBusinessCardDrag()
+	{
+		_draggingBusinessCard = false;
+	}
+
 	private static Sandbox.UI.Panel FindByClass( Sandbox.UI.Panel root, string className )
 	{
 		if ( root is null ) return null;
@@ -221,12 +249,77 @@
 
 		_businessCardMessage = message;
 		_businessCardPlayer = message.Sender;
+		_hasBusinessCardPosition = false;
+		EnsureBusinessCardPosition();
 	}
 
 	private void HideBusinessCard()
 	{
 		_businessCardMessage = null;
 		_businessCardPlayer = null;
+		_draggingBusinessCard = false;
+	}
+
+	private void EnsureBusinessCardPosition()
+	{
+		if ( _hasBusinessCardPosition )
+		{
+			_businessCardPosition = ClampBusinessCardPosition( _businessCardPosition );
+			return;
+		}
+
+		_businessCardPosition = ClampBusinessCardPosition( DefaultBusinessCardPosition() );
+		_hasBusinessCardPosition = true;
+	}
+
+	private Vector2 DefaultBusinessCardPosition()
+	{
+		var viewport = CssViewportSize();
+		var chatLeft = viewport.x - ChatCornerMargin - ChatWindowWidth;
+		var chatTop = viewport.y - ChatCornerMargin - ChatWindowExpandedHeight;
+		var centeredX = chatLeft + ((ChatWindowWidth - BusinessCardWidth) * 0.5f);
+		var aboveChatY = chatTop - BusinessCardGap - BusinessCardHeight;
+
+		return new Vector2( centeredX, aboveChatY );
+	}
+
+	private string BusinessCardStyle()
+	{
+		EnsureBusinessCardPosition();
+		return $"left: {CssFloat( _businessCardPosition.x )}px; top: {CssFloat( _businessCardPosition.y )}px;";
+	}
+
+	private Vector2 ClampBusinessCardPosition( Vector2 position )
+	{
+		var viewport = CssViewportSize();
+		var maxX = float.Max( 0f, viewport.x - BusinessCardWidth );
+		var maxY = float.Max( 0f, viewport.y - BusinessCardHeight );
+
+		return new Vector2(
+			float.Clamp( position.x, 0f, maxX ),
+			float.Clamp( position.y, 0f, maxY ) );
+	}
+
+	private static Vector2 CssViewportSize()
+	{
+		var sh = Screen.Height;
+		if ( sh <= 1 ) return new Vector2( Screen.Width, Screen.Height );
+
+		var scale = 1080f / sh;
+		return new Vector2( Screen.Width * scale, Screen.Height * scale );
+	}
+
+	private static Vector2 ScreenDeltaToCssDelta( Vector2 delta )
+	{
+		var sh = Screen.Height;
+		if ( sh <= 1 ) return delta;
+
+		return delta * (1080f / sh);
+	}
+
+	private static string CssFloat( float value )
+	{
+		return value.ToString( "0.###", System.Globalization.CultureInfo.InvariantCulture );
 	}
 
 	private string BusinessCardName()
@@ -258,6 +351,11 @@
 		}
 
 		return total;
+	}
+
+	private string BusinessCardWorthText()
+	{
+		return $"${BusinessCardWorth():N0}";
 	}
 
 	private string BusinessCardAffiliation()
@@ -325,6 +423,9 @@
 		hc.Add( _historyScrollOffset );
 		hc.Add( _businessCardMessage?.Id ?? -1 );
 		hc.Add( IsIdleCollapsed );
+		hc.Add( _draggingBusinessCard );
+		hc.Add( (int)_businessCardPosition.x );
+		hc.Add( (int)_businessCardPosition.y );
 
 		if ( HasBusinessCard )
 		{

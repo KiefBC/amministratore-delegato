@@ -41,10 +41,7 @@ ChatPanel {
 
 	.business-card {
 		position: absolute;
-		right: 0px;
-		bottom: 100%;
 		width: 320px;
-		margin-bottom: 10px;
 		padding: 14px 16px;
 		flex-direction: column;
 		gap: 8px;
@@ -53,6 +50,13 @@ ChatPanel {
 		border-radius: $panel-radius;
 		box-shadow: 0px 0px 24px rgba( 0, 0, 0, 0.5 );
 		pointer-events: all;
+		cursor: move;
+		z-index: 2;
+	}
+
+	.business-card.dragging {
+		border-color: rgba( 240, 192, 64, 0.86 );
+		box-shadow: 0px 0px 28px rgba( 240, 192, 64, 0.18 ), 0px 0px 24px rgba( 0, 0, 0, 0.5 );
 	}
 
 	.business-card-topline {
@@ -104,12 +108,12 @@ ChatPanel {
 		font-size: $text-small;
 		font-weight: 700;
 		text-shadow: $text-shadow-default;
+	}
 
-		strong {
-			color: $text-primary;
-			font-weight: 900;
-			text-align: right;
-		}
+	.business-card-value {
+		color: $text-primary;
+		font-weight: 900;
+		text-align: right;
 	}
 
 	.chat-messages {
