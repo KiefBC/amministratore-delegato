@@ -37,5 +37,10 @@ public sealed class CombatSystem : GameObjectSystem<CombatSystem>
 	{
 		var resolved = targetGo?.Components.GetInAncestorsOrSelf<Component.IDamageable>();
 		Scene.RunEvent<IDamagedListener>( l => l.OnDamaged( resolved, info, wasKill ) );
+
+		if ( wasKill )
+		{
+			NotificationSystem.Current?.NotifyKill( targetGo, info.Attacker );
+		}
 	}
 }

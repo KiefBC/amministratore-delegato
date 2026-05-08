@@ -1,0 +1,60 @@
+@using Sandbox;
+@using Sandbox.UI;
+@namespace Sandbox
+@inherits PanelComponent
+
+<root>
+	@if ( _notifications.Count > 0 )
+	{
+		<div class="notification-stack">
+			@foreach ( var notification in _notifications )
+			{
+				<div class="notification @notification.KindClass @(notification.IsFading ? "fading" : "")" style="@NotificationStyle( notification )">
+					<span class="notification-title">@notification.Title</span>
+					@if ( !string.IsNullOrWhiteSpace( notification.Message ) )
+					{
+						<span class="notification-message">@notification.Message</span>
+					}
+				</div>
+			}
+		</div>
+	}
+</root>
+
+@code {
+	private IReadOnlyList<GameNotification> _notifications = System.Array.Empty<GameNotification>();
+
+	protected override void OnUpdate()
+	{
+		_notifications = NotificationSystem.Current?.Notifications ?? System.Array.Empty<GameNotification>();
+	}
+
+	protected override int BuildHash()
+	{
+		var hc = new System.HashCode();
+		hc.Add( _notifications.Count );
+		foreach ( var notification in _notifications )
+		{
+			hc.Add( notification.Id );
+			hc.Add( notification.Kind );
+			hc.Add( notification.Title );
+			hc.Add( notification.Message );
+			hc.Add( (int)(notification.FadePercent * 100f) );
+		}
+
+		return hc.ToHashCode();
+	}
+
+	private string NotificationStyle( GameNotification notification )
+	{
+		var fade = notification.FadePercent;
+		var opacity = CssFloat( fade );
+		var offset = CssFloat( (1f - fade) * 14f );
+		return $"opacity: {opacity}; transform: translateX( {offset}px );";
+	}
+
+	private static string CssFloat( float value )
+	{
+		return value.ToString( "0.###", System.Globalization.CultureInfo.InvariantCulture );
+	}
+}

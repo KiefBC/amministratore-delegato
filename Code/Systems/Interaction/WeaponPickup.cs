@@ -34,11 +34,13 @@ public sealed class WeaponPickup : Component, IInteractable
 
 		var definitionPath = ResolvedDefinitionPath;
 		if ( string.IsNullOrWhiteSpace( definitionPath ) ) return;
+		var definition = ResolvedDefinition;
 		if ( !backpack.TryAddDefinition( definitionPath, 1, StartingAmmo, autoEquipFirstWeapon: true ) )
 		{
 			return;
 		}
 
+		PickupNotification.NotifyPickedUp( player, definition, 1 );
 		GameObject.Destroy();
 	}
 

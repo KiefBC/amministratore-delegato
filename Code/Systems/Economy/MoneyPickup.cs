@@ -25,6 +25,7 @@ public sealed class MoneyPickup : Component, IInteractable
 		if ( Amount <= 0 ) return;
 
 		EconomySystem.Current?.Add( player, Amount );
+		PickupNotification.NotifyMoneyPickedUp( player, Amount );
 		GameObject.Destroy();
 	}
 }

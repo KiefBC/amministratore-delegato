@@ -121,6 +121,23 @@ public static class GameNetworkRpc
 		WeaponBehavior.SpawnDebugMarker( player.Scene, position, hit ? Color.Red : Color.Yellow );
 	}
 
+	[Rpc.Broadcast]
+	public static void BroadcastNotification( int kind, string title, string message, float shownDuration )
+	{
+		if ( !CallerIsHost() ) return;
+
+		NotificationSystem.Current?.NotifyFromNetwork( kind, title, message, shownDuration );
+	}
+
+	[Rpc.Broadcast]
+	public static void BroadcastPlayerNotification( GameObject player, int kind, string title, string message, float shownDuration )
+	{
+		if ( !CallerIsHost() ) return;
+		if ( !Sandbox.LocalPlayer.Owns( player ) ) return;
+
+		NotificationSystem.Current?.NotifyFromNetwork( kind, title, message, shownDuration );
+	}
+
 	private static Backpack BackpackFor( GameObject player )
 	{
 		return player?.Components.GetInDescendantsOrSelf<Backpack>();

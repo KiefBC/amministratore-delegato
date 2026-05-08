@@ -105,6 +105,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 	private PlayerStatsComponent _stats;
 	private float _lastAppliedMaxHealth;
 	private float _lastAppliedMaxStamina;
+	private int _lastAppliedStaminaLevel;
 	private bool _wantsRunStaminaDrain;
 	private bool _isRunStaminaDrainActive;
 	private bool _sprintLocked;
@@ -165,6 +166,7 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 		_lastAppliedMaxHealth = EffectiveMaxHealth;
 		_lastAppliedMaxStamina = EffectiveMaxStamina;
+		_lastAppliedStaminaLevel = ResolvePlayerStats()?.StaminaLevel ?? 1;
 		_lastHealth = Health;
 		_deathApplied = false;
 	}
@@ -289,29 +291,36 @@ public sealed class UnitComponent : Component, Component.IDamageable
 
 	private void ApplyStatDerivedPools()
 	{
+		var stats = ResolvePlayerStats();
 		var maxHealth = EffectiveMaxHealth;
 		var maxStamina = EffectiveMaxStamina;
+		var staminaLevel = stats?.StaminaLevel ?? 1;
 
 		if ( _lastAppliedMaxHealth <= 0f ) _lastAppliedMaxHealth = maxHealth;
 		if ( _lastAppliedMaxStamina <= 0f ) _lastAppliedMaxStamina = maxStamina;
+		if ( _lastAppliedStaminaLevel <= 0 ) _lastAppliedStaminaLevel = staminaLevel;
 
 		if ( maxHealth != _lastAppliedMaxHealth )
 		{
-			var delta = maxHealth - _lastAppliedMaxHealth;
-			Health = delta > 0f && Health > 0f
-				? float.Clamp( Health + delta, 0f, maxHealth )
-				: float.Clamp( Health, 0f, maxHealth );
+			Health = float.Clamp( Health, 0f, maxHealth );
 			_lastAppliedMaxHealth = maxHealth;
 		}
 
-		if ( maxStamina != _lastAppliedMaxStamina )
+		if ( staminaLevel > _lastAppliedStaminaLevel )
+		{
+			Stamina = maxStamina;
+			_sprintLocked = false;
+		}
+		else if ( maxStamina != _lastAppliedMaxStamina )
 		{
 			var delta = maxStamina - _lastAppliedMaxStamina;
 			Stamina = delta > 0f
 				? float.Clamp( Stamina + delta, 0f, maxStamina )
 				: float.Clamp( Stamina, 0f, maxStamina );
-			_lastAppliedMaxStamina = maxStamina;
 		}
+
+		_lastAppliedStaminaLevel = staminaLevel;
+		_lastAppliedMaxStamina = maxStamina;
 	}
 
 	private PlayerStatsComponent ResolvePlayerStats()
