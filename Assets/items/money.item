@@ -5,5 +5,42 @@
   "Rarity": "Common",
   "Value": 1,
   "Weight": 0,
-  "MaxStack": 2147483647
+  "MaxStack": 2147483647,
+  "WorldModel": "",
+  "Weapon": {
+    "EquippedModel": "",
+    "HandBone": "hold_R",
+    "HoldType": "Pistol",
+    "Handedness": "Right",
+    "Damage": 25,
+    "Range": 3000,
+    "ClipSize": 15,
+    "ReloadDuration": 1.5,
+    "FireRate": 5,
+    "TraceSize": 6,
+    "Offset": "0,0,0",
+    "AngleOffset": "0,0,0",
+    "Scale": "1,1,1",
+    "FireInterval": 0.2
+  },
+  "Consumable": {
+    "Category": "Food",
+    "Tier": "Basic",
+    "Health": 0,
+    "Stamina": 0,
+    "Hydration": 0,
+    "Nutrition": 0,
+    "HealthRegenPerSecond": 0,
+    "StaminaRegenPerSecond": 0,
+    "EffectDuration": 0,
+    "HealthXp": 0
+  },
+  "IsWeapon": false,
+  "IsCurrency": true,
+  "IsConsumable": false,
+  "ModelPath": "",
+  "IsNotWeaponKind": true,
+  "IsNotConsumableKind": true,
+  "__references": [],
+  "__version": 0
 }

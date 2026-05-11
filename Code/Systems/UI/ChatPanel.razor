@@ -416,7 +416,7 @@
 		foreach ( var pair in finance.StockShares )
 		{
 			if ( pair.Value <= 0 ) continue;
-			var price = MarketDataSystem.Current?.StockPrice( pair.Key ) ?? FinanceCatalog.Stock( pair.Key )?.FallbackPrice ?? 0m;
+			var price = MarketDataSystem.Game?.StockPrice( pair.Key ) ?? FinanceCatalog.Stock( pair.Key )?.FallbackPrice ?? 0m;
 			total += pair.Value * price;
 		}
 
@@ -431,7 +431,7 @@
 		foreach ( var pair in finance.CryptoMilliUnits )
 		{
 			if ( pair.Value <= 0 ) continue;
-			var price = MarketDataSystem.Current?.CryptoPrice( pair.Key ) ?? FinanceCatalog.Coin( pair.Key )?.FallbackPrice ?? 0m;
+			var price = MarketDataSystem.Game?.CryptoPrice( pair.Key ) ?? FinanceCatalog.Coin( pair.Key )?.FallbackPrice ?? 0m;
 			total += (pair.Value / 1000m) * price;
 		}
 
@@ -513,7 +513,7 @@
 			hc.Add( backpack?.Wallet ?? 0 );
 			hc.Add( backpack?.InventoryVersion ?? 0 );
 			hc.Add( finance?.FinanceVersion ?? 0 );
-			hc.Add( MarketDataSystem.Current?.PriceVersion ?? 0 );
+			hc.Add( MarketDataSystem.Game?.PriceVersion ?? 0 );
 			hc.Add( profile?.AffiliationId ?? "" );
 		}
 

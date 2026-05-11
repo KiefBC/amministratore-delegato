@@ -148,6 +148,46 @@ public sealed class PlayerStatsComponent : Component
 		return StatConfig.XpForLevel( level + 1 ) - StatConfig.XpForLevel( level );
 	}
 
+	public PlayerStatsSaveData CreateSaveData()
+	{
+		if ( Sandbox.Networking.IsHost ) FlushPendingXp();
+
+		return new PlayerStatsSaveData
+		{
+			HealthXp = HealthXp,
+			StaminaXp = StaminaXp,
+			PunchingXp = PunchingXp,
+			RangedXp = RangedXp,
+			BusinessXp = BusinessXp,
+			PlayerLevel = PlayerLevel,
+			HealthLevel = HealthLevel,
+			StaminaLevel = StaminaLevel,
+			PunchingLevel = PunchingLevel,
+			RangedLevel = RangedLevel,
+			BusinessLevel = BusinessLevel,
+		};
+	}
+
+	public void RestoreSaveData( PlayerStatsSaveData data )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( data is null ) return;
+
+		var maxXp = StatConfig.MaxXp;
+		HealthXp = float.Clamp( data.HealthXp, 0f, maxXp );
+		StaminaXp = float.Clamp( data.StaminaXp, 0f, maxXp );
+		PunchingXp = float.Clamp( data.PunchingXp, 0f, maxXp );
+		RangedXp = float.Clamp( data.RangedXp, 0f, maxXp );
+		BusinessXp = float.Clamp( data.BusinessXp, 0f, maxXp );
+
+		_pendingHealthXp = 0f;
+		_pendingStaminaXp = 0f;
+		_pendingPunchingXp = 0f;
+		_pendingRangedXp = 0f;
+		_pendingBusinessXp = 0f;
+		StatsVersion++;
+	}
+
 	public void AwardRangedShot( bool hitDamageableTarget )
 	{
 		if ( !Sandbox.Networking.IsHost ) return;
@@ -264,7 +304,11 @@ public sealed class PlayerStatsComponent : Component
 		changed |= FlushPendingStatXp( ref _pendingRangedXp, RangedXp, x => RangedXp = x );
 		changed |= FlushPendingStatXp( ref _pendingBusinessXp, BusinessXp, x => BusinessXp = x );
 
-		if ( changed ) StatsVersion++;
+		if ( changed )
+		{
+			StatsVersion++;
+			PlayerPersistenceSystem.Current?.MarkDirty( GameObject.Root, "stats changed" );
+		}
 	}
 
 	private bool FlushPendingStatXp( ref float pending, float current, System.Action<float> setter )

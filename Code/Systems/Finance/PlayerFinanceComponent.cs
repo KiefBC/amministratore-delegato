@@ -24,7 +24,65 @@ public sealed class PlayerFinanceComponent : Component
 
 	protected override void OnUpdate()
 	{
+		if ( UsesCloudFinance() ) return;
+
 		AccrueDebtIfDue();
+	}
+
+	public PlayerFinanceSaveData CreateSaveData()
+	{
+		if ( Sandbox.Networking.IsHost ) AccrueDebtIfDue();
+
+		var remainingDebtSeconds = DebtBalance > 0 && NextDebtAccrualTime > Time.Now
+			? NextDebtAccrualTime - Time.Now
+			: 0f;
+
+		return new PlayerFinanceSaveData
+		{
+			BankBalance = BankBalance,
+			DebtBalance = DebtBalance,
+			DebtHourlyInterestPercent = DebtHourlyInterestPercent,
+			DebtAccrualIntervalSeconds = DebtAccrualIntervalSeconds,
+			DebtAccrualRemainingSeconds = remainingDebtSeconds,
+			StockShares = StockShares.ToDictionary( x => x.Key, x => x.Value ),
+			StockCostBasis = StockCostBasis.ToDictionary( x => x.Key, x => x.Value ),
+			CryptoMilliUnits = CryptoMilliUnits.ToDictionary( x => x.Key, x => x.Value ),
+			OwnedBusinesses = OwnedBusinesses.ToDictionary( x => x.Key, x => x.Value ),
+		};
+	}
+
+	public void RestoreSaveData( PlayerFinanceSaveData data )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( data is null ) return;
+
+		BankBalance = int.Max( 0, data.BankBalance );
+		DebtBalance = int.Max( 0, data.DebtBalance );
+		DebtHourlyInterestPercent = float.Clamp( data.DebtHourlyInterestPercent, 0f, 100f );
+		DebtAccrualIntervalSeconds = data.DebtAccrualIntervalSeconds > 0f
+			? float.Clamp( data.DebtAccrualIntervalSeconds, 1f, 86400f )
+			: DebtAccrualIntervalSeconds;
+
+		ClearDictionary( StockShares );
+		ClearDictionary( StockCostBasis );
+		ClearDictionary( CryptoMilliUnits );
+		ClearDictionary( OwnedBusinesses );
+
+		RestoreStocks( data );
+		RestorePositiveValues( CryptoMilliUnits, data.CryptoMilliUnits, FinanceCatalog.Coin );
+		RestorePositiveValues( OwnedBusinesses, data.OwnedBusinesses, FinanceCatalog.Business );
+
+		if ( DebtBalance <= 0 )
+		{
+			NextDebtAccrualTime = 0f;
+		}
+		else
+		{
+			var remaining = data.DebtAccrualRemainingSeconds > 0f ? data.DebtAccrualRemainingSeconds : DebtAccrualIntervalSeconds;
+			NextDebtAccrualTime = Time.Now + float.Max( 1f, remaining );
+		}
+
+		Touch();
 	}
 
 	public bool TryDeposit( int amount )
@@ -83,6 +141,56 @@ public sealed class PlayerFinanceComponent : Component
 		}
 
 		return Backpack()?.AddMoney( amount ) == true;
+	}
+
+	public void ApplyCloudBankBalance( int bankBalance, string reason = "cloud snapshot" )
+	{
+		ApplyCloudFinanceSnapshot( bankBalance, null, null, reason );
+	}
+
+	public void ApplyCloudFinanceSnapshot( int? bankBalance, int? debtBalance, long? nextDebtAccrualAtUnix, string reason = "cloud snapshot" )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+
+		var changed = false;
+		if ( bankBalance.HasValue )
+		{
+			var normalized = int.Max( 0, bankBalance.Value );
+			if ( BankBalance != normalized )
+			{
+				BankBalance = normalized;
+				changed = true;
+			}
+		}
+
+		if ( debtBalance.HasValue )
+		{
+			var normalized = int.Max( 0, debtBalance.Value );
+			if ( DebtBalance != normalized )
+			{
+				DebtBalance = normalized;
+				changed = true;
+			}
+		}
+
+		if ( nextDebtAccrualAtUnix.HasValue )
+		{
+			var nextTime = CloudDebtAccrualTime( nextDebtAccrualAtUnix.Value );
+			if ( !NearlyEqual( NextDebtAccrualTime, nextTime ) )
+			{
+				NextDebtAccrualTime = nextTime;
+				changed = true;
+			}
+		}
+
+		if ( !changed ) return;
+
+		Touch();
+		GameLogSystem.Current?.Info( "finance", "Cloud finance snapshot applied", GameObject.Root, data: GameLogSystem.Fields(
+			("reason", reason),
+			("bankBalance", BankBalance),
+			("debtBalance", DebtBalance),
+			("nextDebtAccrualTime", NextDebtAccrualTime) ) );
 	}
 
 	public bool TryBuyBusiness( string businessId )
@@ -304,9 +412,63 @@ public sealed class PlayerFinanceComponent : Component
 		return total;
 	}
 
+	private void RestoreStocks( PlayerFinanceSaveData data )
+	{
+		foreach ( var pair in data.StockShares ?? new Dictionary<string, int>() )
+		{
+			var offer = FinanceCatalog.Stock( pair.Key );
+			if ( offer is null || pair.Value <= 0 ) continue;
+
+			StockShares[offer.Symbol] = pair.Value;
+			if ( data.StockCostBasis?.TryGetValue( pair.Key, out var basis ) == true && basis > 0 )
+			{
+				StockCostBasis[offer.Symbol] = basis;
+			}
+		}
+	}
+
+	private static void RestorePositiveValues<T>( NetDictionary<string, int> target, Dictionary<string, int> source, System.Func<string, T> resolve ) where T : class
+	{
+		foreach ( var pair in source ?? new Dictionary<string, int>() )
+		{
+			var key = pair.Key ?? "";
+			if ( string.IsNullOrWhiteSpace( key ) || pair.Value <= 0 ) continue;
+			if ( resolve( key ) is null ) continue;
+
+			target[key] = pair.Value;
+		}
+	}
+
+	private static void ClearDictionary( NetDictionary<string, int> dictionary )
+	{
+		foreach ( var key in dictionary.Keys.ToList() )
+		{
+			dictionary.Remove( key );
+		}
+	}
+
 	private Backpack Backpack()
 	{
 		return GameObject.Root.Components.GetInDescendantsOrSelf<Backpack>();
+	}
+
+	private static float CloudDebtAccrualTime( long nextDebtAccrualAtUnix )
+	{
+		if ( nextDebtAccrualAtUnix <= 0 ) return 0f;
+
+		var remaining = nextDebtAccrualAtUnix - System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		return Time.Now + float.Max( 1f, remaining );
+	}
+
+	private static bool NearlyEqual( float left, float right )
+	{
+		return float.Abs( left - right ) < 0.1f;
+	}
+
+	private bool UsesCloudFinance()
+	{
+		var config = CloudProgressionSystem.Current?.Config;
+		return config.IsValid() && config.HasBackend;
 	}
 
 	private void EnsureDebtAccrualScheduled()
@@ -331,5 +493,6 @@ public sealed class PlayerFinanceComponent : Component
 	private void Touch()
 	{
 		FinanceVersion++;
+		PlayerPersistenceSystem.Current?.RequestSaveSoon( GameObject.Root, "finance changed" );
 	}
 }

@@ -1,0 +1,207 @@
+{
+  "LocalAssetBrowser.History": {
+    "Value": "[\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple-ragdolls\\\\Assets\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple-ragdolls\\\\Assets\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple-ragdolls\\\\Assets\\\\scenes\u0022,\u0022@everything\u0022,\u0022@recents\u0022]",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.HistoryIdx": {
+    "Value": "4",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "SceneView.Viewport0.Settings": {
+    "Value": "{\u0022CameraPosition\u0022:\u0022-134.553421,-155.508087,146.27597\u0022,\u0022CameraRotation\u0022:\u0022-0.160345837,0.113670439,0.79989022,0.56704849\u0022,\u0022View\u0022:0,\u0022RenderMode\u0022:0,\u0022WireframeMode\u0022:false,\u0022EnablePostProcessing\u0022:true,\u0022EnablePrefabLighting\u0022:true,\u0022ShowSkyIn2D\u0022:true,\u0022ShowGrid\u0022:true,\u0022GridOpacity\u0022:0.2,\u0022GridAxis\u0022:0,\u0022CameraOrthoHeight\u0022:1000}",
+    "Timeout": 1779394265,
+    "DeleteAt": 0
+  },
+  "Window.SboxSceneEditor.Dock": {
+    "Value": "{\u0022floatingWindows\u0022:[],\u0022mainWrapper\u0022:{\u0022geometry\u0022:\u0022AdnQywADAAAAAAAAAAAAAAAACfcAAAUzAAAAAAAAAAAAAAn3AAAFMwAAAAAAAAAACgAAAAAAAAAAAAAACfcAAAUz\u0022,\u0022splitter\u0022:{\u0022items\u0022:[{\u0022currentIndex\u0022:0,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022SceneTreeWidget\u0022,\u0022name\u0022:\u0022Hierarchy\u0022},{\u0022data\u0022:null,\u0022managedType\u0022:\u0022PanelInspectorWidget\u0022,\u0022name\u0022:\u0022UI Panels\u0022}],\u0022type\u0022:\u0022area\u0022},{\u0022items\u0022:[{\u0022items\u0022:[{\u0022currentIndex\u0022:0,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022SceneDock\u0022,\u0022name\u0022:\u0022SceneDock:scenes/minimal.scene\u0022}],\u0022type\u0022:\u0022area\u0022},{\u0022currentIndex\u0022:1,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022MainAssetBrowser\u0022,\u0022name\u0022:\u0022Asset Browser\u0022},{\u0022data\u0022:null,\u0022managedType\u0022:\u0022ConsoleWidget\u0022,\u0022name\u0022:\u0022Console\u0022},{\u0022data\u0022:null,\u0022managedType\u0022:\u0022MixerDock\u0022,\u0022name\u0022:\u0022Mixer\u0022},{\u0022data\u0022:null,\u0022managedType\u0022:\u0022LibraryManagerDock\u0022,\u0022name\u0022:\u0022Library Manager\u0022}],\u0022type\u0022:\u0022area\u0022}],\u0022state\u0022:\u0022AAAA/wAAAAEAAAACAAADsAAAAjUA/////wEAAAACAA==\u0022,\u0022type\u0022:\u0022splitter\u0022},{\u0022items\u0022:[{\u0022currentIndex\u0022:0,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022Inspector\u0022,\u0022name\u0022:\u0022Inspector\u0022}],\u0022type\u0022:\u0022area\u0022},{\u0022currentIndex\u0022:0,\u0022objects\u0022:[{\u0022data\u0022:null,\u0022managedType\u0022:\u0022PerformanceDock\u0022,\u0022name\u0022:\u0022Performance\u0022}],\u0022type\u0022:\u0022area\u0022}],\u0022state\u0022:\u0022AAAA/wAAAAEAAAACAAAEuQAAAVEA/////wEAAAACAA==\u0022,\u0022type\u0022:\u0022splitter\u0022}],\u0022state\u0022:\u0022AAAA/wAAAAEAAAACAAAGvgAAAdgA/////wEAAAABAA==\u0022,\u0022type\u0022:\u0022splitter\u0022}],\u0022state\u0022:\u0022AAAA/wAAAAEAAAACAAABmwAACjQA/////wEAAAABAA==\u0022,\u0022type\u0022:\u0022splitter\u0022}},\u0022toolWindowManagerStateFormat\u0022:1}",
+    "Timeout": 1779394237,
+    "DeleteAt": 0
+  },
+  "gizmo.settings": {
+    "Value": "{\u0022EditMode\u0022:\u0022position\u0022,\u0022Selection\u0022:true,\u0022ViewMode\u0022:\u00223d\u0022,\u0022GizmosEnabled\u0022:true,\u0022GizmoScale\u0022:1,\u0022GridSpacing\u0022:32,\u0022SnapToGrid\u0022:false,\u0022SnapToAngles\u0022:true,\u0022AngleSpacing\u0022:15,\u0022GlobalSpace\u0022:true,\u0022DebugActionGraphs\u0022:false,\u0022DisabledGizmos\u0022:{}}",
+    "Timeout": 1779394214,
+    "DeleteAt": 0
+  },
+  "SceneView.Layout": {
+    "Value": "{\u0022Layout\u0022:0,\u0022SplitterState\u0022:[]}",
+    "Timeout": 1779394214,
+    "DeleteAt": 0
+  },
+  "scenes/minimal.scene.Viewport0": {
+    "Value": "{\u0022CameraPosition\u0022:\u0022-134.553421,-155.508087,146.27597\u0022,\u0022CameraRotation\u0022:\u0022-0.160345837,0.113670439,0.79989022,0.56704849\u0022,\u0022CameraOrthoHeight\u0022:1000}",
+    "Timeout": 1779394265,
+    "DeleteAt": 0
+  },
+  ".Viewport0": {
+    "Value": "{\u0022CameraPosition\u0022:\u0022-134.553421,-155.508087,146.27597\u0022,\u0022CameraRotation\u0022:\u0022-0.184418663,0.11763747,0.822663486,0.524762809\u0022,\u0022CameraOrthoHeight\u0022:1000}",
+    "Timeout": 1778617987,
+    "DeleteAt": 0
+  },
+  "CloudBrowser..ViewMode": {
+    "Value": "2",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "CloudBrowser..ShowJunkFiles": {
+    "Value": "false",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "CloudBrowser..HideNonAssets": {
+    "Value": "false",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "CloudBrowser..ShowRecursiveFiles": {
+    "Value": "false",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ViewMode": {
+    "Value": "0",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ShowJunkFiles": {
+    "Value": "false",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.HideNonAssets": {
+    "Value": "false",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ShowRecursiveFiles": {
+    "Value": "false",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Search": {
+    "Value": "\u0022\u0022",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ActiveTags": {
+    "Value": "\u0022\u0022",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.ExcludedTags": {
+    "Value": "\u0022\u0022",
+    "Timeout": 1779394215,
+    "DeleteAt": 0
+  },
+  "expand.7b26b865-0c93-4325-994b-7532df807b75.MoveModeWalk": {
+    "Value": "false",
+    "Timeout": 1778618916,
+    "DeleteAt": 0
+  },
+  "expand.7b26b865-0c93-4325-994b-7532df807b75.PhysicsGrabber": {
+    "Value": "false",
+    "Timeout": 1778618916,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Model.History": {
+    "Value": "[\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple-ragdolls\\\\Assets\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple-ragdolls\\\\Assets\u0022,\u0022@everything\u0022]",
+    "Timeout": 1778453230,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Model.HistoryIdx": {
+    "Value": "2",
+    "Timeout": 1778453230,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Model.ViewMode": {
+    "Value": "0",
+    "Timeout": 1778453232,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Model.ShowJunkFiles": {
+    "Value": "false",
+    "Timeout": 1778453232,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Model.HideNonAssets": {
+    "Value": "false",
+    "Timeout": 1778453232,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Model.ShowRecursiveFiles": {
+    "Value": "false",
+    "Timeout": 1778453232,
+    "DeleteAt": 0
+  },
+  "expand.e1f3b79f-6b46-4d1e-8019-7e8cad69eac7.SkinnedModelRenderer": {
+    "Value": "false",
+    "Timeout": 1778453235,
+    "DeleteAt": 0
+  },
+  "expand.28caedb8-87f8-425d-92b2-addefdd03f06.Rigidbody": {
+    "Value": "false",
+    "Timeout": 1778493097,
+    "DeleteAt": 0
+  },
+  "expand.28caedb8-87f8-425d-92b2-addefdd03f06.CapsuleCollider": {
+    "Value": "false",
+    "Timeout": 1778493098,
+    "DeleteAt": 0
+  },
+  "EditorDisplayMode": {
+    "Value": "\u002216:9 Aspect\u0022",
+    "Timeout": 1778617974,
+    "DeleteAt": 0
+  },
+  "expand.ab575cbe-8858-4c22-a452-7b72ed14c811.ModelRenderer": {
+    "Value": "false",
+    "Timeout": 1778513056,
+    "DeleteAt": 0
+  },
+  "expand.ab575cbe-8858-4c22-a452-7b72ed14c811.BoxCollider": {
+    "Value": "false",
+    "Timeout": 1778513056,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Material.History": {
+    "Value": "[\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple-ragdolls\\\\Assets\u0022,\u0022C:\\\\Users\\\\uberm\\\\Desktop\\\\Projects\\\\shrimple-ragdolls\\\\Assets\u0022,\u0022@everything\u0022]",
+    "Timeout": 1778512925,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Material.HistoryIdx": {
+    "Value": "2",
+    "Timeout": 1778512925,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Material.ViewMode": {
+    "Value": "0",
+    "Timeout": 1778512927,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Material.ShowJunkFiles": {
+    "Value": "false",
+    "Timeout": 1778512927,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Material.HideNonAssets": {
+    "Value": "false",
+    "Timeout": 1778512927,
+    "DeleteAt": 0
+  },
+  "LocalAssetBrowser.Material.ShowRecursiveFiles": {
+    "Value": "false",
+    "Timeout": 1778512927,
+    "DeleteAt": 0
+  },
+  "expand.efa48df5-f8df-412a-8a7e-e349d24b6cbb.SkinnedModelRenderer": {
+    "Value": "false",
+    "Timeout": 1778617910,
+    "DeleteAt": 0
+  },
+  "expand.7b26b865-0c93-4325-994b-7532df807b75.PlayerController": {
+    "Value": "false",
+    "Timeout": 1778618916,
+    "DeleteAt": 0
+  }
+}

@@ -16,6 +16,7 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 	private const int MaxMessageLength = 240;
 	private const int MaxHistory = 100;
 	private const float SendCooldown = 0.75f;
+	private const float CooldownPruneInterval = 30f;
 	private static readonly (string Sender, string Message)[] DefaultMessages =
 	{
 		("Reception", "Welcome to the floor. Keep your ledger close."),
@@ -28,6 +29,7 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 	private readonly Dictionary<string, float> _nextAllowedSendTime = new();
 	private GameObject _displayObject;
 	private int _nextId;
+	private float _nextCooldownPruneTime;
 
 	public IReadOnlyList<ChatMessageEntry> Messages => _messages;
 	public int ChatVersion { get; private set; }
@@ -110,6 +112,7 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 	{
 		EnsureDisplay();
 		TickMessages();
+		PruneCooldowns();
 	}
 
 	private void EnsureDisplay()
@@ -152,6 +155,17 @@ public sealed class ChatSystem : GameObjectSystem<ChatSystem>
 
 		_nextAllowedSendTime[key] = Time.Now + SendCooldown;
 		return false;
+	}
+
+	private void PruneCooldowns()
+	{
+		if ( Time.Now < _nextCooldownPruneTime ) return;
+
+		_nextCooldownPruneTime = Time.Now + CooldownPruneInterval;
+		foreach ( var pair in _nextAllowedSendTime.ToArray() )
+		{
+			if ( pair.Value <= Time.Now ) _nextAllowedSendTime.Remove( pair.Key );
+		}
 	}
 
 	private static string RateLimitKey( GameObject player, Connection caller )

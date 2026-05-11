@@ -41,6 +41,11 @@ public sealed class PlayerTitleComponent : Component
 		ClearTitleObject();
 	}
 
+	protected override void OnDestroy()
+	{
+		ClearTitleObject();
+	}
+
 	public void CopySettingsFrom( PlayerTitleComponent source )
 	{
 		if ( !source.IsValid() || source == this ) return;

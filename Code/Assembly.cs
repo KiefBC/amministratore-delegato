@@ -1,6 +1,7 @@
 global using Sandbox;
 global using Sandbox.Systems;
 global using Sandbox.Systems.AI;
+global using Sandbox.Systems.Cloud;
 global using Sandbox.Systems.Combat;
 global using Sandbox.Systems.Economy;
 global using Sandbox.Systems.Finance;
@@ -8,6 +9,7 @@ global using Sandbox.Systems.Interaction;
 global using Sandbox.Systems.Inventory;
 global using Sandbox.Systems.Logging;
 global using Sandbox.Systems.Movement;
+global using Sandbox.Systems.Persistence;
 global using Sandbox.Systems.UI;
 global using GameNetworkRpc = Sandbox.Systems.Networking.GameNetworkRpc;
 global using System.Collections.Generic;

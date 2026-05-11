@@ -42,6 +42,11 @@ public sealed class Equipment : Component
 		ClearView();
 	}
 
+	protected override void OnDestroy()
+	{
+		ClearView();
+	}
+
 	private void UpdateView()
 	{
 		EquippedState = default;

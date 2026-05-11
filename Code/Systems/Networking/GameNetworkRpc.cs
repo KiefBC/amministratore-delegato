@@ -34,6 +34,60 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
+	public static void RequestLoadCloudPlayer( GameObject player, string authToken )
+	{
+		if ( !CallerOwns( player ) ) return;
+
+		_ = CloudProgressionSystem.Current?.LoadPlayerAsync( player, authToken ?? "", Rpc.Caller, System.Threading.CancellationToken.None );
+	}
+
+	[Rpc.Host]
+	public static void RequestCompleteCloudJob( GameObject player, GameObject workstation, string authToken )
+	{
+		if ( !CallerOwns( player ) ) return;
+		if ( !workstation.IsValid() ) return;
+
+		foreach ( var job in workstation.Components.GetAll<CloudJobWorkstation>() )
+		{
+			if ( !job.IsValid() ) continue;
+			job.TryCompleteOnHost( player, authToken ?? "", Rpc.Caller );
+			return;
+		}
+	}
+
+	[Rpc.Host]
+	public static void RequestCloudFinanceAction( GameObject player, int action, int amount, int account, GameObject recipient, string authToken )
+	{
+		if ( !CallerOwns( player ) ) return;
+		if ( !System.Enum.IsDefined( typeof( CloudFinanceAction ), action ) ) return;
+		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), account ) ) return;
+		if ( amount <= 0 ) return;
+
+		_ = CloudProgressionSystem.Current?.SubmitFinanceActionAsync(
+			player,
+			(CloudFinanceAction)action,
+			amount,
+			(FinanceAccountSource)account,
+			recipient,
+			authToken ?? "",
+			Rpc.Caller,
+			System.Threading.CancellationToken.None );
+	}
+
+	[Rpc.Host]
+	public static void RequestSaveCloudPlayer( GameObject player, string authToken, string reason )
+	{
+		if ( !CallerOwns( player ) ) return;
+
+		_ = CloudProgressionSystem.Current?.SavePlayerCheckpointFromRequestAsync(
+			player,
+			authToken ?? "",
+			Rpc.Caller,
+			reason ?? "checkpoint",
+			System.Threading.CancellationToken.None );
+	}
+
+	[Rpc.Host]
 	public static void RequestUseDeskDevice( GameObject deskGo, GameObject player, int device )
 	{
 		if ( !CallerOwns( player ) ) return;
@@ -90,23 +144,25 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
-	public static void RequestDepositMoney( GameObject player, int amount )
+	public static void RequestDepositMoney( GameObject player, int amount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) ) return;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.Deposit, amount, FinanceAccountSource.Wallet, null, authToken ) ) return;
 
 		FinanceFor( player )?.TryDeposit( amount );
 	}
 
 	[Rpc.Host]
-	public static void RequestWithdrawMoney( GameObject player, int amount )
+	public static void RequestWithdrawMoney( GameObject player, int amount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) ) return;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.Withdraw, amount, FinanceAccountSource.Bank, null, authToken ) ) return;
 
 		FinanceFor( player )?.TryWithdraw( amount );
 	}
 
 	[Rpc.Host]
-	public static void RequestTakeLoan( GameObject player, int amount, int destinationAccount )
+	public static void RequestTakeLoan( GameObject player, int amount, int destinationAccount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) )
 		{
@@ -131,6 +187,8 @@ public static class GameNetworkRpc
 		}
 
 		var destination = (FinanceAccountSource)destinationAccount;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.TakeLoan, amount, destination, null, authToken ) ) return;
+
 		if ( !finance.TryTakeLoan( amount, destination ) )
 		{
 			Log.Warning( $"[FinanceDebt] Take loan failed; player={PlayerLogName( player )}; amount=${amount:N0}; destination={destination}." );
@@ -143,7 +201,7 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
-	public static void RequestRepayDebt( GameObject player, int amount, int sourceAccount )
+	public static void RequestRepayDebt( GameObject player, int amount, int sourceAccount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) )
 		{
@@ -168,6 +226,8 @@ public static class GameNetworkRpc
 		}
 
 		var source = (FinanceAccountSource)sourceAccount;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.RepayDebt, amount, source, null, authToken ) ) return;
+
 		var payment = int.Min( int.Max( 0, amount ), finance.DebtBalance );
 		if ( !finance.TryRepayDebt( amount, source ) )
 		{
@@ -181,11 +241,12 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
-	public static void RequestTransferMoney( GameObject player, GameObject recipient, int amount, int sourceAccount )
+	public static void RequestTransferMoney( GameObject player, GameObject recipient, int amount, int sourceAccount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) ) return;
 		if ( !recipient.IsValid() || recipient == player ) return;
 		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), sourceAccount ) ) return;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.Transfer, amount, (FinanceAccountSource)sourceAccount, recipient, authToken ) ) return;
 
 		var finance = FinanceFor( player );
 		var recipientFinance = FinanceFor( recipient );
@@ -217,21 +278,28 @@ public static class GameNetworkRpc
 		if ( !finance.IsValid() || !backpack.IsValid() ) return;
 
 		var source = (FinanceAccountSource)sourceAccount;
-		var price = MarketDataSystem.Current?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
+		var price = MarketDataSystem.Game?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
 		if ( amount <= 0 || price <= 0m )
 		{
 			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", "Enter a valid dollar amount.", 2.5f );
 			return;
 		}
 
-		var shares = decimal.ToInt32( decimal.Floor( amount / price ) );
-		if ( shares <= 0 )
+		if ( !TryDivide( amount, price, out var rawShares ) || !TryFloorToPositiveInt( rawShares, out var shares ) )
 		{
-			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", $"Enter at least ${decimal.ToInt32( decimal.Ceiling( price ) ):N0} to buy 1 share of {offer.Symbol}.", 3f );
+			var minimumMessage = TryCeilingToPositiveInt( price, out var minimumAmount )
+				? $"Enter at least ${minimumAmount:N0} to buy 1 share of {offer.Symbol}."
+				: $"The share price for {offer.Symbol} is too large.";
+			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", minimumMessage, 3f );
 			return;
 		}
 
-		var cost = decimal.ToInt32( decimal.Ceiling( shares * price ) );
+		if ( !TryMultiply( price, shares, out var rawCost ) || !TryCeilingToPositiveInt( rawCost, out var cost ) )
+		{
+			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order total is too large.", 3f );
+			return;
+		}
+
 		var fee = StockTradeFee( cost );
 		if ( cost > int.MaxValue - fee )
 		{
@@ -284,7 +352,7 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var price = MarketDataSystem.Current?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
+		var price = MarketDataSystem.Game?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
 		if ( shares <= 0 || price <= 0m )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC rejected invalid amount; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
@@ -293,7 +361,14 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var cost = decimal.ToInt32( decimal.Ceiling( shares * price ) );
+		if ( !TryMultiply( price, shares, out var rawCost ) || !TryCeilingToPositiveInt( rawCost, out var cost ) )
+		{
+			Log.Warning( $"[StockTerminal] Buy RPC rejected oversized total; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
+			AuditWarning( "stock_trade", "Stock buy rejected oversized total", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("price", price) ) );
+			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order total is too large.", 3f );
+			return;
+		}
+
 		var fee = StockTradeFee( cost );
 		if ( cost > int.MaxValue - fee )
 		{
@@ -353,7 +428,7 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var price = MarketDataSystem.Current?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
+		var price = MarketDataSystem.Game?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
 		if ( shares <= 0 || price <= 0m )
 		{
 			Log.Warning( $"[StockTerminal] Sell RPC rejected invalid amount; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
@@ -372,7 +447,14 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var proceeds = decimal.ToInt32( decimal.Floor( shares * price ) );
+		if ( !TryMultiply( price, shares, out var rawProceeds ) || !TryFloorToPositiveInt( rawProceeds, out var proceeds ) )
+		{
+			Log.Warning( $"[StockTerminal] Sell RPC rejected oversized total; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
+			AuditWarning( "stock_trade", "Stock sell rejected oversized total", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("price", price) ) );
+			NotifyTerminal( player, NotificationKind.BadNews, "Sell Order Failed", "The order total is too large.", 3f );
+			return;
+		}
+
 		var fee = StockTradeFee( proceeds );
 		var netProceeds = int.Max( 0, proceeds - fee );
 		Log.Info( $"[StockTerminal] Sell RPC priced; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; proceeds=${proceeds:N0}; fee=${fee:N0}; net=${netProceeds:N0}." );
@@ -396,7 +478,7 @@ public static class GameNetworkRpc
 		if ( !CallerOwns( player ) ) return;
 		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), sourceAccount ) ) return;
 
-		var price = MarketDataSystem.Current?.CryptoPrice( coinId ) ?? FinanceCatalog.Coin( coinId )?.FallbackPrice ?? 0m;
+		var price = MarketDataSystem.Game?.CryptoPrice( coinId ) ?? FinanceCatalog.Coin( coinId )?.FallbackPrice ?? 0m;
 		FinanceFor( player )?.TryBuyCrypto( coinId, amount, price, (FinanceAccountSource)sourceAccount );
 	}
 
@@ -493,6 +575,15 @@ public static class GameNetworkRpc
 		NotificationSystem.Current?.NotifyFromNetwork( kind, title, message, shownDuration );
 	}
 
+	[Rpc.Broadcast]
+	public static void BroadcastCloudStatsProjection( GameObject player, int playerLevel, int businessLevel, int businessesOwned, long netWorth, int creditScore, int hoursPlayedSeconds, int jobsCompleted )
+	{
+		if ( !CallerIsHost() ) return;
+		if ( !LocalPlayer.Owns( player ) ) return;
+
+		CloudStatsProjectionBuilder.PublishLocal( new CloudStatsProjection( playerLevel, businessLevel, businessesOwned, netWorth, creditScore, hoursPlayedSeconds, jobsCompleted ) );
+	}
+
 	[Rpc.Host]
 	public static void RequestSendChatMessage( GameObject player, string message )
 	{
@@ -524,6 +615,35 @@ public static class GameNetworkRpc
 		return player?.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
 	}
 
+	private static bool TryRequestCloudFinance( GameObject player, CloudFinanceAction action, int amount, FinanceAccountSource account, GameObject recipient, string authToken )
+	{
+		var config = CloudProgressionSystem.Current?.Config;
+		if ( !config.IsValid() || !config.HasBackend ) return false;
+
+		if ( amount <= 0 )
+		{
+			NotifyPlayer( player, NotificationKind.Warning, "Finance", "Enter a valid amount.", 2.5f );
+			return true;
+		}
+
+		if ( string.IsNullOrWhiteSpace( authToken ) )
+		{
+			NotifyPlayer( player, NotificationKind.BadNews, "Finance Failed", "Missing s&box auth token.", 3f );
+			return true;
+		}
+
+		_ = CloudProgressionSystem.Current?.SubmitFinanceActionAsync(
+			player,
+			action,
+			amount,
+			account,
+			recipient,
+			authToken,
+			Rpc.Caller,
+			System.Threading.CancellationToken.None );
+		return true;
+	}
+
 	private static void NotifyPlayer( GameObject player, NotificationKind kind, string title, string message, float shownDuration )
 	{
 		BroadcastPlayerNotification( player, (int)kind, title, message, shownDuration );
@@ -548,6 +668,62 @@ public static class GameNetworkRpc
 	{
 		return ServerVaultSystem.Current?.CalculateStockTradeFee( grossAmount )
 			?? ServerVaultSystem.CalculateStockTradeFee( grossAmount );
+	}
+
+	private static bool TryDivide( int amount, decimal price, out decimal result )
+	{
+		result = 0m;
+		if ( amount <= 0 || price <= 0m ) return false;
+
+		try
+		{
+			result = amount / price;
+			return true;
+		}
+		catch ( System.OverflowException )
+		{
+			return false;
+		}
+	}
+
+	private static bool TryMultiply( decimal price, int quantity, out decimal result )
+	{
+		result = 0m;
+		if ( price <= 0m || quantity <= 0 ) return false;
+
+		try
+		{
+			result = price * quantity;
+			return true;
+		}
+		catch ( System.OverflowException )
+		{
+			return false;
+		}
+	}
+
+	private static bool TryFloorToPositiveInt( decimal value, out int result )
+	{
+		result = 0;
+		if ( value <= 0m ) return false;
+
+		var rounded = decimal.Floor( value );
+		if ( rounded <= 0m || rounded > int.MaxValue ) return false;
+
+		result = decimal.ToInt32( rounded );
+		return true;
+	}
+
+	private static bool TryCeilingToPositiveInt( decimal value, out int result )
+	{
+		result = 0;
+		if ( value <= 0m ) return false;
+
+		var rounded = decimal.Ceiling( value );
+		if ( rounded <= 0m || rounded > int.MaxValue ) return false;
+
+		result = decimal.ToInt32( rounded );
+		return true;
 	}
 
 	private static void AddStockTradeFeeToVault( GameObject player, string symbol, int grossAmount, int fee, string side )

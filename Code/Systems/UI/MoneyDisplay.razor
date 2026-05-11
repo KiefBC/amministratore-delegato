@@ -7,11 +7,18 @@
 	@if ( UiModeSystem.Current?.HidesHud != true )
 	{
 		<div class="money @FlashClass">
-			<span class="amount">$@Amount.ToString( "N0" )</span>
+			<div class="balance-line">
+				<span class="label">Cash</span>
+				<span class="amount">$@CashAmount.ToString( "N0" )</span>
+			</div>
+			<div class="balance-line bank">
+				<span class="label">Bank</span>
+				<span class="amount">$@BankAmount.ToString( "N0" )</span>
+			</div>
 			@if ( _flashTimer > 0f && _lastDelta != 0 )
 			{
 				<span class="delta @(_lastDelta > 0 ? "positive" : "negative")">
-					@(_lastDelta > 0 ? "+" : "")@_lastDelta.ToString( "N0" )
+					@_lastDeltaLabel @(_lastDelta > 0 ? "+" : "")@_lastDelta.ToString( "N0" )
 				</span>
 			}
 		</div>
@@ -21,31 +28,45 @@
 @code {
 	private const float FlashDuration = 1.8f;
 
-	private int _displayAmount;
+	private int _displayCash;
+	private int _displayBank;
 	private float _flashTimer;
 	private int _lastDelta;
+	private string _lastDeltaLabel = "";
 	private Backpack _backpack;
+	private PlayerFinanceComponent _finance;
 
-	private int Amount => _displayAmount;
+	private int CashAmount => _displayCash;
+	private int BankAmount => _displayBank;
 	private string FlashClass => _flashTimer > 0f
 		? (_lastDelta > 0 ? "flash-positive" : "flash-negative")
 		: "";
 
 	protected override void OnStart()
 	{
-		FindLocalBackpack();
-		_displayAmount = _backpack?.Wallet ?? 0;
+		FindLocalState();
+		_displayCash = _backpack?.Wallet ?? 0;
+		_displayBank = _finance?.BankBalance ?? 0;
 	}
 
 	protected override void OnUpdate()
 	{
-		FindLocalBackpack();
+		FindLocalState();
 
-		var amount = _backpack?.Wallet ?? 0;
-		if ( amount != _displayAmount )
+		var cash = _backpack?.Wallet ?? 0;
+		var bank = _finance?.BankBalance ?? 0;
+		if ( bank != _displayBank )
 		{
-			_lastDelta = amount - _displayAmount;
-			_displayAmount = amount;
+			_lastDelta = bank - _displayBank;
+			_lastDeltaLabel = "Bank";
+			_displayBank = bank;
+			_flashTimer = FlashDuration;
+		}
+		else if ( cash != _displayCash )
+		{
+			_lastDelta = cash - _displayCash;
+			_lastDeltaLabel = "Cash";
+			_displayCash = cash;
 			_flashTimer = FlashDuration;
 		}
 
@@ -55,10 +76,11 @@
 		}
 	}
 
-	private void FindLocalBackpack()
+	private void FindLocalState()
 	{
 		_backpack = Sandbox.Systems.Movement.LocalPlayer.Component<Backpack>( Scene );
+		_finance = Sandbox.Systems.Movement.LocalPlayer.Component<PlayerFinanceComponent>( Scene );
 	}
 
-	protected override int BuildHash() => System.HashCode.Combine( _displayAmount, _flashTimer > 0f, System.Math.Sign( _lastDelta ), UiModeSystem.Current?.HidesHud == true );
+	protected override int BuildHash() => System.HashCode.Combine( _displayCash, _displayBank, _flashTimer > 0f, System.Math.Sign( _lastDelta ), _lastDeltaLabel, UiModeSystem.Current?.HidesHud == true );
 }

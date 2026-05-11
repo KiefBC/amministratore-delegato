@@ -8,6 +8,9 @@ namespace Sandbox.Systems.Interaction;
 /// </summary>
 public sealed class FoodPickup : Component, IInteractable
 {
+	private bool _networkReady;
+	private bool _networkWarningLogged;
+
 	[Property]
 	[Description( "Optional direct consumable item asset. If assigned, this takes priority over Definition Path." )]
 	public ItemDefinition Definition { get; set; }
@@ -31,6 +34,13 @@ public sealed class FoodPickup : Component, IInteractable
 	protected override void OnStart()
 	{
 		EnsureNetworkObject();
+	}
+
+	protected override void OnUpdate()
+	{
+		if ( _networkReady ) return;
+
+		_networkReady = WorldPickupNetworking.TrySpawnOrRefresh( GameObject, ResolvedDefinition?.DisplayName ?? "food pickup", ref _networkWarningLogged );
 	}
 
 	bool IInteractable.CanInteract( GameObject player )
@@ -80,7 +90,6 @@ public sealed class FoodPickup : Component, IInteractable
 
 	private void EnsureNetworkObject()
 	{
-		GameObject.NetworkMode = NetworkMode.Object;
-		GameObject.Network.SetOwnerTransfer( OwnerTransfer.Fixed );
+		WorldPickupNetworking.Configure( GameObject );
 	}
 }
