@@ -24,6 +24,8 @@ public sealed class PlayerFinanceComponent : Component
 
 	protected override void OnUpdate()
 	{
+		if ( UsesCloudFinance() ) return;
+
 		AccrueDebtIfDue();
 	}
 
@@ -143,16 +145,52 @@ public sealed class PlayerFinanceComponent : Component
 
 	public void ApplyCloudBankBalance( int bankBalance, string reason = "cloud snapshot" )
 	{
+		ApplyCloudFinanceSnapshot( bankBalance, null, null, reason );
+	}
+
+	public void ApplyCloudFinanceSnapshot( int? bankBalance, int? debtBalance, long? nextDebtAccrualAtUnix, string reason = "cloud snapshot" )
+	{
 		if ( !Sandbox.Networking.IsHost ) return;
 
-		var normalized = int.Max( 0, bankBalance );
-		if ( BankBalance == normalized ) return;
+		var changed = false;
+		if ( bankBalance.HasValue )
+		{
+			var normalized = int.Max( 0, bankBalance.Value );
+			if ( BankBalance != normalized )
+			{
+				BankBalance = normalized;
+				changed = true;
+			}
+		}
 
-		BankBalance = normalized;
+		if ( debtBalance.HasValue )
+		{
+			var normalized = int.Max( 0, debtBalance.Value );
+			if ( DebtBalance != normalized )
+			{
+				DebtBalance = normalized;
+				changed = true;
+			}
+		}
+
+		if ( nextDebtAccrualAtUnix.HasValue )
+		{
+			var nextTime = CloudDebtAccrualTime( nextDebtAccrualAtUnix.Value );
+			if ( !NearlyEqual( NextDebtAccrualTime, nextTime ) )
+			{
+				NextDebtAccrualTime = nextTime;
+				changed = true;
+			}
+		}
+
+		if ( !changed ) return;
+
 		Touch();
-		GameLogSystem.Current?.Info( "finance", "Cloud bank balance applied", GameObject.Root, data: GameLogSystem.Fields(
+		GameLogSystem.Current?.Info( "finance", "Cloud finance snapshot applied", GameObject.Root, data: GameLogSystem.Fields(
 			("reason", reason),
-			("bankBalance", BankBalance) ) );
+			("bankBalance", BankBalance),
+			("debtBalance", DebtBalance),
+			("nextDebtAccrualTime", NextDebtAccrualTime) ) );
 	}
 
 	public bool TryBuyBusiness( string businessId )
@@ -412,6 +450,25 @@ public sealed class PlayerFinanceComponent : Component
 	private Backpack Backpack()
 	{
 		return GameObject.Root.Components.GetInDescendantsOrSelf<Backpack>();
+	}
+
+	private static float CloudDebtAccrualTime( long nextDebtAccrualAtUnix )
+	{
+		if ( nextDebtAccrualAtUnix <= 0 ) return 0f;
+
+		var remaining = nextDebtAccrualAtUnix - System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		return Time.Now + float.Max( 1f, remaining );
+	}
+
+	private static bool NearlyEqual( float left, float right )
+	{
+		return float.Abs( left - right ) < 0.1f;
+	}
+
+	private bool UsesCloudFinance()
+	{
+		var config = CloudProgressionSystem.Current?.Config;
+		return config.IsValid() && config.HasBackend;
 	}
 
 	private void EnsureDebtAccrualScheduled()

@@ -56,6 +56,25 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
+	public static void RequestCloudFinanceAction( GameObject player, int action, int amount, int account, GameObject recipient, string authToken )
+	{
+		if ( !CallerOwns( player ) ) return;
+		if ( !System.Enum.IsDefined( typeof( CloudFinanceAction ), action ) ) return;
+		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), account ) ) return;
+		if ( amount <= 0 ) return;
+
+		_ = CloudProgressionSystem.Current?.SubmitFinanceActionAsync(
+			player,
+			(CloudFinanceAction)action,
+			amount,
+			(FinanceAccountSource)account,
+			recipient,
+			authToken ?? "",
+			Rpc.Caller,
+			System.Threading.CancellationToken.None );
+	}
+
+	[Rpc.Host]
 	public static void RequestUseDeskDevice( GameObject deskGo, GameObject player, int device )
 	{
 		if ( !CallerOwns( player ) ) return;
@@ -112,23 +131,25 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
-	public static void RequestDepositMoney( GameObject player, int amount )
+	public static void RequestDepositMoney( GameObject player, int amount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) ) return;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.Deposit, amount, FinanceAccountSource.Wallet, null, authToken ) ) return;
 
 		FinanceFor( player )?.TryDeposit( amount );
 	}
 
 	[Rpc.Host]
-	public static void RequestWithdrawMoney( GameObject player, int amount )
+	public static void RequestWithdrawMoney( GameObject player, int amount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) ) return;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.Withdraw, amount, FinanceAccountSource.Bank, null, authToken ) ) return;
 
 		FinanceFor( player )?.TryWithdraw( amount );
 	}
 
 	[Rpc.Host]
-	public static void RequestTakeLoan( GameObject player, int amount, int destinationAccount )
+	public static void RequestTakeLoan( GameObject player, int amount, int destinationAccount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) )
 		{
@@ -153,6 +174,8 @@ public static class GameNetworkRpc
 		}
 
 		var destination = (FinanceAccountSource)destinationAccount;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.TakeLoan, amount, destination, null, authToken ) ) return;
+
 		if ( !finance.TryTakeLoan( amount, destination ) )
 		{
 			Log.Warning( $"[FinanceDebt] Take loan failed; player={PlayerLogName( player )}; amount=${amount:N0}; destination={destination}." );
@@ -165,7 +188,7 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
-	public static void RequestRepayDebt( GameObject player, int amount, int sourceAccount )
+	public static void RequestRepayDebt( GameObject player, int amount, int sourceAccount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) )
 		{
@@ -190,6 +213,8 @@ public static class GameNetworkRpc
 		}
 
 		var source = (FinanceAccountSource)sourceAccount;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.RepayDebt, amount, source, null, authToken ) ) return;
+
 		var payment = int.Min( int.Max( 0, amount ), finance.DebtBalance );
 		if ( !finance.TryRepayDebt( amount, source ) )
 		{
@@ -203,11 +228,12 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
-	public static void RequestTransferMoney( GameObject player, GameObject recipient, int amount, int sourceAccount )
+	public static void RequestTransferMoney( GameObject player, GameObject recipient, int amount, int sourceAccount, string authToken = "" )
 	{
 		if ( !CallerOwns( player ) ) return;
 		if ( !recipient.IsValid() || recipient == player ) return;
 		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), sourceAccount ) ) return;
+		if ( TryRequestCloudFinance( player, CloudFinanceAction.Transfer, amount, (FinanceAccountSource)sourceAccount, recipient, authToken ) ) return;
 
 		var finance = FinanceFor( player );
 		var recipientFinance = FinanceFor( recipient );
@@ -565,6 +591,35 @@ public static class GameNetworkRpc
 	private static PlayerFinanceComponent FinanceFor( GameObject player )
 	{
 		return player?.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+	}
+
+	private static bool TryRequestCloudFinance( GameObject player, CloudFinanceAction action, int amount, FinanceAccountSource account, GameObject recipient, string authToken )
+	{
+		var config = CloudProgressionSystem.Current?.Config;
+		if ( !config.IsValid() || !config.HasBackend ) return false;
+
+		if ( amount <= 0 )
+		{
+			NotifyPlayer( player, NotificationKind.Warning, "Finance", "Enter a valid amount.", 2.5f );
+			return true;
+		}
+
+		if ( string.IsNullOrWhiteSpace( authToken ) )
+		{
+			NotifyPlayer( player, NotificationKind.BadNews, "Finance Failed", "Missing s&box auth token.", 3f );
+			return true;
+		}
+
+		_ = CloudProgressionSystem.Current?.SubmitFinanceActionAsync(
+			player,
+			action,
+			amount,
+			account,
+			recipient,
+			authToken,
+			Rpc.Caller,
+			System.Threading.CancellationToken.None );
+		return true;
 	}
 
 	private static void NotifyPlayer( GameObject player, NotificationKind kind, string title, string message, float shownDuration )

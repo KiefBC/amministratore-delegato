@@ -280,6 +280,7 @@
           "BackendBaseUrl": "https://geiqpxbeanlekkpfhsvo.supabase.co/functions/v1",
           "CompleteJobEndpoint": "complete-job",
           "Flags": 0,
+          "FinanceActionEndpoint": "finance-action",
           "LoadPlayerEndpoint": "load-player",
           "LocalFallbackJobRewardMoney": 25,
           "LocalFallbackJobRewardXp": 10,

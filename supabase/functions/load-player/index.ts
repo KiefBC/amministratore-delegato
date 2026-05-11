@@ -1,5 +1,5 @@
 import { readSteamId, validateSboxAuth } from "../_shared/auth.ts";
-import { errorResponse, jsonResponse, readJsonObject, readString, unixSeconds } from "../_shared/http.ts";
+import { errorResponse, jsonResponse, readJsonObject, readString } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 
 Deno.serve( async ( req ) => {
@@ -13,23 +13,24 @@ Deno.serve( async ( req ) => {
 	const displayName = readString( payload, "display_name", "displayName" ) || "Player";
 	const supabase = createAdminClient();
 	const { data, error } = await supabase
-		.from( "players" )
-		.upsert( {
-			steam_id: steamId,
-			display_name: displayName,
-		}, { onConflict: "steam_id" } )
-		.select( "steam_id, display_name, bank_balance, job_xp, job_completions, last_job_at" )
+		.rpc( "load_player", {
+			p_steam_id: steamId,
+			p_display_name: displayName,
+		} )
 		.single();
 
 	if ( error ) return errorResponse( error.message, 500 );
+	const row = data as Record<string, unknown>;
 
 	return jsonResponse( {
 		ok: true,
-		steam_id: data.steam_id,
-		display_name: data.display_name,
-		bank_balance: data.bank_balance,
-		job_xp: data.job_xp,
-		job_completions: data.job_completions,
-		last_job_at: unixSeconds( data.last_job_at ),
+		steam_id: row.steam_id,
+		display_name: row.display_name,
+		bank_balance: row.bank_balance,
+		debt_balance: row.debt_balance,
+		next_debt_accrual_at: row.next_debt_accrual_at_unix,
+		job_xp: row.job_xp,
+		job_completions: row.job_completions,
+		last_job_at: row.last_job_at_unix,
 	} );
 } );

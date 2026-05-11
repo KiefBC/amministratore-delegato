@@ -10,6 +10,9 @@ namespace Sandbox.Systems.Cloud;
 
 public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSystem>
 {
+	private readonly HashSet<string> _pendingFinanceActions = new();
+	private readonly object _pendingFinanceActionsLock = new();
+
 	public CloudProgressionConfig Config => Scene.GetAllComponents<CloudProgressionConfig>().FirstOrDefault( x => x.IsValid() );
 
 	public CloudProgressionSystem( Scene scene ) : base( scene )
@@ -103,6 +106,121 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		}
 	}
 
+	public async Task SubmitFinanceActionAsync( GameObject player, CloudFinanceAction action, int amount, FinanceAccountSource account, GameObject recipient, string authToken, Connection caller, CancellationToken cancellationToken )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( !player.IsValid() ) return;
+
+		var config = Config;
+		if ( !config.IsValid() || !config.HasBackend )
+		{
+			NotifyPlayer( player, NotificationKind.Warning, "Cloud Offline", "Cloud finance is not configured.", 3f );
+			return;
+		}
+
+		if ( amount <= 0 )
+		{
+			NotifyPlayer( player, NotificationKind.Warning, "Finance", "Enter a valid amount.", 2.5f );
+			return;
+		}
+
+		if ( string.IsNullOrWhiteSpace( authToken ) )
+		{
+			NotifyPlayer( player, NotificationKind.BadNews, "Finance Failed", "Missing s&box auth token.", 3f );
+			return;
+		}
+
+		var finance = player.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
+		if ( !finance.IsValid() || !backpack.IsValid() ) return;
+
+		var expectedWalletDelta = ExpectedWalletDelta( action, amount, account, finance );
+		if ( expectedWalletDelta < 0 && backpack.Wallet < -expectedWalletDelta )
+		{
+			NotifyPlayer( player, NotificationKind.BadNews, "Not Enough Cash", $"Need ${-expectedWalletDelta:N0} cash.", 3f );
+			return;
+		}
+
+		if ( expectedWalletDelta > 0 && !backpack.CanAddMoney( expectedWalletDelta ) )
+		{
+			NotifyPlayer( player, NotificationKind.BadNews, "No Cash Space", $"Make room for ${expectedWalletDelta:N0} cash.", 3f );
+			return;
+		}
+
+		var pendingKey = FinanceActionKey( player, caller );
+		lock ( _pendingFinanceActionsLock )
+		{
+			if ( !_pendingFinanceActions.Add( pendingKey ) )
+			{
+				NotifyPlayer( player, NotificationKind.Warning, "Finance Pending", "Wait for the current finance action to finish.", 2.5f );
+				return;
+			}
+		}
+
+		try
+		{
+			var payload = BuildPlayerPayload( config, player, caller );
+			payload["action"] = ActionId( action );
+			payload["amount"] = amount;
+			payload["source_account"] = SourceAccountId( action, account );
+			payload["destination_account"] = DestinationAccountId( action, account );
+
+			if ( action == CloudFinanceAction.Transfer )
+			{
+				if ( !recipient.IsValid() || recipient == player )
+				{
+					NotifyPlayer( player, NotificationKind.Warning, "Transfer", "Select a valid recipient.", 2.5f );
+					return;
+				}
+
+				var recipientOwner = recipient.Network.Owner;
+				if ( recipientOwner is null )
+				{
+					NotifyPlayer( player, NotificationKind.Warning, "Transfer", "Recipient is not available.", 2.5f );
+					return;
+				}
+
+				payload["recipient_steam_id"] = recipientOwner.SteamId.ToString();
+			}
+
+			var response = await PostAsync( config, config.FinanceActionEndpoint, payload, authToken, cancellationToken );
+			if ( cancellationToken.IsCancellationRequested || !player.IsValid() ) return;
+
+			var state = ParseCloudStateResponse( response );
+			if ( !state.Success )
+			{
+				NotifyPlayer( player, NotificationKind.BadNews, "Finance Failed", state.MessageOrDefault( "The backend rejected the finance action." ), 3f );
+				return;
+			}
+
+			ApplyWalletDelta( player, state.WalletDelta.GetValueOrDefault() );
+			ApplyCloudState( player, state, $"finance {ActionId( action )}" );
+
+			if ( action == CloudFinanceAction.Transfer && recipient.IsValid() && state.RecipientBankBalance.HasValue )
+			{
+				var recipientFinance = recipient.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+				if ( recipientFinance.IsValid() ) recipientFinance.ApplyCloudFinanceSnapshot( state.RecipientBankBalance.Value, null, null, "finance transfer received" );
+			}
+
+			NotifyPlayer( player, NotificationKind.Success, "Finance", state.MessageOrDefault( "Finance action complete." ), 3f );
+		}
+		catch ( OperationCanceledException ) when ( cancellationToken.IsCancellationRequested )
+		{
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"[Cloud] Finance action failed: {e.Message}" );
+			NotifyPlayer( player, NotificationKind.BadNews, "Finance Failed", "The backend finance request failed.", 3f );
+		}
+		finally
+		{
+			lock ( _pendingFinanceActionsLock )
+			{
+				_pendingFinanceActions.Remove( pendingKey );
+			}
+		}
+	}
+
 	private void ApplyLocalFallbackIfAllowed( CloudProgressionConfig config, GameObject player )
 	{
 		if ( !config.IsValid() || !config.AllowLocalDevFallback )
@@ -160,7 +278,7 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		var finance = player.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
 		if ( finance.IsValid() )
 		{
-			if ( state.BankBalance.HasValue ) finance.ApplyCloudBankBalance( state.BankBalance.Value, reason );
+			if ( state.BankBalance.HasValue || state.DebtBalance.HasValue || state.NextDebtAccrualAtUnix.HasValue ) finance.ApplyCloudFinanceSnapshot( state.BankBalance, state.DebtBalance, state.NextDebtAccrualAtUnix, reason );
 			else if ( state.RewardMoney.GetValueOrDefault() > 0 ) finance.AddMoney( FinanceAccountSource.Bank, state.RewardMoney.Value );
 		}
 
@@ -176,6 +294,8 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		GameLogSystem.Current?.Info( "cloud", "Cloud state applied", player, data: GameLogSystem.Fields(
 			("reason", reason),
 			("bankBalance", state.BankBalance),
+			("debtBalance", state.DebtBalance),
+			("nextDebtAccrualAtUnix", state.NextDebtAccrualAtUnix),
 			("jobXp", state.JobXp),
 			("jobCompletions", state.JobCompletions),
 			("rewardMoney", state.RewardMoney),
@@ -209,11 +329,16 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 			Success = success,
 			Message = message,
 			BankBalance = ReadInt( stateRoot, "bank_balance", "bankBalance", "BankBalance" ),
+			DebtBalance = ReadInt( stateRoot, "debt_balance", "debtBalance", "DebtBalance" ),
+			NextDebtAccrualAtUnix = ReadLong( stateRoot, "next_debt_accrual_at", "nextDebtAccrualAt", "NextDebtAccrualAtUnix" ),
 			JobXp = ReadInt( stateRoot, "job_xp", "jobXp", "JobXp" ),
 			JobCompletions = ReadInt( stateRoot, "job_completions", "jobCompletions", "JobCompletions" ),
 			LastJobAtUnix = ReadLong( stateRoot, "last_job_at", "lastJobAt", "LastJobAtUnix" ),
 			RewardMoney = ReadInt( root, "reward_money", "rewardMoney", "RewardMoney" ),
 			RewardXp = ReadInt( root, "reward_xp", "rewardXp", "RewardXp" ),
+			WalletDelta = ReadInt( root, "wallet_delta", "walletDelta", "WalletDelta" ),
+			RecipientSteamId = ReadString( root, "recipient_steam_id", "recipientSteamId", "RecipientSteamId" ) ?? "",
+			RecipientBankBalance = ReadInt( root, "recipient_bank_balance", "recipientBankBalance", "RecipientBankBalance" ),
 		};
 		}
 	}
@@ -276,6 +401,70 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		return null;
 	}
 
+	private static void ApplyWalletDelta( GameObject player, int walletDelta )
+	{
+		if ( walletDelta == 0 ) return;
+
+		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
+		if ( !backpack.IsValid() ) return;
+
+		var applied = walletDelta > 0
+			? backpack.AddMoney( walletDelta )
+			: backpack.TrySpend( -walletDelta );
+
+		if ( applied ) return;
+
+		Log.Warning( $"[Cloud] Could not apply wallet delta after confirmed finance action; player={DisplayNameFor( player )}; walletDelta=${walletDelta:N0}." );
+		NotifyPlayer( player, NotificationKind.BadNews, "Wallet Sync Failed", "Cloud finance changed, but local cash could not be updated.", 4f );
+	}
+
+	private static int ExpectedWalletDelta( CloudFinanceAction action, int amount, FinanceAccountSource account, PlayerFinanceComponent finance )
+	{
+		return action switch
+		{
+			CloudFinanceAction.Deposit => -amount,
+			CloudFinanceAction.Withdraw => amount,
+			CloudFinanceAction.TakeLoan when account == FinanceAccountSource.Wallet => amount,
+			CloudFinanceAction.RepayDebt when account == FinanceAccountSource.Wallet => -int.Min( amount, finance?.DebtBalance ?? amount ),
+			CloudFinanceAction.Transfer when account == FinanceAccountSource.Wallet => -amount,
+			_ => 0,
+		};
+	}
+
+	private static string ActionId( CloudFinanceAction action )
+	{
+		return action switch
+		{
+			CloudFinanceAction.Deposit => "deposit",
+			CloudFinanceAction.Withdraw => "withdraw",
+			CloudFinanceAction.TakeLoan => "take_loan",
+			CloudFinanceAction.RepayDebt => "repay_debt",
+			CloudFinanceAction.Transfer => "transfer",
+			_ => "unknown",
+		};
+	}
+
+	private static string SourceAccountId( CloudFinanceAction action, FinanceAccountSource account )
+	{
+		return action is CloudFinanceAction.RepayDebt or CloudFinanceAction.Transfer ? AccountId( account ) : "";
+	}
+
+	private static string DestinationAccountId( CloudFinanceAction action, FinanceAccountSource account )
+	{
+		return action == CloudFinanceAction.TakeLoan ? AccountId( account ) : "";
+	}
+
+	private static string AccountId( FinanceAccountSource account )
+	{
+		return account == FinanceAccountSource.Bank ? "bank" : "wallet";
+	}
+
+	private static string FinanceActionKey( GameObject player, Connection caller )
+	{
+		var owner = caller ?? player.Network.Owner;
+		return owner is not null ? owner.SteamId.ToString() : player.GetHashCode().ToString();
+	}
+
 	private static string ClaimId( CloudProgressionConfig config, GameObject player, CloudJobWorkstation workstation )
 	{
 		var owner = player.Network.Owner;
@@ -303,11 +492,16 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		public bool Success { get; set; } = true;
 		public string Message { get; set; } = "";
 		public int? BankBalance { get; set; }
+		public int? DebtBalance { get; set; }
+		public long? NextDebtAccrualAtUnix { get; set; }
 		public int? JobXp { get; set; }
 		public int? JobCompletions { get; set; }
 		public long? LastJobAtUnix { get; set; }
 		public int? RewardMoney { get; set; }
 		public int? RewardXp { get; set; }
+		public int? WalletDelta { get; set; }
+		public string RecipientSteamId { get; set; } = "";
+		public int? RecipientBankBalance { get; set; }
 
 		public string MessageOrDefault( string fallback )
 		{

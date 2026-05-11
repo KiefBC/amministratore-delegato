@@ -40,6 +40,8 @@ Deno.serve( async ( req ) => {
 	return jsonResponse( {
 		ok,
 		bank_balance: row.bank_balance,
+		debt_balance: row.debt_balance,
+		next_debt_accrual_at: row.next_debt_accrual_at_unix,
 		job_xp: row.job_xp,
 		job_completions: row.job_completions,
 		last_job_at: row.last_job_at_unix,

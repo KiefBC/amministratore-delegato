@@ -13,6 +13,7 @@ public sealed class CloudProgressionConfig : Component
 	[Property] public string SessionId { get; set; } = "local-session";
 	[Property] public string LoadPlayerEndpoint { get; set; } = "load-player";
 	[Property] public string CompleteJobEndpoint { get; set; } = "complete-job";
+	[Property] public string FinanceActionEndpoint { get; set; } = "finance-action";
 	[Property] public bool AutoLoadPlayers { get; set; }
 
 	[Property] public bool AllowLocalDevFallback { get; set; }
