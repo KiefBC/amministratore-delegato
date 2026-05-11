@@ -141,6 +141,20 @@ public sealed class PlayerFinanceComponent : Component
 		return Backpack()?.AddMoney( amount ) == true;
 	}
 
+	public void ApplyCloudBankBalance( int bankBalance, string reason = "cloud snapshot" )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+
+		var normalized = int.Max( 0, bankBalance );
+		if ( BankBalance == normalized ) return;
+
+		BankBalance = normalized;
+		Touch();
+		GameLogSystem.Current?.Info( "finance", "Cloud bank balance applied", GameObject.Root, data: GameLogSystem.Fields(
+			("reason", reason),
+			("bankBalance", BankBalance) ) );
+	}
+
 	public bool TryBuyBusiness( string businessId )
 	{
 		if ( !Sandbox.Networking.IsHost ) return false;

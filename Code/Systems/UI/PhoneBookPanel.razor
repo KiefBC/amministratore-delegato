@@ -8,6 +8,8 @@
 <root class="@(IsOpen ? "open" : "")">
 	@if ( IsOpen )
 	{
+		var contactRows = ContactRows();
+
 		<div class="phone-book-overlay">
 			<div class="phone-book-shell">
 				<div class="phone-book-header">
@@ -22,7 +24,7 @@
 				</div>
 
 				<div class="contact-list">
-					@foreach ( var contact in ContactRows() )
+					@foreach ( var contact in contactRows )
 					{
 						<div class="contact-card @(contact.IsLocal ? "local" : "")">
 							<div class="contact-avatar">@Initials( contact.Name )</div>
@@ -46,14 +48,14 @@
 						</div>
 					}
 
-					@if ( !ContactRows().Any() )
+					@if ( contactRows.Count == 0 )
 					{
 						<div class="empty-directory">No online contacts found.</div>
 					}
 				</div>
 
 				<div class="phone-book-footer">
-					<span>@ContactRows().Count().ToString( "N0" ) contacts online</span>
+					<span>@contactRows.Count.ToString( "N0" ) contacts online</span>
 					<span>Press Esc to hang up</span>
 				</div>
 			</div>
@@ -62,8 +64,10 @@
 </root>
 
 @code {
-	private sealed record ContactRow( GameObject Player, string Name, string Affiliation, long NetWorth, bool IsLocal, string Status );
+	private readonly record struct ContactRow( GameObject Player, string Name, string Affiliation, long NetWorth, bool IsLocal, string Status );
 
+	private readonly List<ContactRow> _contactRows = new();
+	private readonly HashSet<GameObject> _seenContactPlayers = new();
 	private GameObject _player;
 	private Sandbox.UI.Panel _closePanel;
 	private bool _isOpen;
@@ -147,19 +151,19 @@
 		return _controlPressed ? "hover pressed" : "hover";
 	}
 
-	private IEnumerable<ContactRow> ContactRows()
+	private IReadOnlyList<ContactRow> ContactRows()
 	{
-		var rows = new List<ContactRow>();
-		var seen = new HashSet<GameObject>();
+		_contactRows.Clear();
+		_seenContactPlayers.Clear();
 
 		foreach ( var controller in Scene.GetAllComponents<PlayerController>() )
 		{
 			if ( !controller.IsValid() || !controller.GameObject.IsValid() || !controller.GameObject.Active ) continue;
 
 			var player = PlayerRoot( controller.GameObject );
-			if ( !player.IsValid() || !seen.Add( player ) ) continue;
+			if ( !player.IsValid() || !_seenContactPlayers.Add( player ) ) continue;
 
-			rows.Add( new ContactRow(
+			_contactRows.Add( new ContactRow(
 				player,
 				PlayerName( player ),
 				Affiliation( player ),
@@ -168,9 +172,13 @@
 				controller.IsProxy ? "Remote line" : "Local line" ) );
 		}
 
-		return rows
-			.OrderByDescending( x => x.IsLocal )
-			.ThenBy( x => x.Name, System.StringComparer.OrdinalIgnoreCase );
+		_contactRows.Sort( ( a, b ) =>
+		{
+			var local = b.IsLocal.CompareTo( a.IsLocal );
+			return local != 0 ? local : string.Compare( a.Name, b.Name, System.StringComparison.OrdinalIgnoreCase );
+		} );
+
+		return _contactRows;
 	}
 
 	private static GameObject PlayerRoot( GameObject gameObject )
@@ -326,7 +334,8 @@
 
 		if ( _isOpen )
 		{
-			foreach ( var contact in ContactRows() )
+			var contactRows = ContactRows();
+			foreach ( var contact in contactRows )
 			{
 				hc.Add( contact.Player.GetHashCode() );
 				hc.Add( contact.Name );

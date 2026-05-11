@@ -10,9 +10,9 @@ MoneyDisplay {
 		position: absolute;
 		top: $prompt-margin-top;
 		right: $corner-margin;
-		flex-direction: row;
-		align-items: center;
-		gap: 12px;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
 		padding: $panel-padding-loose;
 		background-color: $panel-bg;
 		border-radius: $panel-radius;
@@ -30,9 +30,29 @@ MoneyDisplay {
 		}
 	}
 
+	.balance-line {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+
+		&.bank .amount {
+			color: $text-positive;
+		}
+	}
+
+	.label {
+		color: $text-secondary;
+		font-size: 14px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.8px;
+		text-shadow: $text-shadow-default;
+	}
+
 	.amount {
 		color: $text-primary;
-		font-size: $text-numeric;
+		font-size: 24px;
 		font-weight: bold;
 		text-shadow: $text-shadow-default;
 	}
@@ -40,6 +60,7 @@ MoneyDisplay {
 	.delta {
 		font-size: 18px;
 		font-weight: bold;
+		align-self: flex-end;
 		text-shadow: $text-shadow-default;
 
 		&.positive { color: $text-positive; }

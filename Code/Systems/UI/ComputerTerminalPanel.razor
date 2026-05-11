@@ -1,5 +1,6 @@
 @using Sandbox;
 @using Sandbox.UI;
+@using System.Collections.Generic;
 @using System.Linq;
 @namespace Sandbox.Systems.UI
 @inherits PanelComponent
@@ -7,12 +8,16 @@
 <root class="@(IsOpen ? "open" : "")">
 	@if ( IsOpen )
 	{
+		var stockRows = StockRows();
+		var renderCandles = RenderCandles();
+		var portfolioRows = PortfolioRows();
+
 		<div class="stock-terminal">
 			<div class="stock-panel">
 				<div class="left-panel terminal-card">
 					<div class="panel-title">Current Stocks</div>
 					<div class="stock-list">
-						@foreach ( var row in StockRows() )
+						@foreach ( var row in stockRows )
 						{
 							var selected = row.Symbol == _selectedStock;
 							<div class="stock-row @(selected ? "selected" : "") @(_hoveredStock == row.Symbol ? "hover" : "")">
@@ -91,7 +96,7 @@
 						<div class="grid-line two"></div>
 						<div class="grid-line three"></div>
 						<div class="candle-strip">
-							@foreach ( var candle in RenderCandles() )
+							@foreach ( var candle in renderCandles )
 							{
 								<div class="candle-slot">
 									<div class="candle-wick" style="top: @(candle.WickTop)px; height: @(candle.WickHeight)px;"></div>
@@ -109,13 +114,14 @@
 
 				<div class="portfolio-panel terminal-card">
 					<div class="panel-title">Portfolio Summary</div>
-					<div class="portfolio-total">$@StockValue().ToString( "N0" )</div>
+					<div class="portfolio-total">$@PortfolioTotal().ToString( "N0" )</div>
 					<div class="summary-row"><span>Cash</span><b>$@Wallet.ToString( "N0" )</b></div>
+					<div class="summary-row"><span>Bank</span><b>$@BankBalance.ToString( "N0" )</b></div>
 					<div class="summary-row"><span>Stock Value</span><b>$@StockValue().ToString( "N0" )</b></div>
 					<div class="summary-row"><span>PnL</span><b class="@(TotalPnlPercent() >= 0 ? "up" : "down")">@SignedPercent( TotalPnlPercent() )</b></div>
 
 					<div class="holdings-list">
-						@foreach ( var row in PortfolioRows() )
+						@foreach ( var row in portfolioRows )
 						{
 							<div class="holding-row">
 								<div>
@@ -129,7 +135,7 @@
 							</div>
 						}
 
-						@if ( !PortfolioRows().Any() )
+						@if ( portfolioRows.Count == 0 )
 						{
 							<div class="empty-portfolio">No stock positions yet.</div>
 						}
@@ -142,10 +148,10 @@
 
 @code {
 	private enum StockOrderMode { Buy, Sell }
-	private sealed record StockRow( string Symbol, string Name, decimal Price, decimal Change );
-	private sealed record TimeframeOption( StockTimeframe Key, string Label );
-	private sealed record RenderCandle( int WickTop, int WickHeight, int BodyTop, int BodyHeight, bool Up );
-	private sealed record PortfolioRow( string Symbol, int Shares, int Value, decimal PnlPercent );
+	private readonly record struct StockRow( string Symbol, string Name, decimal Price, decimal Change );
+	private readonly record struct TimeframeOption( StockTimeframe Key, string Label );
+	private readonly record struct RenderCandle( int WickTop, int WickHeight, int BodyTop, int BodyHeight, bool Up );
+	private readonly record struct PortfolioRow( string Symbol, int Shares, int Value, decimal PnlPercent );
 
 	private const int ChartHeight = 300;
 	private static readonly TimeframeOption[] TimeframeOptions =
@@ -165,6 +171,9 @@
 	private StockOrderMode _orderMode = StockOrderMode.Buy;
 	private string _sharesText = "1";
 	private TextEntry _sharesInput = null;
+	private readonly List<StockRow> _stockRows = new();
+	private readonly List<RenderCandle> _renderCandles = new();
+	private readonly List<PortfolioRow> _portfolioRows = new();
 	private Sandbox.UI.Panel _sharesInputPanel;
 	private Sandbox.UI.Panel _stockListPanel;
 	private string _hoveredStock;
@@ -179,6 +188,7 @@
 
 	public bool IsOpen => _isOpen;
 	private int Wallet => _backpack?.Wallet ?? 0;
+	private int BankBalance => _finance?.BankBalance ?? 0;
 	private bool HasMessage => _messageTimer > 0f && !string.IsNullOrWhiteSpace( _messageTitle );
 	private string MessageClass => _messageKind.ToString().ToLowerInvariant();
 
@@ -299,12 +309,15 @@
 		else GameNetworkRpc.RequestSellStock( _player, _selectedStock, shares );
 	}
 
-	private IEnumerable<StockRow> StockRows()
+	private IReadOnlyList<StockRow> StockRows()
 	{
+		_stockRows.Clear();
 		foreach ( var stock in FinanceCatalog.Stocks )
 		{
-			yield return new StockRow( stock.Symbol, stock.Name, Price( stock.Symbol ), StockChangePercent( stock.Symbol ) );
+			_stockRows.Add( new StockRow( stock.Symbol, stock.Name, Price( stock.Symbol ), StockChangePercent( stock.Symbol ) ) );
 		}
+
+		return _stockRows;
 	}
 
 	private IReadOnlyList<StockCandle> Candles()
@@ -312,25 +325,43 @@
 		return _market?.StockCandles( _selectedStock, _timeframe ) ?? System.Array.Empty<StockCandle>();
 	}
 
-	private IEnumerable<RenderCandle> RenderCandles()
+	private IReadOnlyList<RenderCandle> RenderCandles()
 	{
-		var candles = Candles().Where( x => x.High > x.Low ).TakeLast( 64 ).ToArray();
-		if ( candles.Length == 0 ) yield break;
+		_renderCandles.Clear();
 
-		var high = candles.Max( x => x.High );
-		var low = candles.Min( x => x.Low );
+		var candles = Candles();
+		var start = int.Max( 0, candles.Count - 64 );
+		var high = decimal.MinValue;
+		var low = decimal.MaxValue;
+
+		for ( var i = start; i < candles.Count; i++ )
+		{
+			var candle = candles[i];
+			if ( candle.High <= candle.Low ) continue;
+
+			high = decimal.Max( high, candle.High );
+			low = decimal.Min( low, candle.Low );
+		}
+
+		if ( high == decimal.MinValue || low == decimal.MaxValue ) return _renderCandles;
+
 		var range = decimal.Max( 0.01m, high - low );
 
-		foreach ( var candle in candles )
+		for ( var i = start; i < candles.Count; i++ )
 		{
+			var candle = candles[i];
+			if ( candle.High <= candle.Low ) continue;
+
 			var highY = PriceY( candle.High, high, low, range );
 			var lowY = PriceY( candle.Low, high, low, range );
 			var openY = PriceY( candle.Open, high, low, range );
 			var closeY = PriceY( candle.Close, high, low, range );
 			var bodyTop = int.Min( openY, closeY );
 			var bodyHeight = int.Max( 4, int.Abs( closeY - openY ) );
-			yield return new RenderCandle( highY, int.Max( 4, lowY - highY ), bodyTop, bodyHeight, candle.IsUp );
+			_renderCandles.Add( new RenderCandle( highY, int.Max( 4, lowY - highY ), bodyTop, bodyHeight, candle.IsUp ) );
 		}
+
+		return _renderCandles;
 	}
 
 	private static int PriceY( decimal price, decimal high, decimal low, decimal range )
@@ -339,9 +370,10 @@
 		return int.Clamp( decimal.ToInt32( decimal.Round( normalized * ChartHeight ) ), 0, ChartHeight );
 	}
 
-	private IEnumerable<PortfolioRow> PortfolioRows()
+	private IReadOnlyList<PortfolioRow> PortfolioRows()
 	{
-		if ( !_finance.IsValid() ) yield break;
+		_portfolioRows.Clear();
+		if ( !_finance.IsValid() ) return _portfolioRows;
 
 		foreach ( var stock in FinanceCatalog.Stocks )
 		{
@@ -349,8 +381,10 @@
 			var value = decimal.ToInt32( decimal.Round( shares * Price( stock.Symbol ) ) );
 			var basis = _finance.StockCostBasis.TryGetValue( stock.Symbol, out var cost ) ? cost : 0;
 			var pnl = basis > 0 ? ((value - basis) / (decimal)basis) * 100m : 0m;
-			yield return new PortfolioRow( stock.Symbol, shares, value, pnl );
+			_portfolioRows.Add( new PortfolioRow( stock.Symbol, shares, value, pnl ) );
 		}
+
+		return _portfolioRows;
 	}
 
 	private int StockValue()
@@ -359,6 +393,11 @@
 		decimal total = 0m;
 		foreach ( var pair in _finance.StockShares ) total += pair.Value * Price( pair.Key );
 		return decimal.ToInt32( decimal.Round( total ) );
+	}
+
+	private int PortfolioTotal()
+	{
+		return Wallet + BankBalance + StockValue();
 	}
 
 	private int TotalCostBasis()
@@ -432,11 +471,11 @@
 		if ( _stockListPanel is not null )
 		{
 			var index = 0;
-			var rows = StockRows().ToArray();
+			var stocks = FinanceCatalog.Stocks;
 			foreach ( var child in _stockListPanel.Children )
 			{
 				if ( !child.HasClass( "stock-row" ) ) continue;
-				if ( index < rows.Length && child.IsInside( mouse ) ) _hoveredStock = rows[index].Symbol;
+				if ( index < stocks.Count && child.IsInside( mouse ) ) _hoveredStock = stocks[index].Symbol;
 				index++;
 			}
 
@@ -626,6 +665,7 @@
 		var hc = new System.HashCode();
 		hc.Add( _isOpen );
 		hc.Add( Wallet );
+		hc.Add( BankBalance );
 		hc.Add( _finance?.FinanceVersion ?? 0 );
 		hc.Add( _market?.PriceVersion ?? 0 );
 		hc.Add( _market?.CandleVersion ?? 0 );

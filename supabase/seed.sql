@@ -1,0 +1,1 @@
+-- MVP progression seed data lives in migrations so remote db push stays deterministic.

@@ -161,6 +161,7 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		EnsurePlayerProfile( player );
 		EnsurePlayerStats( player );
 		EnsurePlayerFinance( player );
+		EnsureCloudProgress( player );
 		EnsurePlayerAppearance( player );
 		EnsurePlayerTitle( player );
 		EnsurePlayerRole( player );
@@ -178,6 +179,11 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		foreach ( var finance in player.Components.GetAll<PlayerFinanceComponent>( FindMode.EverythingInSelfAndDescendants ) )
 		{
 			ConfigureNetworkObject( finance.GameObject );
+		}
+
+		foreach ( var progress in player.Components.GetAll<CloudPlayerProgressComponent>( FindMode.EverythingInSelfAndDescendants ) )
+		{
+			ConfigureNetworkObject( progress.GameObject );
 		}
 
 		foreach ( var role in player.Components.GetAll<Sandbox.Systems.Roles.PlayerRoleComponent>( FindMode.EverythingInSelfAndDescendants ) )
@@ -224,6 +230,16 @@ public sealed class GameNetworkManager : Component, Component.INetworkListener
 		if ( finance.IsValid() ) return;
 
 		player.Components.Create<PlayerFinanceComponent>();
+	}
+
+	private static void EnsureCloudProgress( GameObject player )
+	{
+		if ( !player.IsValid() ) return;
+
+		var progress = player.Components.GetInDescendantsOrSelf<CloudPlayerProgressComponent>();
+		if ( progress.IsValid() ) return;
+
+		player.Components.Create<CloudPlayerProgressComponent>();
 	}
 
 	private static void EnsurePlayerAppearance( GameObject player )

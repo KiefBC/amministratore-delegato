@@ -36,8 +36,10 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 	private readonly Dictionary<string, float> _nextCandleRefresh = new();
 	private readonly Dictionary<string, long> _loggedCandleCacheSkips = new();
 	private readonly HashSet<string> _pendingCandleRequests = new();
+	private readonly CancellationTokenSource _lifetimeCts = new();
 	private float _nextQuoteRefreshTime;
 	private bool _refreshingQuotes;
+	private bool _disposed;
 	private long _loggedCryptoCacheSkipUntil;
 	private MarketDataCache _cache = new();
 
@@ -86,6 +88,8 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 
 	public void RequestStockCandles( string symbol, StockTimeframe timeframe )
 	{
+		if ( _disposed ) return;
+
 		symbol = NormalizeSymbol( symbol );
 		if ( string.IsNullOrWhiteSpace( symbol ) ) return;
 
@@ -96,56 +100,77 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 
 		_nextCandleRefresh[key] = Time.Now + 1f;
 		_pendingCandleRequests.Add( key );
-		RefreshStockCandlesAsync( symbol, timeframe, key );
+		_ = RefreshStockCandlesAsync( symbol, timeframe, key, _lifetimeCts.Token );
+	}
+
+	public override void Dispose()
+	{
+		if ( _disposed ) return;
+
+		_disposed = true;
+		_lifetimeCts.Cancel();
+		_lifetimeCts.Dispose();
+		base.Dispose();
 	}
 
 	private void OnTick()
 	{
+		if ( _disposed ) return;
 		if ( _refreshingQuotes || Time.Now < _nextQuoteRefreshTime ) return;
 
 		_nextQuoteRefreshTime = Time.Now + QuoteRefreshPollInterval;
-		RefreshQuotesAsync();
+		_ = RefreshQuotesAsync( _lifetimeCts.Token );
 	}
 
-	private async void RefreshQuotesAsync()
+	private async System.Threading.Tasks.Task RefreshQuotesAsync( CancellationToken cancellationToken )
 	{
 		_refreshingQuotes = true;
 
 		try
 		{
-			await RefreshCryptoAsync();
+			await RefreshCryptoAsync( cancellationToken );
+			if ( ShouldStopAsyncWork( cancellationToken ) ) return;
 
 			foreach ( var stock in FinanceCatalog.Stocks )
 			{
 				RequestStockCandles( stock.Symbol, StockTimeframe.OneDay );
 			}
 
+			if ( ShouldStopAsyncWork( cancellationToken ) ) return;
 			StatusText = HasLiveCrypto || HasLiveStocks ? "Cached/public delayed market data" : "Fallback market data";
 			PriceVersion++;
 		}
+		catch ( OperationCanceledException ) when ( cancellationToken.IsCancellationRequested )
+		{
+		}
 		catch ( Exception e )
 		{
+			if ( ShouldStopAsyncWork( cancellationToken ) ) return;
 			StatusText = HasLiveCrypto || HasLiveStocks ? "Cached market data" : "Fallback market data";
 			Log.Warning( $"[MarketData] Quote refresh failed unexpectedly: {e.Message}" );
 		}
 		finally
 		{
-			_refreshingQuotes = false;
+			if ( !_disposed ) _refreshingQuotes = false;
 		}
 	}
 
-	private async void RefreshStockCandlesAsync( string symbol, StockTimeframe timeframe, string key )
+	private async System.Threading.Tasks.Task RefreshStockCandlesAsync( string symbol, StockTimeframe timeframe, string key, CancellationToken cancellationToken )
 	{
 		try
 		{
-			var response = await HttpGetString( YahooChartUrl( symbol, timeframe ) );
+			var response = await HttpGetString( YahooChartUrl( symbol, timeframe ), cancellationToken );
+			if ( ShouldStopAsyncWork( cancellationToken ) ) return;
+
 			var candles = ParseYahooCandles( response, timeframe );
 			if ( candles.Count <= 0 )
 			{
+				if ( ShouldStopAsyncWork( cancellationToken ) ) return;
 				SetCandleNextRefresh( key, UnixNow() + StockRefreshSeconds( timeframe ) );
 				return;
 			}
 
+			if ( ShouldStopAsyncWork( cancellationToken ) ) return;
 			_stockCandles[key] = candles;
 			UpdateStockPrice( symbol, candles );
 			CacheStockCandles( key, candles, timeframe );
@@ -156,8 +181,13 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 			PriceVersion++;
 			CandleVersion++;
 		}
+		catch ( OperationCanceledException ) when ( cancellationToken.IsCancellationRequested )
+		{
+		}
 		catch ( Exception e )
 		{
+			if ( ShouldStopAsyncWork( cancellationToken ) ) return;
+
 			var backoff = IsRateLimited( e ) ? RateLimitBackoffSeconds : StockRefreshSeconds( timeframe );
 			SetCandleNextRefresh( key, UnixNow() + backoff );
 			StatusText = _stockCandles.ContainsKey( key ) ? "Cached market data" : StatusText;
@@ -177,11 +207,11 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 		}
 		finally
 		{
-			_pendingCandleRequests.Remove( key );
+			if ( !_disposed ) _pendingCandleRequests.Remove( key );
 		}
 	}
 
-	private async System.Threading.Tasks.Task RefreshCryptoAsync()
+	private async System.Threading.Tasks.Task RefreshCryptoAsync( CancellationToken cancellationToken )
 	{
 		var now = UnixNow();
 		if ( _cache.NextCryptoRefreshUnix > now )
@@ -194,7 +224,9 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 		var uri = $"https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies=usd";
 		try
 		{
-			var json = await HttpGetString( uri );
+			var json = await HttpGetString( uri, cancellationToken );
+			if ( ShouldStopAsyncWork( cancellationToken ) ) return;
+
 			using var document = JsonDocument.Parse( json );
 			var updated = 0;
 
@@ -218,8 +250,13 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 			SaveMarketCache();
 			Log.Info( $"[MarketData] Crypto refresh succeeded; prices={updated:N0}; nextRefresh={FormatUnixTime( _cache.NextCryptoRefreshUnix )}." );
 		}
+		catch ( OperationCanceledException ) when ( cancellationToken.IsCancellationRequested )
+		{
+		}
 		catch ( Exception e )
 		{
+			if ( ShouldStopAsyncWork( cancellationToken ) ) return;
+
 			var backoff = IsRateLimited( e ) ? RateLimitBackoffSeconds : CryptoRefreshIntervalSeconds;
 			_cache.NextCryptoRefreshUnix = now + backoff;
 			SaveMarketCache();
@@ -495,9 +532,14 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 		return element.ValueKind != JsonValueKind.Null && element.ValueKind != JsonValueKind.Undefined && element.TryGetDecimal( out value );
 	}
 
-	private static async System.Threading.Tasks.Task<string> HttpGetString( string uri )
+	private bool ShouldStopAsyncWork( CancellationToken cancellationToken )
 	{
-		return await Sandbox.Http.RequestStringAsync( uri, "GET", null, null, CancellationToken.None );
+		return _disposed || cancellationToken.IsCancellationRequested || Scene is null;
+	}
+
+	private static async System.Threading.Tasks.Task<string> HttpGetString( string uri, CancellationToken cancellationToken )
+	{
+		return await Sandbox.Http.RequestStringAsync( uri, "GET", null, null, cancellationToken );
 	}
 
 	private static string CandleKey( string symbol, StockTimeframe timeframe )

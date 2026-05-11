@@ -7,6 +7,22 @@
   "Weight": 1,
   "MaxStack": 50,
   "WorldModel": "",
+  "Weapon": {
+    "EquippedModel": "",
+    "HandBone": "hold_R",
+    "HoldType": "Pistol",
+    "Handedness": "Right",
+    "Damage": 25,
+    "Range": 3000,
+    "ClipSize": 15,
+    "ReloadDuration": 1.5,
+    "FireRate": 5,
+    "TraceSize": 6,
+    "Offset": "0,0,0",
+    "AngleOffset": "0,0,0",
+    "Scale": "1,1,1",
+    "FireInterval": 0.2
+  },
   "Consumable": {
     "Category": "Food",
     "Tier": "Quality",
@@ -18,5 +34,13 @@
     "StaminaRegenPerSecond": 0,
     "EffectDuration": 30,
     "HealthXp": 1
-  }
+  },
+  "IsWeapon": false,
+  "IsCurrency": false,
+  "IsConsumable": true,
+  "ModelPath": "",
+  "IsNotWeaponKind": true,
+  "IsNotConsumableKind": false,
+  "__references": [],
+  "__version": 0
 }

@@ -1,6 +1,7 @@
 global using Sandbox;
 global using Sandbox.Systems;
 global using Sandbox.Systems.AI;
+global using Sandbox.Systems.Cloud;
 global using Sandbox.Systems.Combat;
 global using Sandbox.Systems.Economy;
 global using Sandbox.Systems.Finance;

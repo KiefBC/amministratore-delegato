@@ -34,6 +34,28 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
+	public static void RequestLoadCloudPlayer( GameObject player, string authToken )
+	{
+		if ( !CallerOwns( player ) ) return;
+
+		_ = CloudProgressionSystem.Current?.LoadPlayerAsync( player, authToken ?? "", Rpc.Caller, System.Threading.CancellationToken.None );
+	}
+
+	[Rpc.Host]
+	public static void RequestCompleteCloudJob( GameObject player, GameObject workstation, string authToken )
+	{
+		if ( !CallerOwns( player ) ) return;
+		if ( !workstation.IsValid() ) return;
+
+		foreach ( var job in workstation.Components.GetAll<CloudJobWorkstation>() )
+		{
+			if ( !job.IsValid() ) continue;
+			job.TryCompleteOnHost( player, authToken ?? "", Rpc.Caller );
+			return;
+		}
+	}
+
+	[Rpc.Host]
 	public static void RequestUseDeskDevice( GameObject deskGo, GameObject player, int device )
 	{
 		if ( !CallerOwns( player ) ) return;
@@ -224,14 +246,21 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var shares = decimal.ToInt32( decimal.Floor( amount / price ) );
-		if ( shares <= 0 )
+		if ( !TryDivide( amount, price, out var rawShares ) || !TryFloorToPositiveInt( rawShares, out var shares ) )
 		{
-			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", $"Enter at least ${decimal.ToInt32( decimal.Ceiling( price ) ):N0} to buy 1 share of {offer.Symbol}.", 3f );
+			var minimumMessage = TryCeilingToPositiveInt( price, out var minimumAmount )
+				? $"Enter at least ${minimumAmount:N0} to buy 1 share of {offer.Symbol}."
+				: $"The share price for {offer.Symbol} is too large.";
+			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", minimumMessage, 3f );
 			return;
 		}
 
-		var cost = decimal.ToInt32( decimal.Ceiling( shares * price ) );
+		if ( !TryMultiply( price, shares, out var rawCost ) || !TryCeilingToPositiveInt( rawCost, out var cost ) )
+		{
+			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order total is too large.", 3f );
+			return;
+		}
+
 		var fee = StockTradeFee( cost );
 		if ( cost > int.MaxValue - fee )
 		{
@@ -293,7 +322,14 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var cost = decimal.ToInt32( decimal.Ceiling( shares * price ) );
+		if ( !TryMultiply( price, shares, out var rawCost ) || !TryCeilingToPositiveInt( rawCost, out var cost ) )
+		{
+			Log.Warning( $"[StockTerminal] Buy RPC rejected oversized total; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
+			AuditWarning( "stock_trade", "Stock buy rejected oversized total", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("price", price) ) );
+			NotifyTerminal( player, NotificationKind.BadNews, "Stock Order Failed", "The order total is too large.", 3f );
+			return;
+		}
+
 		var fee = StockTradeFee( cost );
 		if ( cost > int.MaxValue - fee )
 		{
@@ -372,7 +408,14 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var proceeds = decimal.ToInt32( decimal.Floor( shares * price ) );
+		if ( !TryMultiply( price, shares, out var rawProceeds ) || !TryFloorToPositiveInt( rawProceeds, out var proceeds ) )
+		{
+			Log.Warning( $"[StockTerminal] Sell RPC rejected oversized total; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
+			AuditWarning( "stock_trade", "Stock sell rejected oversized total", player, GameLogSystem.Fields( ("symbol", offer.Symbol), ("shares", shares), ("price", price) ) );
+			NotifyTerminal( player, NotificationKind.BadNews, "Sell Order Failed", "The order total is too large.", 3f );
+			return;
+		}
+
 		var fee = StockTradeFee( proceeds );
 		var netProceeds = int.Max( 0, proceeds - fee );
 		Log.Info( $"[StockTerminal] Sell RPC priced; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; proceeds=${proceeds:N0}; fee=${fee:N0}; net=${netProceeds:N0}." );
@@ -548,6 +591,62 @@ public static class GameNetworkRpc
 	{
 		return ServerVaultSystem.Current?.CalculateStockTradeFee( grossAmount )
 			?? ServerVaultSystem.CalculateStockTradeFee( grossAmount );
+	}
+
+	private static bool TryDivide( int amount, decimal price, out decimal result )
+	{
+		result = 0m;
+		if ( amount <= 0 || price <= 0m ) return false;
+
+		try
+		{
+			result = amount / price;
+			return true;
+		}
+		catch ( System.OverflowException )
+		{
+			return false;
+		}
+	}
+
+	private static bool TryMultiply( decimal price, int quantity, out decimal result )
+	{
+		result = 0m;
+		if ( price <= 0m || quantity <= 0 ) return false;
+
+		try
+		{
+			result = price * quantity;
+			return true;
+		}
+		catch ( System.OverflowException )
+		{
+			return false;
+		}
+	}
+
+	private static bool TryFloorToPositiveInt( decimal value, out int result )
+	{
+		result = 0;
+		if ( value <= 0m ) return false;
+
+		var rounded = decimal.Floor( value );
+		if ( rounded <= 0m || rounded > int.MaxValue ) return false;
+
+		result = decimal.ToInt32( rounded );
+		return true;
+	}
+
+	private static bool TryCeilingToPositiveInt( decimal value, out int result )
+	{
+		result = 0;
+		if ( value <= 0m ) return false;
+
+		var rounded = decimal.Ceiling( value );
+		if ( rounded <= 0m || rounded > int.MaxValue ) return false;
+
+		result = decimal.ToInt32( rounded );
+		return true;
 	}
 
 	private static void AddStockTradeFeeToVault( GameObject player, string symbol, int grossAmount, int fee, string side )
