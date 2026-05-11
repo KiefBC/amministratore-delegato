@@ -37,11 +37,15 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 	private readonly Dictionary<string, long> _loggedCandleCacheSkips = new();
 	private readonly HashSet<string> _pendingCandleRequests = new();
 	private readonly CancellationTokenSource _lifetimeCts = new();
+	private static MarketDataSystem _gameInstance;
 	private float _nextQuoteRefreshTime;
 	private bool _refreshingQuotes;
+	private bool _active;
 	private bool _disposed;
 	private long _loggedCryptoCacheSkipUntil;
 	private MarketDataCache _cache = new();
+
+	public static MarketDataSystem Game => _gameInstance ?? Current;
 
 	public int PriceVersion { get; private set; }
 	public int CandleVersion { get; private set; }
@@ -51,6 +55,19 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 
 	public MarketDataSystem( Scene scene ) : base( scene )
 	{
+		if ( _gameInstance is not null && !_gameInstance._disposed && _gameInstance._active )
+		{
+			return;
+		}
+
+		if ( !scene.WantsSystemScene )
+		{
+			return;
+		}
+
+		_active = true;
+		_gameInstance = this;
+
 		foreach ( var stock in FinanceCatalog.Stocks ) _stockPrices[stock.Symbol] = stock.FallbackPrice;
 		foreach ( var coin in FinanceCatalog.Crypto ) _cryptoPrices[coin.Id] = coin.FallbackPrice;
 		LoadMarketCache();
@@ -88,7 +105,7 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 
 	public void RequestStockCandles( string symbol, StockTimeframe timeframe )
 	{
-		if ( _disposed ) return;
+		if ( _disposed || !_active ) return;
 
 		symbol = NormalizeSymbol( symbol );
 		if ( string.IsNullOrWhiteSpace( symbol ) ) return;
@@ -108,6 +125,7 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 		if ( _disposed ) return;
 
 		_disposed = true;
+		if ( _gameInstance == this ) _gameInstance = null;
 		_lifetimeCts.Cancel();
 		_lifetimeCts.Dispose();
 		base.Dispose();
@@ -115,7 +133,7 @@ public sealed class MarketDataSystem : GameObjectSystem<MarketDataSystem>
 
 	private void OnTick()
 	{
-		if ( _disposed ) return;
+		if ( _disposed || !_active ) return;
 		if ( _refreshingQuotes || Time.Now < _nextQuoteRefreshTime ) return;
 
 		_nextQuoteRefreshTime = Time.Now + QuoteRefreshPollInterval;

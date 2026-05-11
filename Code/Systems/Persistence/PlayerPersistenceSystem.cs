@@ -218,6 +218,26 @@ public sealed class PlayerPersistenceSystem : GameObjectSystem<PlayerPersistence
 		return data;
 	}
 
+	public static PlayerSaveData CapturePlayerSnapshot( GameObject player, Connection connection, string steamId, string displayName )
+	{
+		return CapturePlayer( player, connection, steamId, displayName );
+	}
+
+	public static PlayerSaveData CreateCloudCheckpointData( PlayerSaveData data )
+	{
+		if ( data is null ) return null;
+
+		var json = System.Text.Json.JsonSerializer.Serialize( data );
+		var cloudData = System.Text.Json.JsonSerializer.Deserialize<PlayerSaveData>( json ) ?? new PlayerSaveData();
+
+		// TODO: Decide whether exact current HP/stamina should persist to Supabase.
+		// For now cloud checkpoints keep these as sentinel values and restore spawn/default pools.
+		cloudData.Vitals.Health = 0f;
+		cloudData.Vitals.Stamina = 0f;
+		cloudData.Vitals.WasDead = false;
+		return cloudData;
+	}
+
 	private static void RestorePlayer( GameObject player, PlayerSaveData data )
 	{
 		if ( data is null || !player.IsValid() ) return;
@@ -238,6 +258,28 @@ public sealed class PlayerPersistenceSystem : GameObjectSystem<PlayerPersistence
 
 		var unit = root.Components.GetInDescendantsOrSelf<UnitComponent>();
 		if ( unit.IsValid() ) unit.RestoreSaveData( data.Vitals );
+	}
+
+	public static void RestoreCloudSnapshot( GameObject player, PlayerSaveData data )
+	{
+		if ( data is null || !player.IsValid() ) return;
+
+		var root = player.Root.IsValid() ? player.Root : player;
+
+		var stats = root.Components.GetInDescendantsOrSelf<PlayerStatsComponent>();
+		if ( stats.IsValid() ) stats.RestoreSaveData( data.Stats );
+
+		var backpack = root.Components.GetInDescendantsOrSelf<Backpack>();
+		if ( backpack.IsValid() ) backpack.RestoreSaveData( data.Inventory );
+
+		var finance = root.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
+		if ( finance.IsValid() ) finance.RestoreSaveData( data.Finance );
+
+		var profile = root.Components.GetInDescendantsOrSelf<PlayerProfileComponent>();
+		if ( profile.IsValid() ) profile.RestoreSaveData( data.Profile );
+
+		// TODO: Cloud snapshots intentionally do not restore exact HP/stamina yet.
+		// The saved values are sentinels until the design decides whether combat state should survive sessions.
 	}
 
 	private static bool IsAuthoritative => !Sandbox.Networking.IsActive || Sandbox.Networking.IsHost;
@@ -361,6 +403,12 @@ public sealed class PlayerStatsSaveData
 	public float PunchingXp { get; set; }
 	public float RangedXp { get; set; }
 	public float BusinessXp { get; set; }
+	public int PlayerLevel { get; set; }
+	public int HealthLevel { get; set; }
+	public int StaminaLevel { get; set; }
+	public int PunchingLevel { get; set; }
+	public int RangedLevel { get; set; }
+	public int BusinessLevel { get; set; }
 }
 
 public sealed class PlayerVitalsSaveData

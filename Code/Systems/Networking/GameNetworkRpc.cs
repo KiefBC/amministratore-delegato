@@ -75,6 +75,19 @@ public static class GameNetworkRpc
 	}
 
 	[Rpc.Host]
+	public static void RequestSaveCloudPlayer( GameObject player, string authToken, string reason )
+	{
+		if ( !CallerOwns( player ) ) return;
+
+		_ = CloudProgressionSystem.Current?.SavePlayerCheckpointFromRequestAsync(
+			player,
+			authToken ?? "",
+			Rpc.Caller,
+			reason ?? "checkpoint",
+			System.Threading.CancellationToken.None );
+	}
+
+	[Rpc.Host]
 	public static void RequestUseDeskDevice( GameObject deskGo, GameObject player, int device )
 	{
 		if ( !CallerOwns( player ) ) return;
@@ -265,7 +278,7 @@ public static class GameNetworkRpc
 		if ( !finance.IsValid() || !backpack.IsValid() ) return;
 
 		var source = (FinanceAccountSource)sourceAccount;
-		var price = MarketDataSystem.Current?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
+		var price = MarketDataSystem.Game?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
 		if ( amount <= 0 || price <= 0m )
 		{
 			NotifyTerminal( player, NotificationKind.Warning, "Stock Order", "Enter a valid dollar amount.", 2.5f );
@@ -339,7 +352,7 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var price = MarketDataSystem.Current?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
+		var price = MarketDataSystem.Game?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
 		if ( shares <= 0 || price <= 0m )
 		{
 			Log.Warning( $"[StockTerminal] Buy RPC rejected invalid amount; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
@@ -415,7 +428,7 @@ public static class GameNetworkRpc
 			return;
 		}
 
-		var price = MarketDataSystem.Current?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
+		var price = MarketDataSystem.Game?.StockPrice( offer.Symbol ) ?? offer.FallbackPrice;
 		if ( shares <= 0 || price <= 0m )
 		{
 			Log.Warning( $"[StockTerminal] Sell RPC rejected invalid amount; player={PlayerLogName( player )}; symbol={offer.Symbol}; shares={shares:N0}; price=${PriceLog( price )}." );
@@ -465,7 +478,7 @@ public static class GameNetworkRpc
 		if ( !CallerOwns( player ) ) return;
 		if ( !System.Enum.IsDefined( typeof( FinanceAccountSource ), sourceAccount ) ) return;
 
-		var price = MarketDataSystem.Current?.CryptoPrice( coinId ) ?? FinanceCatalog.Coin( coinId )?.FallbackPrice ?? 0m;
+		var price = MarketDataSystem.Game?.CryptoPrice( coinId ) ?? FinanceCatalog.Coin( coinId )?.FallbackPrice ?? 0m;
 		FinanceFor( player )?.TryBuyCrypto( coinId, amount, price, (FinanceAccountSource)sourceAccount );
 	}
 
@@ -560,6 +573,15 @@ public static class GameNetworkRpc
 		if ( !LocalPlayer.Owns( player ) ) return;
 
 		NotificationSystem.Current?.NotifyFromNetwork( kind, title, message, shownDuration );
+	}
+
+	[Rpc.Broadcast]
+	public static void BroadcastCloudStatsProjection( GameObject player, int playerLevel, int businessLevel, int businessesOwned, long netWorth, int creditScore, int hoursPlayedSeconds, int jobsCompleted )
+	{
+		if ( !CallerIsHost() ) return;
+		if ( !LocalPlayer.Owns( player ) ) return;
+
+		CloudStatsProjectionBuilder.PublishLocal( new CloudStatsProjection( playerLevel, businessLevel, businessesOwned, netWorth, creditScore, hoursPlayedSeconds, jobsCompleted ) );
 	}
 
 	[Rpc.Host]

@@ -159,6 +159,12 @@ public sealed class PlayerStatsComponent : Component
 			PunchingXp = PunchingXp,
 			RangedXp = RangedXp,
 			BusinessXp = BusinessXp,
+			PlayerLevel = PlayerLevel,
+			HealthLevel = HealthLevel,
+			StaminaLevel = StaminaLevel,
+			PunchingLevel = PunchingLevel,
+			RangedLevel = RangedLevel,
+			BusinessLevel = BusinessLevel,
 		};
 	}
 

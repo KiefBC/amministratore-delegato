@@ -389,6 +389,9 @@ verify_jwt = false
 [functions.finance-action]
 verify_jwt = false
 
+[functions.save-player]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

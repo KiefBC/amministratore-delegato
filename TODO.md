@@ -17,3 +17,10 @@
 - Add an admin panel for host/admin-only controls such as viewing the server money vault, reviewing debt calculations, changing interest settings, and sending server announcements. Issues: https://github.com/KiefBC/amministratore-delegato/issues/11, https://github.com/KiefBC/amministratore-delegato/issues/10, https://github.com/KiefBC/amministratore-delegato/issues/12
 - Add a server-tracked game version checker that compares the running version against the latest trusted release source, such as GitHub releases or s&box metadata, and warns players when a newer version exists or when the running build appears modified/fraudulent. Issue: https://github.com/KiefBC/amministratore-delegato/issues/13
 - Add persistent world state instead of session-only state so important world/session state survives leaving, rejoining, and host restarts where applicable. Issue: https://github.com/KiefBC/amministratore-delegato/issues/17
+
+## Cloud Persistence And Interfaces
+
+- Standardize cloud/finance UI patterns so ATM, bank, phone, retry/error, loading, and admin panels share consistent modal behavior, styling, loading states, notification handling, and `UiModeSystem` ownership.
+- Add an ATM UI for deposits, withdrawals, loans, debt repayment, and transfers.
+- Add a Bank UI for account review and future bank/teller actions. Initial version can be read-only, showing bank balance, debt, recent transactions, credit score, and cloud sync state.
+- Add a corner cellphone UI with limited initial functionality: player list/contact directory like the desk phone, and read-only Bank UI access. Later expand it into calls, messages, apps, and mobile banking.

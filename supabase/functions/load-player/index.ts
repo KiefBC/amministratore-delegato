@@ -32,5 +32,14 @@ Deno.serve( async ( req ) => {
 		job_xp: row.job_xp,
 		job_completions: row.job_completions,
 		last_job_at: row.last_job_at_unix,
+		player_snapshot: row.player_snapshot,
+		save_version: row.save_version,
+		last_checkpoint_at: row.last_checkpoint_at_unix,
+		player_level: row.player_level,
+		business_level: row.business_level,
+		businesses_owned: row.businesses_owned,
+		net_worth: row.net_worth,
+		credit_score: row.credit_score,
+		hours_played_seconds: row.hours_played_seconds,
 	} );
 } );

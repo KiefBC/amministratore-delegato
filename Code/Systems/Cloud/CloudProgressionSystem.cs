@@ -10,7 +10,11 @@ namespace Sandbox.Systems.Cloud;
 
 public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSystem>
 {
+	private static readonly JsonSerializerOptions SaveDataJsonOptions = new() { PropertyNameCaseInsensitive = true };
+
 	private readonly HashSet<string> _pendingFinanceActions = new();
+	private readonly Dictionary<string, float> _lastCheckpointTimeBySteamId = new();
+	private readonly Dictionary<string, int> _hoursPlayedBySteamId = new();
 	private readonly object _pendingFinanceActionsLock = new();
 
 	public CloudProgressionConfig Config => Scene.GetAllComponents<CloudProgressionConfig>().FirstOrDefault( x => x.IsValid() );
@@ -31,6 +35,7 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 			NotifyPlayer( player, NotificationKind.BadNews, "Cloud Load Failed", "Missing s&box auth token.", 3f );
 			return;
 		}
+		RememberCloudSession( player, caller );
 
 		try
 		{
@@ -74,6 +79,7 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 			NotifyPlayer( player, NotificationKind.BadNews, "Job Failed", "Missing s&box auth token.", 3f );
 			return;
 		}
+		RememberCloudSession( player, caller );
 
 		try
 		{
@@ -129,6 +135,7 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 			NotifyPlayer( player, NotificationKind.BadNews, "Finance Failed", "Missing s&box auth token.", 3f );
 			return;
 		}
+		RememberCloudSession( player, caller );
 
 		var finance = player.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
 		var backpack = player.Components.GetInDescendantsOrSelf<Backpack>();
@@ -221,6 +228,87 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		}
 	}
 
+	public async Task SavePlayerCheckpointFromRequestAsync( GameObject player, string authToken, Connection caller, string reason, CancellationToken cancellationToken )
+	{
+		if ( !Sandbox.Networking.IsHost ) return;
+		if ( !player.IsValid() ) return;
+
+		var config = Config;
+		if ( !config.IsValid() || !config.HasBackend ) return;
+
+		if ( string.IsNullOrWhiteSpace( authToken ) )
+		{
+			NotifyPlayer( player, NotificationKind.BadNews, "Cloud Save Failed", "Missing s&box auth token.", 3f );
+			return;
+		}
+
+		var steamId = CloudSteamId( player, caller );
+		if ( string.IsNullOrWhiteSpace( steamId ) ) return;
+
+		RememberCloudSession( player, caller );
+		var displayName = caller?.DisplayName ?? player.Network.Owner?.DisplayName ?? DisplayNameFor( player );
+		var data = PlayerPersistenceSystem.CapturePlayerSnapshot( player, caller, steamId, displayName );
+		data = PlayerPersistenceSystem.CreateCloudCheckpointData( data );
+		var sessionSecondsDelta = ConsumeSessionSecondsDelta( steamId );
+		var projection = CloudStatsProjectionBuilder.FromPlayer( player, sessionSecondsDelta );
+
+		await SavePlayerCheckpointAsync( config, data, projection, authToken, string.IsNullOrWhiteSpace( reason ) ? "checkpoint" : reason, caller, player, cancellationToken );
+	}
+
+	private async Task SavePlayerCheckpointAsync( CloudProgressionConfig config, PlayerSaveData data, CloudStatsProjection projection, string authToken, string reason, Connection connection, GameObject player, CancellationToken cancellationToken )
+	{
+		try
+		{
+			var payload = new Dictionary<string, object>
+			{
+				["session_id"] = config.ResolvedSessionId(),
+				["steam_id"] = data.SteamId,
+				["display_name"] = string.IsNullOrWhiteSpace( data.LastKnownName ) ? connection?.DisplayName ?? "Player" : data.LastKnownName,
+				["game_ident"] = "amministratore_delegato",
+				["checkpoint_id"] = $"{config.ResolvedSessionId()}:{data.SteamId}:checkpoint:{Guid.NewGuid():N}",
+				["reason"] = string.IsNullOrWhiteSpace( reason ) ? "checkpoint" : reason,
+				["snapshot_json"] = JsonSerializer.Serialize( data, SaveDataJsonOptions ),
+				["player_level"] = projection.PlayerLevel,
+				["business_level"] = projection.BusinessLevel,
+				["businesses_owned"] = projection.BusinessesOwned,
+				["net_worth"] = projection.NetWorth,
+				["credit_score"] = projection.CreditScore,
+				["session_seconds_delta"] = projection.HoursPlayedSeconds,
+			};
+
+			var response = await PostAsync( config, config.SavePlayerEndpoint, payload, authToken, cancellationToken );
+			var state = ParseCloudStateResponse( response );
+			if ( !state.Success )
+			{
+				Log.Warning( $"[Cloud] Player checkpoint rejected; steamId={data.SteamId}; reason={reason}; message={state.MessageOrDefault( "unknown" )}." );
+				GameLogSystem.Current?.Warning( "cloud", "Cloud checkpoint rejected", player, connection, GameLogSystem.Fields(
+					("steamId", data.SteamId),
+					("reason", reason),
+					("message", state.MessageOrDefault( "unknown" )) ) );
+				return;
+			}
+
+			Log.Info( $"[Cloud] Player checkpoint saved; steamId={data.SteamId}; reason={reason}; hours={state.HoursPlayedSeconds.GetValueOrDefault()}." );
+			GameLogSystem.Current?.Info( "cloud", "Cloud checkpoint saved", player, connection, GameLogSystem.Fields(
+				("steamId", data.SteamId),
+				("reason", reason),
+				("hoursPlayedSeconds", state.HoursPlayedSeconds) ) );
+
+			if ( player.IsValid() ) PublishStatsProjection( player, state );
+		}
+		catch ( OperationCanceledException ) when ( cancellationToken.IsCancellationRequested )
+		{
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"[Cloud] Player checkpoint failed; steamId={data.SteamId}; reason={reason}; error={e.Message}" );
+			GameLogSystem.Current?.Warning( "cloud", "Cloud checkpoint failed", player, connection, GameLogSystem.Fields(
+				("steamId", data.SteamId),
+				("reason", reason),
+				("error", e.Message) ) );
+		}
+	}
+
 	private void ApplyLocalFallbackIfAllowed( CloudProgressionConfig config, GameObject player )
 	{
 		if ( !config.IsValid() || !config.AllowLocalDevFallback )
@@ -266,15 +354,25 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 			["X-Sbox-Auth-Service"] = config.ResolvedAuthServiceName(),
 		};
 
+		var started = DateTimeOffset.UtcNow;
+		Log.Info( $"[Cloud] POST {endpoint} started." );
 		var response = await Sandbox.Http.RequestAsync( url, "POST", Sandbox.Http.CreateJsonContent( payload ), headers, cancellationToken );
 		var body = await response.Content.ReadAsStringAsync( cancellationToken );
+		var elapsedMs = (DateTimeOffset.UtcNow - started).TotalMilliseconds;
+		Log.Info( $"[Cloud] POST {endpoint} completed; status={(int)response.StatusCode}; elapsedMs={elapsedMs:0}; bytes={body?.Length ?? 0}." );
 		if ( response.IsSuccessStatusCode || !string.IsNullOrWhiteSpace( body ) ) return body;
 
 		throw new InvalidOperationException( $"Cloud backend returned {(int)response.StatusCode} {response.ReasonPhrase}." );
 	}
 
-	private static void ApplyCloudState( GameObject player, CloudStateResponse state, string reason )
+	private void ApplyCloudState( GameObject player, CloudStateResponse state, string reason )
 	{
+		if ( !string.IsNullOrWhiteSpace( state.PlayerSnapshotJson ) )
+		{
+			var snapshot = DeserializePlayerSnapshot( state.PlayerSnapshotJson );
+			if ( snapshot is not null ) PlayerPersistenceSystem.RestoreCloudSnapshot( player, snapshot );
+		}
+
 		var finance = player.Components.GetInDescendantsOrSelf<PlayerFinanceComponent>();
 		if ( finance.IsValid() )
 		{
@@ -300,6 +398,41 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 			("jobCompletions", state.JobCompletions),
 			("rewardMoney", state.RewardMoney),
 			("rewardXp", state.RewardXp) ) );
+
+		PublishStatsProjection( player, state );
+	}
+
+	private static PlayerSaveData DeserializePlayerSnapshot( string json )
+	{
+		try
+		{
+			return JsonSerializer.Deserialize<PlayerSaveData>( json, SaveDataJsonOptions );
+		}
+		catch ( Exception e )
+		{
+			Log.Warning( $"[Cloud] Ignored invalid player snapshot: {e.Message}" );
+			return null;
+		}
+	}
+
+	private void PublishStatsProjection( GameObject player, CloudStateResponse state )
+	{
+		if ( !player.IsValid() ) return;
+
+		var steamId = CloudSteamId( player, null );
+		var hoursPlayedSeconds = state.HoursPlayedSeconds ?? (_hoursPlayedBySteamId.TryGetValue( steamId, out var cachedHours ) ? cachedHours : 0);
+		if ( !string.IsNullOrWhiteSpace( steamId ) ) _hoursPlayedBySteamId[steamId] = hoursPlayedSeconds;
+
+		var projection = CloudStatsProjectionBuilder.FromPlayer( player, hoursPlayedSeconds );
+		GameNetworkRpc.BroadcastCloudStatsProjection(
+			player,
+			projection.PlayerLevel,
+			projection.BusinessLevel,
+			projection.BusinessesOwned,
+			projection.NetWorth,
+			projection.CreditScore,
+			projection.HoursPlayedSeconds,
+			projection.JobsCompleted );
 	}
 
 	private static CloudStateResponse ParseCloudStateResponse( string json )
@@ -328,12 +461,14 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		{
 			Success = success,
 			Message = message,
+			PlayerSnapshotJson = ReadRawJson( stateRoot, "player_snapshot", "playerSnapshot", "PlayerSnapshot" ) ?? "",
 			BankBalance = ReadInt( stateRoot, "bank_balance", "bankBalance", "BankBalance" ),
 			DebtBalance = ReadInt( stateRoot, "debt_balance", "debtBalance", "DebtBalance" ),
 			NextDebtAccrualAtUnix = ReadLong( stateRoot, "next_debt_accrual_at", "nextDebtAccrualAt", "NextDebtAccrualAtUnix" ),
 			JobXp = ReadInt( stateRoot, "job_xp", "jobXp", "JobXp" ),
 			JobCompletions = ReadInt( stateRoot, "job_completions", "jobCompletions", "JobCompletions" ),
 			LastJobAtUnix = ReadLong( stateRoot, "last_job_at", "lastJobAt", "LastJobAtUnix" ),
+			HoursPlayedSeconds = ReadInt( stateRoot, "hours_played_seconds", "hoursPlayedSeconds", "HoursPlayedSeconds" ),
 			RewardMoney = ReadInt( root, "reward_money", "rewardMoney", "RewardMoney" ),
 			RewardXp = ReadInt( root, "reward_xp", "rewardXp", "RewardXp" ),
 			WalletDelta = ReadInt( root, "wallet_delta", "walletDelta", "WalletDelta" ),
@@ -396,6 +531,19 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		{
 			if ( !root.TryGetProperty( name, out var element ) ) continue;
 			if ( element.ValueKind == JsonValueKind.String ) return element.GetString();
+		}
+
+		return null;
+	}
+
+	private static string ReadRawJson( JsonElement root, params string[] names )
+	{
+		foreach ( var name in names )
+		{
+			if ( !root.TryGetProperty( name, out var element ) ) continue;
+			if ( element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined ) continue;
+			if ( element.ValueKind == JsonValueKind.String ) return element.GetString();
+			return element.GetRawText();
 		}
 
 		return null;
@@ -465,6 +613,30 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 		return owner is not null ? owner.SteamId.ToString() : player.GetHashCode().ToString();
 	}
 
+	private void RememberCloudSession( GameObject player, Connection caller )
+	{
+		var steamId = CloudSteamId( player, caller );
+		if ( string.IsNullOrWhiteSpace( steamId ) ) return;
+
+		if ( !_lastCheckpointTimeBySteamId.ContainsKey( steamId ) ) _lastCheckpointTimeBySteamId[steamId] = Time.Now;
+	}
+
+	private int ConsumeSessionSecondsDelta( string steamId )
+	{
+		if ( string.IsNullOrWhiteSpace( steamId ) ) return 0;
+
+		var now = Time.Now;
+		var previous = _lastCheckpointTimeBySteamId.TryGetValue( steamId, out var last ) && last > 0f ? last : now;
+		_lastCheckpointTimeBySteamId[steamId] = now;
+		return int.Max( 0, (int)float.Floor( now - previous ) );
+	}
+
+	private static string CloudSteamId( GameObject player, Connection caller )
+	{
+		var owner = caller ?? player.Network.Owner;
+		return owner?.SteamId.ToString() ?? "";
+	}
+
 	private static string ClaimId( CloudProgressionConfig config, GameObject player, CloudJobWorkstation workstation )
 	{
 		var owner = player.Network.Owner;
@@ -491,12 +663,14 @@ public sealed class CloudProgressionSystem : GameObjectSystem<CloudProgressionSy
 	{
 		public bool Success { get; set; } = true;
 		public string Message { get; set; } = "";
+		public string PlayerSnapshotJson { get; set; } = "";
 		public int? BankBalance { get; set; }
 		public int? DebtBalance { get; set; }
 		public long? NextDebtAccrualAtUnix { get; set; }
 		public int? JobXp { get; set; }
 		public int? JobCompletions { get; set; }
 		public long? LastJobAtUnix { get; set; }
+		public int? HoursPlayedSeconds { get; set; }
 		public int? RewardMoney { get; set; }
 		public int? RewardXp { get; set; }
 		public int? WalletDelta { get; set; }

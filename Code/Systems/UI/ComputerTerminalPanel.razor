@@ -200,7 +200,7 @@
 	protected override void OnUpdate()
 	{
 		FindLocalPlayer();
-		_market = MarketDataSystem.Current;
+		_market = MarketDataSystem.Game;
 
 		if ( !_isOpen ) return;
 
